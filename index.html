@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dott-y</title>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <img src="icons/Logo principal.png" alt="Logo de Dott-y" style="max-width: 100px; height: auto;" />
+        <h1>El Bault Del Enano</h1>
+        <h4>Guardar 🏔️ Texto</h4>
+    </div>
+    
+    <div class="container">
+        <ul id="textList"></ul>
+
+        <div class="edit-section">
+
+             <!-- Botón para agregar una nueva categoría -->
+    <div class="container">
+        <button class="accordion-button" id="addCategoryButton">FORJA🔨 <span style="color: #cccccc;">- (Crear Base de Datos)</span></button>
+        <div class="accordion-content">
+            <input type="text" id="newCategory" placeholder="Nombre de la Base de Datos" />
+            <button id="addCategory">FORJAR 🔨<span style="color: #cccccc;">(Guardar)</span></button>
+        </div>
+    </div>
+
+    <!-- Botón para el selector de categorías -->
+    <div class="container">
+        <button class="accordion-button" id="categorySelectButton">
+            LA CAMARA ENANA 🗃️<span style="color: #cccccc;"> - (Ver Bases de Datos)</span>
+        </button>
+        <div class="accordion-content">
+            <label for="categorySelect">Base De Datos:</label>
+            <select id="categorySelect"></select>
+        </div>
+    </div>
+    
+    <!-- Botón para la edición de categorías -->
+    <div class="container">
+        <button class="accordion-button" id="editCategoryButton">MARTILLO DE DURIN 🛠️ <span style="color: #cccccc;"> - (Edición Base Datos)</span></button>
+        <div class="accordion-content">
+            <ul id="categoryList"></ul> <!-- Lista donde se mostrarán las categorías -->
+        </div>
+    </div>
+
+    <!-- Botón para editar texto -->
+    <div class="container">
+        <button class="accordion-button" id="editTextButton">PICO DE KHAZAD ⛏️<span style="color: #cccccc;"> - (Editar Texto) </span> </button>
+        <div class="accordion-content">
+            <input type="text" id="editText" placeholder="Texto" />
+            <input type="text" id="editCategory" placeholder="Categoría" />
+            <input type="text" id="editURL" placeholder="URL" /> <!-- Nuevo campo de entrada para la URL -->
+            <div class="checkbox-container">
+                <input type="checkbox" id="favoriteCheckbox" />
+                <label for="favoriteCheckbox">Favorito</label>
+            </div>
+            <button id="saveEdit">FORJAR ⛏️<span style="color: #cccccc;"> (Guardar)</span></button>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+
+   
+</html>

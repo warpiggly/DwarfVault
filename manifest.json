@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "DataSaver:El Bault Del Enano",
+    "version": "0.0",
+    "description": "Guarda texto seleccionado en una base de datos.",
+    "permissions": ["contextMenus", "storage"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+    "action": {
+      "default_popup": "index.html",
+      "default_icon": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+      }
+    }
+  }
+  
