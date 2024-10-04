@@ -9,60 +9,53 @@
 </head>
 <body>
     <div class="header">
-        <img src="icons/Logo principal.png" alt="Logo de Dott-y" style="max-width: 100px; height: auto;" />
-        <h1>El Bault Del Enano</h1>
-        <h4>Guardar 🏔️ Texto</h4>
-    </div>
-    
-    <div class="container">
-        <ul id="textList"></ul>
-
-        <div class="edit-section">
-
-             <!-- Botón para agregar una nueva categoría -->
-    <div class="container">
-        <button class="accordion-button" id="addCategoryButton">FORJA🔨 <span style="color: #cccccc;">- (Crear Base de Datos)</span></button>
-        <div class="accordion-content">
-            <input type="text" id="newCategory" placeholder="Nombre de la Base de Datos" />
-            <button id="addCategory">FORJAR 🔨<span style="color: #cccccc;">(Guardar)</span></button>
-        </div>
+        <h1 class="title">EL BAULT DEL ENANO</h1>
+        <img src="icons/Final Gif.gif" alt="Logo de Dott-y" class="logo" id="enanoGif">
+        <h3 class="subtitle">Copiar 🏔️  Texto</h3>
     </div>
 
-    <!-- Botón para el selector de categorías -->
-    <div class="container">
-        <button class="accordion-button" id="categorySelectButton">
-            LA CAMARA ENANA 🗃️<span style="color: #cccccc;"> - (Ver Bases de Datos)</span>
-        </button>
-        <div class="accordion-content">
-            <label for="categorySelect">Base De Datos:</label>
-            <select id="categorySelect"></select>
-        </div>
-    </div>
-    
-    <!-- Botón para la edición de categorías -->
-    <div class="container">
-        <button class="accordion-button" id="editCategoryButton">MARTILLO DE DURIN 🛠️ <span style="color: #cccccc;"> - (Edición Base Datos)</span></button>
-        <div class="accordion-content">
-            <ul id="categoryList"></ul> <!-- Lista donde se mostrarán las categorías -->
-        </div>
-    </div>
 
-    <!-- Botón para editar texto -->
-    <div class="container">
-        <button class="accordion-button" id="editTextButton">PICO DE KHAZAD ⛏️<span style="color: #cccccc;"> - (Editar Texto) </span> </button>
-        <div class="accordion-content">
-            <input type="text" id="editText" placeholder="Texto" />
-            <input type="text" id="editCategory" placeholder="Categoría" />
-            <input type="text" id="editURL" placeholder="URL" /> <!-- Nuevo campo de entrada para la URL -->
-            <div class="checkbox-container">
-                <input type="checkbox" id="favoriteCheckbox" />
-                <label for="favoriteCheckbox">Favorito</label>
+    <div>
+        <div class="container2">
+            <img src="image/Boton 3.png" alt="Imagen de fondo" class="background-image">
+            <div class="texto-movible">
+                <h2>RUNAS ⚒️ <span style="color: #cccccc;"></span></h2>
             </div>
-            <button id="saveEdit">FORJAR ⛏️<span style="color: #cccccc;"> (Guardar)</span></button>
+        </div>
+    <div id="dbName" style="display: none;"></div> <!-- Aquí se mostrará el nombre de la base de datos -->
+    <div id="entryIndex" class="copy">Índice: No disponible</div> <!-- Aquí se mostrará el índice -->
+    <div id="entryText" class="copy">No hay texto seleccionado aún.</div>
+    <button id="copyButton" class="action-btn2">Copiar Texto</button>
+    </div>
+
+    <div class="container">
+        <!-- FORJA Section -->
+        <input type="checkbox" id="toggleForja" class="toggle">
+        <label for="toggleForja" class="toggle-label">FORJA 🔨 <span style="color: #cccccc;"></span></label>
+        <div class="toggle-content">
+            <label for="databaseSelect" class="secundarios">LA CAMARA ENANA 🗃️ <span style="color: #cccccc;"> - Selecciona una base de datos</span></label>
+            <select id="databaseSelect" class="secundarios2"></select>
+            <button id="createDatabase" class="action-btn">FORJAR ⛏️ <span style="color: #cccccc;"> - Crear Nueva Base de Datos</span></button>
+            <button id="editDatabase" class="action-btn">REFORJAR 🛠️ <span style="color: #cccccc;"> - Editar Base de Datos</span></button>
+            <button id="deleteDatabase" class="delete-btn">DESTRUIR 🧝 <span style="color: #cccccc;"> - Eliminar Base de Datos</span></button>
+            <button id="export-csv" class="action-btn">Exportar a CSV</button>
+        </div>
+    
+        <!-- RELIQUIAS ENANAS Section -->
+        <input type="checkbox" id="toggleReliquias" class="toggle">
+        <label for="toggleReliquias" class="toggle-label">RELIQUIAS 🏰  <span style="color: #cccccc;"></span></label>
+        <div class="toggle-content">
+            <input type="text" id="searchBar" placeholder="Buscar por índice o texto...">
+            <ul id="entriesList" class="entries-list"></ul>
         </div>
     </div>
+    
+    
+
 
     <script src="popup.js"></script>
+    <script src="scripts/Butons.js"></script>
 
+</body>
    
 </html>

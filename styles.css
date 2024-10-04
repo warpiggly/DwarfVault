@@ -1,29 +1,98 @@
+@font-face {
+    font-family: 'SofadiOne-Regular';
+    src: url('fonts/SofadiOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Righteous-Regular';
+    src: url('fonts/Righteous/Righteous-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+@font-face {
+    font-family: 'Pixeled';
+    src: url('fonts/Pixeled.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 body {
-    font-family: 'MADE TOMMY Medium_PERSONAL USE', sans-serif;
     margin: 0;
     padding: 0;
-    width: 400px;
-    height: 600px;
-    background-color: #e8eaed; /* Fondo gris claro */
-    overflow: auto;
+    width: 500px; /* Cambia a 100% para ocupar todo el ancho de la ventana */
+    height: 700px; /* Cambia a 100vh para ocupar toda la altura de la ventana */
+    background-color: #272727; /* Fondo gris claro */
+    overflow: auto; /* Permite el desplazamiento */
+    position: relative; /* Necesario para el pseudo-elemento */
 }
+
+body::before {
+    content: "";
+    position: fixed; /* Cambia a fixed para que la imagen de fondo no se mueva al hacer scroll */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; 
+    background-image: url("image/back.png");
+    background-size: cover; /* Esto asegura que la imagen cubra toda */
+    background-position: center; /* Centra la imagen en la ventana */
+    opacity: 0.3; /* Ajusta el valor entre 0 y 1 para cambiar la transparencia */
+    z-index: -1; /* Coloca el pseudo-elemento detrás del contenido del body */
+}
+
+
 
 /* Encabezado */
+/* Encabezado */
 .header {
-    background-color: rgba(255, 255, 255, 0.3); /* Fondo blanco con transparencia */
-    color: #2e4057; /* Texto oscuro y serio */
-    padding: 15px;
+    font-family: 'Pixeled';
+    color: antiquewhite; /* Texto oscuro */
+    padding: 90px 0 5px; /* Ajusta el padding superior para dar espacio al logo */
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(46, 64, 87, 0.2); /* Línea separadora tenue */
+    position: relative; /* Permite posicionar los elementos hijos de manera absoluta */
+    margin-bottom: 0px;
+    border-bottom: 0px solid rgba(46, 64, 87, 0.2);
+    background-image: url("image/Heder2.png");
+    background-size: cover; /* Asegura que la imagen de fondo cubra todo el encabezado */
+    background-position: center; /* Centra la imagen de fondo */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra del encabezado */
 }
 
-/* Contenedor principal */
-.container {
-    padding: 10px;
-    margin-bottom: 10px;
+/* Estilo específico para la imagen */
+.logo {
+    max-width: 175px; /* Ajusta el tamaño según sea necesario */
+    height: auto; /* Mantiene la proporción */
+    position: absolute; /* Mantiene la imagen en la posición especificada */
+    top: 83px; /* Mueve la imagen hacia abajo */
+    left: 50%; /* Centra horizontalmente */
+    transform: translate(-50%, -50%); /* Compensa el desplazamiento del 50% tanto horizontal como vertical */
+    z-index: 0; /* Envía la imagen detrás de los textos */
+    transition: transform 0.5s; /* Efecto de transición suave */
 }
+
+
+/* Títulos */
+.title {
+    position: relative; /* Mantiene el posicionamiento relativo */
+    top: 12px; /* Sin desplazamiento hacia abajo */
+    left: 0px; /* Sin desplazamiento hacia la derecha */
+    z-index: 1; /* Asegura que el título esté por encima del logo */
+    font-size: 2em; /* Ajusta el tamaño según sea necesario */
+}
+
+.subtitle {
+    text-align: center; /* Cambiar a 'left' o 'right' para mover a izquierda o derecha */
+    font-size: 0.5em; /* Ajusta el tamaño según sea necesario */
+    z-index: 1; /* Asegura que el subtítulo esté por encima del logo */
+}
+
+
+
+
 
 /* Estilo de la lista */
 #textList {
@@ -57,10 +126,9 @@ body {
 
 .item-label {
     font-weight: bold;
-    color: #2e4057; /* Color oscuro para el texto */
+    color: #ffffff; /* Color oscuro para el texto */
 }
 
-/* Estilo para truncar texto largo */
 .item-detail span {
     white-space: nowrap;
     overflow: hidden;
@@ -72,19 +140,27 @@ body {
 
 /* Botones */
 button {
-    background-color: rgba(46, 64, 87, 0.8); /* Botón azul oscuro con transparencia */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
+    padding: 10px 20px;
+    background-color: #795649; /* A dark wood-like brown */
+    color: #f4e5c3; /* A parchment-like off-white */
+    border: 2px solid #c0a080; /* A lighter brown border */
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 13px;
+    text-shadow: 1px 1px 0px #a67c52; /* Gives a bit of depth to the text */
+    box-shadow: 2px 2px 0px #a67c52; /* Simulates an inset look */
+    border-radius: 4px; /* Slightly rounded corners */
     cursor: pointer;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    margin-top: 10px;
+    transition: all 0.3s ease;
 }
 
 button:hover {
-    background-color: #2e4057; /* Botón más oscuro en hover */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #8a6e2f; /* A lighter, worn wood color for hover */
+    box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.3); /* A more pronounced shadow for hover */
+}
+
+button:active{
+    box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
+    transform: translateY(2px); /* Moves the button down to simulate a press */
 }
 
 .copy-btn {
@@ -94,7 +170,6 @@ button:hover {
     font-size: 12px;
 }
 
-/* Inputs y Select */
 input, select {
     margin-top: 10px;
     width: 100%;
@@ -103,7 +178,7 @@ input, select {
     border-radius: 5px;
     box-sizing: border-box;
     margin-bottom: 10px;
-    background-color: rgba(255, 255, 255, 0.6); /* Fondo blanco con transparencia */
+    background-color: rgb(255, 255, 255); /* Fondo blanco con transparencia */
     color: #2e4057; /* Texto oscuro */
     transition: border 0.2s ease;
 }
@@ -121,7 +196,7 @@ input:focus, select:focus {
 
 .checkbox-container label {
     margin-left: 5px;
-    color: #2e4057; /* Texto oscuro */
+    color: #ffffff; /* Texto oscuro */
 }
 
 .favorite {
@@ -131,9 +206,10 @@ input:focus, select:focus {
 
 .accordion-button {
     align-items: center;
+    text-align: center;
     cursor: pointer;
     padding: 10px;
-    background-color: rgba(104, 121, 143, 0.8); /* Botón gris azulado transparente */
+    background-color: rgb(104, 121, 143); /* Botón gris azulado transparente */
     color: white;
     border: none;
     border-radius: 5px;
@@ -152,4 +228,340 @@ input:focus, select:focus {
     border: 1px solid rgba(46, 64, 87, 0.1); /* Borde tenue */
     border-radius: 5px;
     background-color: rgba(248, 248, 248, 0.6); /* Fondo gris claro con transparencia */
+}
+
+.action-btn {
+    padding: 10px 20px;
+    background-color: #795649; /* A dark wood-like brown */
+    color: #f4e5c3; /* A parchment-like off-white */
+    border: 2px solid #c0a080; /* A lighter brown border */
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 12px;
+    text-shadow: 1px 1px 0px #a67c52; /* Gives a bit of depth to the text */
+    box-shadow: 2px 2px 0px #a67c52; /* Simulates an inset look */
+    border-radius: 4px; /* Slightly rounded corners */
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background-color: #8a6e2f; /* A lighter, worn wood color for hover */
+    box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.3); /* A more pronounced shadow for hover */
+}
+
+.action-btn:active{
+    box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
+    transform: translateY(2px); /* Moves the button down to simulate a press */
+}
+
+/* Estilos específicos para el botón de eliminar */
+.delete-btn {
+    padding: 10px 20px;
+    background-color: #795649; /* A dark wood-like brown */
+    color: #f4e5c3; /* A parchment-like off-white */
+    border: 2px solid #c0a080; /* A lighter brown border */
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 12px;
+    text-shadow: 1px 1px 0px #a67c52; /* Gives a bit of depth to the text */
+    box-shadow: 2px 2px 0px #a67c52; /* Simulates an inset look */
+    border-radius: 4px; /* Slightly rounded corners */
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+    background-color: #8a2f2f; /* A lighter, worn wood color for hover */
+    box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.3); /* A more pronounced shadow for hover */
+}
+
+.delete-btn:active{
+    box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
+    transform: translateY(2px); /* Moves the button down to simulate a press */
+
+}
+
+.entries-list {
+    font-family: 'Righteous-Regular';
+    background-color: #ffffff00;
+    text-align: center;
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.entries-list li {
+    background-color: rgba(121, 86, 73, 0.362);
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    font-size: 18px;
+}
+
+.entries-list li:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.entries-list img {
+    display: block;
+    margin: 10px auto; /* Centra la imagen horizontalmente */
+    max-width: 150px;
+    height: auto;
+    border-radius: 5px;
+}
+
+.secundarios {
+    font-family: 'Righteous-Regular';
+    color: antiquewhite;
+}
+
+/* Estilos para el select */
+.secundarios2 {
+    width: calc(100% - 20px);
+    padding: 12px 45px 12px 15px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 16px;
+    color: #f4e5c3;
+    background-color: rgba(121, 86, 73, 0.7);
+    border: 2px solid #c0a080;
+    border-radius: 25px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23f4e5c3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: calc(100% - 15px) center;
+    background-size: 20px;
+}
+
+.secundarios2:hover {
+    background-color: rgba(121, 86, 73, 0.8);
+}
+
+.secundarios2:focus {
+    background-color: rgba(121, 86, 73, 0.9);
+    border-color: #ffc400;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(255, 196, 0, 0.5);
+}
+
+/* Estilos para las opciones del select */
+.secundarios2 option {
+    background-color: #795649;
+    color: #f4e5c3;
+    padding: 12px;
+}
+
+/* Para navegadores basados en WebKit (Chrome, Safari) */
+.secundarios2::-webkit-scrollbar {
+    width: 10px;
+}
+
+.secundarios2::-webkit-scrollbar-track {
+    background: #5d4037;
+}
+
+.secundarios2::-webkit-scrollbar-thumb {
+    background-color: #8d6e63;
+    border-radius: 20px;
+    border: 3px solid #5d4037;
+}
+
+
+
+h2 {
+    font-family: 'SofadiOne-Regular';
+    color: antiquewhite;
+    text-align: center;
+    font-size: 1.5em;
+    margin-top: 2.0em; /* Aumentar espacio superior */
+    margin-bottom: 2.0em; /* Aumentar espacio inferior */
+    font-weight: bold;
+}
+
+.copy{
+    font-family: 'Righteous-Regular';
+    text-align: center;
+    font-size: 15px;
+    margin: 20px auto;
+    color: #e0e0e0;
+}
+
+.action-btn2 {
+    font-family: 'Righteous-Regular';
+    display: block;           /* Cambiar a block para poder aplicar márgenes */
+    margin: 0 auto;          /* Aplicar márgenes automáticos */
+    /* Opcional: ajustar el ancho del botón */
+    width: 200px;            /* Establecer un ancho fijo, si es necesario */
+}
+
+.container {
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center;
+    flex-direction: column; /* Alinea los elementos uno debajo del otro */
+    width: 100%; /* Asegura que ocupe el ancho completo */
+}
+
+/* Estilos para ocultar el contenido de inicio */
+.toggle-content {
+    display: none;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0); /* Fondo semitransparente para resaltar el contenido */
+    position: relative; /* Permite posicionar elementos dentro libremente */
+    color: white; /* Cambia el color del texto */
+}
+
+/* Mostrar el contenido cuando el checkbox está marcado */
+.toggle:checked + .toggle-label + .toggle-content {
+    display: block;
+}
+
+/* Ocultar el checkbox */
+.toggle {
+    display: none;
+}
+
+/* Imagen de fondo personalizada para cada sección */
+#toggleForja + .toggle-label {
+    background-image: url('image/Boton 3.png'); /* Imagen de fondo para FORJA */
+    background-size: cover; /* Asegura que la imagen cubra todo el área */
+    background-position: center; /* Centra la imagen */
+    display: flex; /* Permite mover el texto dentro */
+    align-items: center; /* Centra verticalmente el texto */
+    justify-content: center; /* Centra horizontalmente el texto */
+    position: relative; /* Para permitir que el texto se posicione sobre la imagen */
+    width: 50%; /* Asegura que ocupe todo el ancho */
+    height: 50px; /* Ajusta la altura según sea necesario */
+    cursor: pointer; /* Cambia el cursor para indicar que se puede hacer clic */
+    margin: 30px auto; /* Agrega un margen alrededor del contenedor y centra horizontalmente */
+}
+
+#toggleReliquias + .toggle-label {
+    background-image: url('image/Boton 3.png'); /* Imagen de fondo para RELIQUIAS */
+    background-size: cover; /* Asegura que la imagen cubra todo el área */
+    background-position: center; /* Centra la imagen */
+    display: flex; /* Permite mover el texto dentro */
+    align-items: center; /* Centra verticalmente el texto */
+    justify-content: center; /* Centra horizontalmente el texto */
+    position: relative; /* Para permitir que el texto se posicione sobre la imagen */
+    width: 50%; /* Asegura que ocupe todo el ancho */
+    height: 50px; /* Ajusta la altura según sea necesario */
+    cursor: pointer; /* Cambia el cursor para indicar que se puede hacer clic */
+    margin: 20px auto; /* Agrega un margen alrededor del contenedor y centra horizontalmente */
+}
+
+/* Para mover el texto libremente */
+.toggle-label {
+    font-family: 'SofadiOne-Regular';
+    position: absolute; /* Permite mover el título libremente */
+    top: 20; /* Ajusta según sea necesario */
+    left: 10; /* Ajusta según sea necesario */
+    font-size: 20px; /* Tamaño de la fuente */
+    color: rgb(44, 44, 44); /* Color del texto */
+    text-align: center; /* Centra el texto */
+    font-weight: bold;
+}
+/* Permitir que el contenido dentro del área se mueva libremente */
+.toggle-content * {
+    position: relative; /* Los elementos pueden ser movidos libremente */
+    margin: 10px 0; /* Ajuste de margen para los elementos internos */
+}
+
+
+
+
+ /* Contenedor que asegura que la imagen y el texto se mantengan juntos */
+ .container2 {
+    position: relative;
+    width: 200%;
+    max-width: 300px; /* Ajusta este tamaño según lo que necesites */
+    margin: 20px auto; /* Agrega un margen alrededor del contenedor y centra horizontalmente */
+    padding: 20px; /* Espacio interno entre la imagen y el borde del contenedor */
+    box-sizing: border-box; /* Hace que el padding se incluya en el tamaño total */
+}
+
+/* Imagen de fondo que se ajusta al contenedor */
+.background-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Texto que es absolutamente movible y ajustable sobre la imagen */
+.texto-movible {
+    position: absolute; /* Permite que el texto se posicione sobre la imagen */
+    top: 45%; /* Mueve el texto a una posición específica dentro del contenedor */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centra el texto dentro del contenedor */
+    text-align: center;
+}
+
+/* Estilo del texto */
+.texto-movible h2 {
+    font-size: 20px; /* Ajusta el tamaño del texto */
+    color: rgb(44, 44, 44); /* Color del texto */
+}
+
+
+/* Estilos generales para todos los enlaces */
+a {
+    color: #f4e5c3; /* Color similar al texto de los botones */
+    text-decoration: none; /* Quita el subrayado */
+    transition: color 0.3s ease; /* Transición suave para el cambio de color */
+}
+
+/* Estilo para enlaces al pasar el mouse */
+a:hover {
+    color: #ffc400; /* Color dorado al pasar el mouse */
+    text-decoration: underline; /* Subrayado al pasar el mouse */
+}
+
+/* Estilo para enlaces visitados */
+a:visited {
+    color: #d4c5a3; /* Un tono más oscuro del color original */
+}
+
+/* Estilo para enlaces activos (cuando se hace clic) */
+a:active {
+    color: #8a6e2f; /* Color similar al hover de los botones */
+}
+
+
+
+/* Estilos para la barra de búsqueda */
+#searchBar {
+    width: calc(100% - 20px);
+    padding: 12px 45px 12px 15px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 16px;
+    color: #f4e5c3;
+    background-color: rgba(121, 86, 73, 0.7);
+    border: 2px solid #c0a080;
+    border-radius: 25px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    outline: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23f4e5c3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');
+    background-repeat: no-repeat;
+    background-position: calc(100% - 15px) center;
+    background-size: 20px;
+}
+
+#searchBar::placeholder {
+    color: #d4c5a3;
+    opacity: 0.7;
+}
+
+#searchBar:focus {
+    background-color: rgba(121, 86, 73, 0.9);
+    border-color: #ffc400;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(255, 196, 0, 0.5);
 }

@@ -1,24 +1,52 @@
 {
-    "manifest_version": 3,
-    "name": "DataSaver:El Bault Del Enano",
-    "version": "0.0",
-    "description": "Guarda texto seleccionado en una base de datos.",
-    "permissions": ["contextMenus", "storage"],
-    "background": {
-      "service_worker": "background.js"
+  "manifest_version": 3,
+  "name": "El Bault Del Enano",
+  "version": "1.0",
+   "commands": {
+        "open-extension": {
+            "suggested_key": {
+                "default": "Ctrl+Y",
+                "mac": "Command+Y"
+            },
+            "description": "Abrir el popup de la extensión"
+        }
     },
-    "icons": {
+
+  "description": "Guarda texto seleccionado en bases de datos personalizadas.",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "notifications",
+    "tabs",
+    "clipboardWrite",
+    "clipboardRead",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["scripts/Butons.js"]
+        }
+    ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-    "action": {
-      "default_popup": "index.html",
-      "default_icon": {
-        "16": "icons/icon16.png",
-        "48": "icons/icon48.png",
-        "128": "icons/icon128.png"
-      }
-    }
   }
-  
+}
