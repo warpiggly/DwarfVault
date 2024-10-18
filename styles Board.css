@@ -37,7 +37,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%; 
-    background-image: url("image/Fondo\ 3.jfif");
+    background-image: url("image/Gemini_Generated_Image_4i7a8i4i7a8i4i7a.jfif");
     background-size: cover; /* Esto asegura que la imagen cubra toda */
     background-position: center; /* Centra la imagen en la ventana */
     opacity: 0.3; /* Ajusta el valor entre 0 y 1 para cambiar la transparencia */
@@ -256,160 +256,60 @@ body::before {
     background: #FFD700;
 }
 
-.history {
-    height: 100vh; /* Ocupa toda la altura de la ventana */
-    text-align: center; /* Centra el texto horizontalmente */
-    color: rgba(255, 255, 255, 0.422); /* Letra blanca con 50% de transparencia */
-    font-family: 'Righteous-Regular', sans-serif; /* Fuente creativa */
-    padding: 0 20px; /* Añade un poco de espacio lateral */
-    max-width: 450px; /* Establece un ancho máximo para los párrafos */
-    margin: 0 auto; /* Centra el contenedor horizontalmente */
-    display: block;
-    clear: both; /* Asegura que el contenido esté debajo de cualquier elemento flotante */
-    margin-bottom: 50px; /* Aumenta el margen inferior si otros elementos deben estar después */
+
+/* Estilos para la tabla */
+table {
+    width: 100%;
+    border-collapse: collapse; /* Elimina los espacios entre celdas */
+    margin-top: 20px;
+    font-family: 'SofadiOne-Regular'; /* Fuente medieval */
+    color: #f4e5c3; /* Texto claro */
+    background-color: rgba(121, 86, 73, 0.7); /* Color de fondo acorde a tu tema */
+    border: 2px solid #c0a080; /* Borde alrededor de la tabla */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Sombra */
 }
 
-.history p {
-    font-size: 0.8rem;
-    line-height: 1.6; /* Aumenta la altura de línea para mejorar la legibilidad */
-    transition: transform 0.3s ease, color 0.3s ease; /* Transición para hacerla interactiva */
+/* Estilo para las celdas de encabezado */
+table thead th {
+    background-color: #795649; /* Fondo oscuro para el encabezado */
+    color: #FFD700; /* Texto dorado */
+    font-family: 'SofadiOne-Regular', sans-serif; /* Fuente pixelada para el encabezado */
+    padding: 10px;
+    text-align: left; /* Alineación de texto */
+    border-bottom: 3px solid #DAA520; /* Borde inferior dorado */
 }
 
-/* Efecto de "zoom" cuando el usuario pasa el mouse sobre el texto */
-.history p:hover {
-    transform: scale(1.05); /* Aumenta ligeramente el tamaño */
-    color: #f4e5c3; /* Cambia el color del texto al pasar el mouse */
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.8);
-    
+/* Estilo para las celdas del cuerpo */
+table tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #c0a080; /* Borde inferior claro */
+    background-color: rgba(218, 165, 32, 0.1); /* Fondo claro para las filas */
 }
 
-@keyframes lights {
-    0% {
-        color: hsl(57, 40%, 80%);
-        text-shadow:
-          0 0 1em hsla(0, 100%, 50%, 0.2),
-          0 0 0.125em hsla(0, 100%, 60%, 0.3),
-          -1em -0.125em 0.5em hsla(185, 100%, 60%, 0),
-          1em 0.125em 0.5em hsla(27, 100%, 60%, 0);
-      }
-      
-      30% { 
-        color: hsl(57, 80%, 90%);
-        text-shadow:
-          0 0 1em hsla(0, 100%, 50%, 0.5),
-          0 0 0.125em hsla(0, 100%, 60%, 0.5),
-          -0.5em -0.125em 0.25em hsla(185, 100%, 60%, 0.2),
-          0.5em 0.125em 0.25em hsla(27, 100%, 60%, 0.4);
-      }
-      
-      40% { 
-        color: hsl(57, 100%, 95%);
-        text-shadow:
-          0 0 1em hsla(0, 100%, 50%, 0.5),
-          0 0 0.125em hsla(0, 100%, 90%, 0.5),
-          -0.25em -0.125em 0.125em hsla(185, 100%, 60%, 0.2),
-          0.25em 0.125em 0.125em hsla(27, 100%, 60%, 0.4);
-      }
-      
-      70% {
-        color: hsl(57, 80%, 90%);
-        text-shadow:
-          0 0 1em hsla(0, 100%, 50%, 0.5),
-          0 0 0.125em hsla(0, 100%, 60%, 0.5),
-          0.5em -0.125em 0.25em hsla(185, 100%, 60%, 0.2),
-          -0.5em 0.125em 0.25em hsla(27, 100%, 60%, 0.4);
-      }
-      
-      100% {
-        color: hsl(57, 40%, 80%);
-        text-shadow:
-          0 0 1em hsla(0, 100%, 50%, 0.2),
-          0 0 0.125em hsla(0, 100%, 60%, 0.3),
-          1em -0.125em 0.5em hsla(185, 100%, 60%, 0),
-          -1em 0.125em 0.5em hsla(27, 100%, 60%, 0);
-      }
-    
-  }
-  
-  /* Estilo para el título */
-  .history h2 {
-    font-family: 'Pixeled';
-    margin: 1.5em 0; /* Añade margen entre párrafos */
-    margin: 30px;
-    font-size: 2.0rem; /* Ajusta el tamaño del título */
-    font-weight: 300; /* Peso de la fuente */
-    
-  }
-  .history h2:hover {
-    transform: scale(1.05); /* Aumenta ligeramente el tamaño */
-    color: #f4e5c3; /* Cambia el color del texto al pasar el mouse */
-    transition: transform 0.3s ease, color 0.3s ease; /* Transición para hacerla interactiva */
-    animation: lights 2s 750ms linear infinite; /* Aplica la animación */
-  
-  }
-
-
-
-div.gallery {
-	margin-top: 170px;
-    display: block;
+/* Estilo alternativo para las filas impares */
+table tbody tr:nth-child(odd) {
+    background-color: rgba(121, 86, 73, 0.5); /* Color de fondo para filas alternas */
 }
 
-div.gallery ul {
-	list-style-type: none;
-	margin-left: 0px;
+/* Efecto al pasar el cursor sobre las filas */
+table tbody tr:hover {
+    background-color: rgba(255, 215, 0, 0.2); /* Destacar la fila en hover */
+    cursor: pointer;
 }
 
-/* animation */
-div.gallery ul li, div.gallery li img {
-	-webkit-transition: all 0.1s ease-in-out;
-  	-moz-transition: all 0.1s ease-in-out;
-  	-o-transition: all 0.1s ease-in-out;
-  	transition: all 0.1s ease-in-out;
+/* Estilo para enlaces dentro de la tabla */
+table tbody td a {
+    color: #FFD700; /* Color dorado para los enlaces */
+    text-decoration: none;
+    font-family: 'Righteous-Regular', sans-serif; /* Fuente decorativa */
 }
 
-div.gallery ul li {
-	position: relative;
-	float: left;
-	width: 125px;
-	height: 125px;
-	margin: 5px;
-	padding: 5px;
-	z-index: 0;
+table tbody td a:hover {
+    text-decoration: underline; /* Subrayado al pasar el cursor */
+    color: #ffc400; /* Color más claro en hover */
 }
 
-/* Make sure z-index is higher on hover */
-/* Ensure that hover image overlapped the others */
-div.gallery ul li:hover {
-	z-index: 5;
+h3{
+    font-family: 'Righteous-Regular', sans-serif; /* Fuente decorativa */
+    color:#ffc400;
 }
-
-div.gallery ul li img {
-    position: relative;
-    left: 0;
-    top: 0;
-    border: 2px solid transparent;
-    padding: 5px;
-    width: 125px;
-    height: 125px;
-    background: #f0f0f080;
-    opacity: 0.5;
-    transition: all 0.5s ease-in-out;
-    border-radius: 5px; /* Bordes redondeados */
-    box-shadow: 0 0 15px rgba(139, 69, 19, 0.5); /* Resplandor inicial, marrón cálido */
-}
-
-div.gallery ul li img:hover {
-    width: 200px;
-    height: 200px;
-    margin-top: -130px;
-    margin-left: -130px;
-    top: 65%;
-    left: 65%;
-    opacity: 1;
-    border-color: transparent;
-    box-shadow: 0 0 30px 10px rgba(184, 134, 11, 0.8), /* Dorado medieval brillante */
-                0 0 50px 20px rgba(34, 139, 34, 0.6); /* Verde oscuro místico */
-    background: linear-gradient(45deg, #8b4513, #b8860b, #228b22); /* Degradado medieval: marrón, dorado y verde */
-}
-

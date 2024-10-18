@@ -119,6 +119,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             chrome.storage.local.set({
                 entryIndex: entryIndex,
                 selectedText: selectedEntry.text,
+                selectedURL: selectedEntry.url,    
                 dbName:dbItem.name // Guardar el nombre de la base de datos
             }, () => {
                 console.log('Datos guardados en storage.local');

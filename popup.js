@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    loadAllDatabasesAsTables();
+    console.log("DOM Content Loaded");
+
     // Crear la base de datos "Ejecutando" al iniciar la aplicación
     checkAndCreateDatabase("Ejecutando");
 
@@ -47,65 +50,76 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("export-csv").addEventListener("click", function() {
         exportDataAsCSV();
     });
-    // Obtener el entryIndex y el texto almacenado en local storage al cargar el popup
-    chrome.storage.local.get(['entryIndex', 'selectedText'], (result) => {
+
+
+        // Obtener el entryIndex, el texto y el enlace almacenado en local storage al cargar el popup
+    chrome.storage.local.get(['entryIndex', 'selectedText', 'selectedURL', 'dbName'], (result) => {
         if (result.selectedText) {
-            // Mostrar el texto en un elemento del popup
+            // Mostrar el texto, el índice, la base de datos y el enlace en el popup
             const entryTextElement = document.getElementById('entryText');
             const entryIndexElement = document.getElementById('entryIndex');
             const dbNameElement = document.getElementById('dbName');
+            const entryUrlElement = document.getElementById('entryUrl'); // Nuevo para el enlace
 
             entryIndexElement.textContent = `ÍNDICE: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
             dbNameElement.textContent = `Base de Datos: ${result.dbName}`; // Mostrar el nombre de la base de datos
             entryTextElement.textContent = result.selectedText;
 
-            //     // Agregar un evento al botón de copiar solo después de que se haya cargado el texto
-            // const copyButton = document.getElementById('copyButton');
-            // copyButton.addEventListener('click', () => {
-            //     copyToClipboard(entryTextElement.textContent);}); 
+            // Mostrar el enlace como un hipervínculo
+            if (result.selectedURL) {
+                entryUrlElement.innerHTML = `<a href="${result.selectedURL}" target="_blank">Abrir Enlace</a>`;
+            } else {
+                entryUrlElement.textContent = 'No hay enlace disponible';
+            }
         } else {
             console.log('No se encontró ninguna entrada seleccionada');
         }
     });
 
-            // Función para copiar texto al portapapeles
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                console.log('Texto copiado al portapapeles');
-            }).catch(err => {
-                console.error('Error al copiar el texto: ', err);
-            });
-        }
-
-         // Agregar un evento al botón de copiar
-        document.getElementById('copyButton').addEventListener('click', () => {
-            const entryTextElement = document.getElementById('entryText');
-            copyToClipboard(entryTextElement.textContent);
+    // Función para copiar texto al portapapeles
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('Texto copiado al portapapeles');
+        }).catch(err => {
+            console.error('Error al copiar el texto: ', err);
         });
+    }
+
+    // Agregar un evento al botón de copiar
+    document.getElementById('copyButton').addEventListener('click', () => {
+        const entryTextElement = document.getElementById('entryText');
+        copyToClipboard(entryTextElement.textContent);
+
+         // Cerrar la extensión después de copiar
+        window.close(); // Esta línea cierra la ventana del popup
+    });
 
     // Escuchar mensajes del background script
     chrome.runtime.onMessage.addListener((message) => {
         if (message.action === 'openPopup') {
             // Obtener los datos del storage
-            chrome.storage.local.get(['entryIndex', 'selectedText'], (result) => {
+            chrome.storage.local.get(['entryIndex', 'selectedText', 'selectedURL', 'dbName'], (result) => {
                 if (result.selectedText) {
                     const entryIndexElement = document.getElementById('entryIndex');
                     const entryTextElement = document.getElementById('entryText');
                     const dbNameElement = document.getElementById('dbName');
+                    const entryUrlElement = document.getElementById('entryUrl'); // Nuevo para el enlace
 
-                    entryIndexElement.textContent = `Índice: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
+                    entryIndexElement.textContent = `ÍNDICE: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
                     dbNameElement.textContent = `Base de Datos: ${result.dbName}`;
                     entryTextElement.textContent = result.selectedText;
 
-                    //     // Agregar el evento al botón de copiar aquí también
-                    // const copyButton = document.getElementById('copyButton');
-                    // copyButton.addEventListener('click', () => {
-                    //     copyToClipboard(entryTextElement.textContent);
-                    // });
+                    // Mostrar el enlace como un hipervínculo
+                    if (result.selectedURL) {
+                        entryUrlElement.innerHTML = `<a href="${result.selectedURL}" target="_blank">Abrir Enlace</a>`;
+                    } else {
+                        entryUrlElement.textContent = 'No hay enlace disponible';
+                    }
                 }
             });
         }
     });
+
 
     
 });
@@ -167,14 +181,14 @@ function deleteDatabase(dbName) {
     });
 }
 
-// Abrir la base de datos y crear almacenes si es necesario
+// Función para abrir la base de datos y pasarla al callback
 function openDatabase(callback) {
     const request = indexedDB.open('Dott-yDB', 1);
+    console.log("Abriendo la base de datos...");
 
     request.onupgradeneeded = (event) => {
+        console.log("Actualizando la base de datos...");
         const db = event.target.result;
-        
-        // Crear el almacén para las bases de datos si no existe
         if (!db.objectStoreNames.contains('databases')) {
             db.createObjectStore('databases', { keyPath: 'name' });
         }
@@ -182,7 +196,8 @@ function openDatabase(callback) {
 
     request.onsuccess = (event) => {
         const db = event.target.result;
-        callback(db);
+        console.log("Base de datos abierta con éxito");
+        callback(db); // Pasar la base de datos al callback
     };
 
     request.onerror = (event) => {
@@ -190,26 +205,32 @@ function openDatabase(callback) {
     };
 }
 
-// Cargar las bases de datos en el selector
+// Cargar las bases de datos en el dropdown
 function loadDatabases(db) {
+    console.log("Cargando bases de datos...");
     const transaction = db.transaction('databases', 'readonly');
     const store = transaction.objectStore('databases');
-    
+
     const dbSelect = document.getElementById('databaseSelect');
-    dbSelect.innerHTML = '';
+    dbSelect.innerHTML = ''; // Limpia el selector antes de agregar las opciones
 
     const request = store.getAll();
-
     request.onsuccess = (event) => {
         const databases = event.target.result;
+        console.log("Bases de datos encontradas:", databases); // Log para verificar qué bases de datos se encuentran
         databases.forEach(db => {
             const option = document.createElement('option');
             option.value = db.name;
             option.textContent = db.name;
             dbSelect.appendChild(option);
         });
+
+        // Verificar si hay bases de datos cargadas
         if (dbSelect.options.length > 0) {
-            loadEntries(dbSelect.options[0].value);
+            console.log("Cargando la primera base de datos por defecto:", dbSelect.options[0].value);
+            loadEntriesAsTable(dbSelect.options[0].value); // Cargar la primera base de datos por defecto
+        } else {
+            console.log("No se encontraron bases de datos");
         }
     };
 
@@ -217,6 +238,99 @@ function loadDatabases(db) {
         console.error('Error al cargar bases de datos:', event.target.errorCode);
     };
 }
+
+// Función para cargar entradas y mostrarlas en la tabla
+function loadAllDatabasesAsTables() {
+    openDatabase((db) => {
+        const transaction = db.transaction('databases', 'readonly');
+        const store = transaction.objectStore('databases');
+        
+        const request = store.getAll();
+
+        request.onsuccess = (event) => {
+            const databases = event.target.result;
+            const tablesContainer = document.getElementById('tablesContainer'); // Contenedor para todas las tablas
+            tablesContainer.innerHTML = ''; // Limpiar contenedor
+
+            databases.forEach((dbData) => {
+                const entries = dbData.entries;
+                const dbName = dbData.name;
+
+                // Crear un contenedor para cada base de datos
+                const dbContainer = document.createElement('div');
+                dbContainer.classList.add('database-container');
+
+                // Título de la base de datos
+                const dbTitle = document.createElement('h3');
+                dbTitle.textContent = `Base de Datos: ${dbName}`;
+                dbContainer.appendChild(dbTitle);
+
+                // Crear la tabla para esta base de datos
+                const table = document.createElement('table');
+                table.classList.add('entries-table');
+                table.border = '1';
+
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th>#</th>
+                        <th>Favicon</th>
+                        <th>Texto</th>
+                        <th>URL</th>
+                    </tr>
+                `;
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                entries.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+
+                    // Columna de índice
+                    const indexCell = document.createElement('td');
+                    indexCell.textContent = index + 1;
+                    row.appendChild(indexCell);
+
+                    // Columna de favicon (si existe)
+                    const faviconCell = document.createElement('td');
+                    if (entry.favicon) {
+                        const faviconImg = document.createElement('img');
+                        faviconImg.src = entry.favicon;
+                        faviconImg.alt = 'Favicon';
+                        faviconImg.style.width = '20px';
+                        faviconImg.style.height = '20px';
+                        faviconCell.appendChild(faviconImg);
+                    }
+                    row.appendChild(faviconCell);
+
+                    // Columna de texto
+                    const textCell = document.createElement('td');
+                    textCell.textContent = entry.text;
+                    row.appendChild(textCell);
+
+                    // Columna de URL
+                    const urlCell = document.createElement('td');
+                    const urlLink = document.createElement('a');
+                    urlLink.href = entry.url;
+                    urlLink.textContent = entry.url;
+                    urlLink.target = '_blank';
+                    urlCell.appendChild(urlLink);
+                    row.appendChild(urlCell);
+
+                    tbody.appendChild(row);
+                });
+
+                table.appendChild(tbody);
+                dbContainer.appendChild(table);
+                tablesContainer.appendChild(dbContainer);
+            });
+        };
+
+        request.onerror = (event) => {
+            console.error('Error al cargar bases de datos:', event.target.errorCode);
+        };
+    });
+}
+
 
 // Crear una nueva base de datos
 function createDatabase(dbName) {
@@ -498,6 +612,10 @@ function exportDataAsCSV() {
         };
     });
 }
+
+
+
+
 
 
 
