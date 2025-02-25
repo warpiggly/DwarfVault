@@ -348,10 +348,27 @@ body::before {
   
   }
 
+/* 
+  history h3 {
+    font-family: 'Pixeled';
+    margin: 2.5em 0; 
+    margin: 40px;
+    font-size: 3.0rem; 
+    font-weight: 600; 
+    
+  } */
+  .history h3:hover {
+    transform: scale(1.25); 
+    color: #f4e5c3; 
+    transition: transform 0.3s ease, color 0.3s ease; 
+    animation: lights 2s 750ms linear infinite; 
+  
+  }
+
 
 
 div.gallery {
-	margin-top: 170px;
+	margin-top: 350px;
     display: block;
 }
 

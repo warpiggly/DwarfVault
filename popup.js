@@ -51,6 +51,29 @@ document.addEventListener('DOMContentLoaded', () => {
         exportDataAsCSV();
     });
 
+    // IMPORT DATA BASES 
+
+    document.getElementById("importDatabase").addEventListener("click", function() {
+        document.getElementById("importCSV").click(); // Abre el selector de archivos
+    });
+    
+    document.getElementById("importCSV").addEventListener("change", function(event) {
+        const file = event.target.files[0];
+    
+        if (!file) {
+            alert("Please select a CSV file first.");
+            return;
+        }
+    
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const csvData = event.target.result;
+            processCSV(csvData, file.name.replace(".csv", "")); // Usa el nombre del archivo como nombre de la BD
+        };
+        reader.readAsText(file);
+    });
+    
+
 
         // Obtener el entryIndex, el texto y el enlace almacenado en local storage al cargar el popup
     chrome.storage.local.get(['entryIndex', 'selectedText', 'selectedURL', 'dbName'], (result) => {
@@ -618,6 +641,43 @@ function exportDataAsCSV() {
 
         request.onerror = (event) => {
             console.error('Error al exportar datos:', event.target.errorCode);
+        };
+    });
+}
+
+function processCSV(csvData, dbName) {
+    const rows = csvData.split("\n").map(row => row.split(","));
+    
+    if (rows.length < 2) {
+        alert("Invalid CSV format.");
+        return;
+    }
+
+    const entries = rows.slice(1).map(row => {
+        return {
+            text: cleanValue(row[1]),  // Limpiar comillas en la columna de texto
+            url: cleanValue(row[2]),   // Limpiar comillas en la columna de URL
+            favicon: cleanValue(row[3]) // Limpiar comillas en la columna de Favicon
+        };
+    });
+
+    saveDatabase(dbName, entries);
+}
+
+// Función para limpiar comillas al inicio y al final de cada campo
+function cleanValue(value) {
+    return value ? value.trim().replace(/^"(.*)"$/, '$1') : "";
+}
+
+function saveDatabase(dbName, entries) {
+    openDatabase(db => {
+        const transaction = db.transaction("databases", "readwrite");
+        const store = transaction.objectStore("databases");
+
+        store.add({ name: dbName, entries: entries }).onsuccess = () => {
+            loadDatabases(db); // Recargar la lista de bases de datos
+            chrome.runtime.sendMessage({ action: "updateContextMenu" });
+            alert(`Database "${dbName}" imported successfully!`);
         };
     });
 }
