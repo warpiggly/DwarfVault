@@ -38,12 +38,13 @@ function openDatabase() {
 }
 
 // Crear el menú contextual dinámico en base a las bases de datos
+
 async function createContextMenu(db) {
     await chrome.contextMenus.removeAll();
 
     chrome.contextMenus.create({
         id: "saveTextRoot",
-        title: "Guardar en El Bault Del Enano 🏰",
+        title: "--📥Save to Vault 🏰--",
         contexts: ["selection"]
     });
 
@@ -62,22 +63,27 @@ async function createContextMenu(db) {
 
         dbItems = databases; // Almacena las bases de datos en la variable global
 
+        // Reinicia el contador cada vez que se llama a esta función
+        let counter = 1;
+
         for (const dbItem of databases) {
             const entryCount = dbItem.entries.length;
 
             // Imprimir el nombre de la base de datos para depuración
             console.log(`Base de datos: ${dbItem.name}, Número de entradas: ${entryCount}`);
 
+            
             chrome.contextMenus.create({
                 id: `saveText_${dbItem.name}`,
                 parentId: "saveTextRoot",
-                title: `${dbItem.name} (${entryCount}-Elementos 👀)`,
+                title: `${counter}. ${dbItem.name} - ${entryCount} Item(s) 🗂️`,
                 contexts: ["selection"]
             });
+            
 
             chrome.contextMenus.create({
                 id: `viewText_${dbItem.name}`,
-                title: `👁️Ver Base de datos: ${dbItem.name}`,
+                title: `👁️ View DB : ${dbItem.name}`,
                 contexts: ["all"]
             });
 
@@ -85,15 +91,18 @@ async function createContextMenu(db) {
                 chrome.contextMenus.create({
                     id: `copyText_${dbItem.name}_${index}`,
                     parentId: `viewText_${dbItem.name}`,
-                    title: `📜Entrada-${index + 1}: ${entry.text.substring(0, 30)}...`,
+                    title: `📜-${index + 1}: ${entry.text.substring(0, 30)}...`,
                     contexts: ["all"]
                 });
             });
+          counter++;  
         }
+        
     } catch (error) {
         console.error('Error al crear el menú contextual:', error);
     }
 }
+
 
 // Manejar clics en el menú contextual
 chrome.contextMenus.onClicked.addListener((info, tab) => {

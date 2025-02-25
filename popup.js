@@ -3,11 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Content Loaded");
 
     // Crear la base de datos "Ejecutando" al iniciar la aplicación
-    checkAndCreateDatabase("Ejecutando");
+    checkAndCreateDatabase("Running");
 
     // Eliminar la base de datos "Ejecutando" después de 1 segundo
     setTimeout(() => {
-        deleteDatabase("Ejecutando");
+        deleteDatabase("Running");
     }, 1000);
 
 
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Evento para crear nueva base de datos
     document.getElementById('createDatabase').addEventListener('click', () => {
-        const dbName = prompt("Ingrese el nombre de la nueva base de datos:");
+        const dbName = prompt("Enter the name of the new database:");
         if (dbName && dbName.trim()) {
             createDatabase(dbName.trim());
         }
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('editDatabase').addEventListener('click', () => {
         const dbSelect = document.getElementById('databaseSelect');
         const oldName = dbSelect.value;
-        const newName = prompt("Ingrese el nuevo nombre de la base de datos:", oldName);
+        const newName = prompt("Enter the new database name:", oldName);
         if (newName && newName.trim()) {
             editDatabase(oldName, newName.trim());
         }
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Evento para eliminar la base de datos seleccionada
     document.getElementById('deleteDatabase').addEventListener('click', () => {
         const dbName = document.getElementById('databaseSelect').value;
-        if (confirm(`¿Está seguro de que desea eliminar la base de datos "${dbName}" y todas sus entradas?`)) {
+        if (confirm(`¿Are you sure you want to delete the database  "${dbName}" and all its entries?`)) {
             deleteDatabase(dbName);
         }
     });
@@ -61,27 +61,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const dbNameElement = document.getElementById('dbName');
             const entryUrlElement = document.getElementById('entryUrl'); // Nuevo para el enlace
 
-            entryIndexElement.textContent = `ÍNDICE: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
+            entryIndexElement.textContent = `INDEX: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
             dbNameElement.textContent = `Base de Datos: ${result.dbName}`; // Mostrar el nombre de la base de datos
             entryTextElement.textContent = result.selectedText;
 
             // Mostrar el enlace como un hipervínculo
             if (result.selectedURL) {
-                entryUrlElement.innerHTML = `<a href="${result.selectedURL}" target="_blank">Abrir Enlace</a>`;
+                entryUrlElement.innerHTML = `<a href="${result.selectedURL}" target="_blank">Open Link</a>`;
             } else {
-                entryUrlElement.textContent = 'No hay enlace disponible';
+                entryUrlElement.textContent = 'No link available';
             }
         } else {
-            console.log('No se encontró ninguna entrada seleccionada');
+            console.log('No selected entry found');
         }
     });
 
     // Función para copiar texto al portapapeles
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
-            console.log('Texto copiado al portapapeles');
+            console.log('Text copied to clipboard');
         }).catch(err => {
-            console.error('Error al copiar el texto: ', err);
+            console.error('Error copying text:', err);
         });
     }
 
@@ -105,15 +105,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const dbNameElement = document.getElementById('dbName');
                     const entryUrlElement = document.getElementById('entryUrl'); // Nuevo para el enlace
 
-                    entryIndexElement.textContent = `ÍNDICE: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
+                    entryIndexElement.textContent = `INDEX: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
                     dbNameElement.textContent = `Base de Datos: ${result.dbName}`;
                     entryTextElement.textContent = result.selectedText;
 
                     // Mostrar el enlace como un hipervínculo
                     if (result.selectedURL) {
-                        entryUrlElement.innerHTML = `<a href="${result.selectedURL}" target="_blank">Abrir Enlace</a>`;
+                        entryUrlElement.innerHTML = `<a href="${result.selectedURL}" target="_blank">Open Link</a>`;
                     } else {
-                        entryUrlElement.textContent = 'No hay enlace disponible';
+                        entryUrlElement.textContent = 'No link available';
                     }
                 }
             });
@@ -262,7 +262,7 @@ function loadAllDatabasesAsTables() {
 
                 // Título de la base de datos
                 const dbTitle = document.createElement('h3');
-                dbTitle.textContent = `Base de Datos: ${dbName}`;
+                dbTitle.textContent = `Database: ${dbName}`;
                 dbContainer.appendChild(dbTitle);
 
                 // Crear la tabla para esta base de datos
@@ -275,7 +275,7 @@ function loadAllDatabasesAsTables() {
                     <tr>
                         <th>#</th>
                         <th>Favicon</th>
-                        <th>Texto</th>
+                        <th>Text</th>
                         <th>URL</th>
                     </tr>
                 `;
@@ -417,17 +417,17 @@ function loadEntries(dbName) {
 
                     // Botón de copiar
                     const copyButton = document.createElement('button');
-                    copyButton.textContent = 'Copiar texto';
+                    copyButton.textContent = 'Copy Text';
                     copyButton.addEventListener('click', () => {
                         navigator.clipboard.writeText(entry.text).then(() => {
-                            alert('Texto copiado al portapapeles');
+                            alert('Text copied to clipboard');
                         });
                     });
                     li.appendChild(copyButton);
 
                     // Botón para eliminar entrada
                     const deleteButton = document.createElement('button');
-                    deleteButton.textContent = 'Eliminar';
+                    deleteButton.textContent = 'Delete';
                     deleteButton.addEventListener('click', () => {
                         deleteEntry(dbName, index);
                     });
@@ -435,7 +435,7 @@ function loadEntries(dbName) {
 
                     // Botón para editar entrada
                     const editButton = document.createElement('button');
-                    editButton.textContent = 'Editar';
+                    editButton.textContent = 'Edit';
                     editButton.addEventListener('click', () => {
                         editEntry(dbName, index, entry);
                     });
@@ -465,8 +465,16 @@ function loadEntries(dbName) {
 }
 
 
-// Eliminar entrada
+// Eliminar entrada con confirmación
 function deleteEntry(dbName, entryIndex) {
+    const userConfirmed = confirm("Are you sure you want to delete this entry? This action cannot be undone");
+
+    if (!userConfirmed) {
+        // Si el usuario cancela, no se realiza ninguna acción
+        return;
+    }
+
+    // Proceder con la eliminación si se confirma
     openDatabase((db) => {
         const transaction = db.transaction('databases', 'readwrite');
         const store = transaction.objectStore('databases');
@@ -478,8 +486,8 @@ function deleteEntry(dbName, entryIndex) {
             if (dbData) {
                 dbData.entries.splice(entryIndex, 1);
                 store.put(dbData).onsuccess = () => {
-                    loadEntries(dbName);
-                    chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+                    loadEntries(dbName); // Recargar las entradas después de eliminar
+                    chrome.runtime.sendMessage({ action: 'updateContextMenu' }); // Actualizar el menú contextual
                 };
             }
         };
@@ -490,10 +498,11 @@ function deleteEntry(dbName, entryIndex) {
     });
 }
 
+
 // Editar entrada
 function editEntry(dbName, entryIndex, entry) {
-    const newText = prompt("Editar texto:", entry.text);
-    const newUrl = prompt("Editar URL:", entry.url);
+    const newText = prompt("Edit Text:", entry.text);
+    const newUrl = prompt("Edit URL:", entry.url);
 
     if (newText !== null && newUrl !== null) {
         openDatabase((db) => {
