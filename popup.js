@@ -99,22 +99,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Función para copiar texto al portapapeles
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            console.log('Text copied to clipboard');
-        }).catch(err => {
-            console.error('Error copying text:', err);
-        });
+    // Obtiene el botón de copiar y el elemento que contiene el texto 
+    var copyButton = document.getElementById('copyButton');
+    var entryTextElement = document.getElementById('entryText');
+
+    // Verifica si los elementos existen antes de continuar  
+    if (!copyButton || !entryTextElement) {
+        console.error('No se encontró el botón o el campo de texto.');
+        return;
     }
 
-    // Agregar un evento al botón de copiar
-    document.getElementById('copyButton').addEventListener('click', () => {
-        const entryTextElement = document.getElementById('entryText');
-        copyToClipboard(entryTextElement.textContent);
 
-         // Cerrar la extensión después de copiar
-        window.close(); // Esta línea cierra la ventana del popup
+    // Agrega un evento de clic al botón de copiar 
+    copyButton.addEventListener('click', function () {
+        let textToCopy = entryTextElement.textContent.trim();
+
+        if (!textToCopy) {
+            alert('No hay texto para copiar.');
+            return;
+        }
+
+        // Copia el texto al portapapeles
+        navigator.clipboard.writeText(textToCopy)
+            .then(() => {
+                // alert('Texto copiado al portapapeles');
+                window.close(); // Cierra la extensión después de copiar
+            })
+            .catch(err => {
+                console.error('Error al copiar: ', err);
+                alert('Hubo un problema al copiar el texto.');
+            });
     });
 
     // Escuchar mensajes del background script
