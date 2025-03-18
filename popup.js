@@ -611,7 +611,7 @@ function deleteDatabase(dbName) {
     });
 }
 
-
+//Descargar bases de datos 
 function exportDataAsCSV() {
     const dbName = document.getElementById('databaseSelect').value;
 
@@ -632,7 +632,13 @@ function exportDataAsCSV() {
                 // Añadir las filas con los datos de las entradas
                 dbData.entries.forEach((entry, index) => {
                     const favicon = entry.favicon ? entry.favicon : "";
-                    const row = `${index + 1},"${entry.text}","${entry.url}","${favicon}"`;
+                    
+                    // Escapar correctamente los campos
+                    const escapedText = `"${entry.text.replace(/"/g, '""')}"`;
+                    const escapedUrl = `"${entry.url.replace(/"/g, '""')}"`;
+                    const escapedFavicon = `"${favicon.replace(/"/g, '""')}"`;
+                    
+                    const row = `${index + 1},${escapedText},${escapedUrl},${escapedFavicon}`;
                     csvContent += row + "\n";
                 });
 
@@ -658,23 +664,74 @@ function exportDataAsCSV() {
         };
     });
 }
-
-function processCSV(csvData, dbName) {
-    const rows = csvData.split("\n").map(row => row.split(","));
+/**
+ * Analiza una línea de texto CSV respetando las reglas estándar de CSV.
+ * 
+ * Esta función maneja correctamente:
+ * - Campos delimitados por comas
+ * - Texto entre comillas (que puede contener comas)
+ * - Comillas escapadas dentro de campos con comillas ("" representa una comilla literal)
+ * 
+ * @param {string} text - La línea de texto CSV a analizar
+ * @return {string[]} Un array con los valores de cada columna correctamente extraídos
+ */
+function parseCSVLine(text) {
+    const result = [];
+    let cell = '';
+    let inQuotes = false;
     
-    if (rows.length < 2) {
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        
+        if (char === '"') {
+            if (i + 1 < text.length && text[i + 1] === '"') {
+                // Doble comilla dentro de comillas es una comilla escapada
+                cell += '"';
+                i++; // Saltar la siguiente comilla
+            } else {
+                // Alternar estado de comillas
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            // Final de la celda si la coma no está dentro de comillas
+            result.push(cell);
+            cell = '';
+        } else {
+            cell += char;
+        }
+    }
+    
+    // No olvidar la última celda
+    result.push(cell);
+    return result;
+}
+//Importar las bases de datos 
+function processCSV(csvData, dbName) {
+    // Dividir por líneas
+    const lines = csvData.split(/\r?\n/);
+    
+    if (lines.length < 2) {
         alert("Invalid CSV format.");
         return;
     }
-
-    const entries = rows.slice(1).map(row => {
-        return {
-            text: cleanValue(row[1]),  // Limpiar comillas en la columna de texto
-            url: cleanValue(row[2]),   // Limpiar comillas en la columna de URL
-            favicon: cleanValue(row[3]) // Limpiar comillas en la columna de Favicon
-        };
-    });
-
+    
+    // Parsear encabezados y entradas
+    const headers = parseCSVLine(lines[0]);
+    const entries = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue; // Saltar líneas vacías
+        
+        const row = parseCSVLine(lines[i]);
+        if (row.length >= 4) { // Aseguramos que hay suficientes columnas
+            entries.push({
+                text: row[1].replace(/^"(.*)"$/, '$1'), // Eliminar comillas externas si existen
+                url: row[2].replace(/^"(.*)"$/, '$1'),
+                favicon: row[3].replace(/^"(.*)"$/, '$1')
+            });
+        }
+    }
+    
     saveDatabase(dbName, entries);
 }
 
