@@ -265,7 +265,7 @@ function loadDatabases(db) {
         // Verificar si hay bases de datos cargadas
         if (dbSelect.options.length > 0) {
             console.log("Cargando la primera base de datos por defecto:", dbSelect.options[0].value);
-            loadEntriesAsTable(dbSelect.options[0].value); // Cargar la primera base de datos por defecto
+            loadEntries(dbSelect.options[0].value); // Cambio aquí - usar loadEntries en lugar de loadEntriesAsTable
         } else {
             console.log("No se encontraron bases de datos");
         }
