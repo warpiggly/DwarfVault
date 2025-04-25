@@ -38,7 +38,6 @@ function openDatabase() {
 }
 
 // Crear el menú contextual dinámico en base a las bases de datos
-
 async function createContextMenu(db) {
     await chrome.contextMenus.removeAll();
 
@@ -61,6 +60,7 @@ async function createContextMenu(db) {
         // Añadir un log para verificar los nombres de las bases de datos
         console.log('Bases de datos encontradas:', databases); 
 
+        // IMPORTANT: Update the global dbItems array
         dbItems = databases; // Almacena las bases de datos en la variable global
 
         // Reinicia el contador cada vez que se llama a esta función
@@ -106,38 +106,79 @@ async function createContextMenu(db) {
 
 // Manejar clics en el menú contextual
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-    const [action, dbName, entryIndex] = info.menuItemId.split("_");
-
+    // Log para depuración - identificar qué menú item fue clickeado
+    console.log("Menú item clickeado:", info.menuItemId);
+    
     // Si la acción es "guardar texto" y hay texto seleccionado
-    if (action === "saveText" && info.selectionText && info.selectionText.trim()) {
+    if (info.menuItemId.startsWith("saveText_") && info.selectionText && info.selectionText.trim()) {
+        const dbName = info.menuItemId.split("_")[1];
+        console.log(`Guardando texto en la base de datos: ${dbName}`);
+        
         openDatabase().then(db => {
             saveTextToDatabase(db, dbName, info.selectionText, tab.url, tab.favIconUrl);
         });
     } 
-    // Verificar que el clic proviene de un elemento del menú que creamos
+    // Verificar que el clic proviene de un elemento del menú para copiar texto
     else if (info.menuItemId.startsWith('copyText_')) {
-        const entryIndex = info.menuItemId.split('_')[2]; // Obtener el índice del entry
-        const dbName = info.menuItemId.split('_')[1]; // Obtener el nombre de la base de datos
-
-        // Obtener el dbItem correspondiente a dbName
-        const dbItem = dbItems.find(item => item.name === dbName);
-        if (dbItem) {
-            const selectedEntry = dbItem.entries[entryIndex];
-
-            // Guardar el nombre de la base de datos, el índice y el texto en chrome.storage.local
-            chrome.storage.local.set({
-                entryIndex: entryIndex,
-                selectedText: selectedEntry.text,
-                selectedURL: selectedEntry.url,    
-                dbName:dbItem.name // Guardar el nombre de la base de datos
-            }, () => {
-                console.log('Datos guardados en storage.local');
-
-                // Abrir el popup con el dato seleccionado
-                chrome.action.openPopup(); // Abre el popup
-            });
-        } else {
-            console.error(`No se encontró la base de datos con el nombre: ${dbName}`);
+        console.log("Acción de copiar texto detectada");
+        
+        const parts = info.menuItemId.split('_');
+        if (parts.length >= 3) {
+            const dbName = parts[1];
+            const entryIndex = parseInt(parts[2]);
+            
+            console.log(`Buscando base de datos: ${dbName}, índice: ${entryIndex}`);
+            console.log("Bases de datos disponibles:", dbItems.map(item => item.name));
+            
+            // Encontrar la base de datos por nombre
+            const dbItem = dbItems.find(item => item.name === dbName);
+            
+            if (dbItem) {
+                console.log(`Base de datos encontrada: ${dbName}`);
+                if (entryIndex >= 0 && entryIndex < dbItem.entries.length) {
+                    const selectedEntry = dbItem.entries[entryIndex];
+                    console.log("Entrada encontrada:", selectedEntry);
+                    
+                    // Guardar datos en storage.local para que el popup pueda accederlos
+                    chrome.storage.local.set({
+                        entryIndex: entryIndex,
+                        selectedText: selectedEntry.text,
+                        selectedURL: selectedEntry.url,    
+                        dbName: dbItem.name
+                    }, () => {
+                        console.log('Datos guardados en storage.local');
+                        // Abrir el popup con el dato seleccionado
+                        chrome.action.openPopup();
+                    });
+                } else {
+                    console.error(`Índice de entrada inválido: ${entryIndex}`);
+                }
+            } else {
+                // Recargar las bases de datos y reintentar
+                console.error(`No se encontró la base de datos con el nombre: ${dbName}`);
+                console.log("Intentando recargar las bases de datos...");
+                
+                openDatabase().then(async (db) => {
+                    await loadDatabases();
+                    
+                    // Buscar nuevamente después de recargar
+                    const updatedDbItem = dbItems.find(item => item.name === dbName);
+                    if (updatedDbItem) {
+                        console.log("Base de datos encontrada después de recargar");
+                        const selectedEntry = updatedDbItem.entries[entryIndex];
+                        
+                        chrome.storage.local.set({
+                            entryIndex: entryIndex,
+                            selectedText: selectedEntry.text,
+                            selectedURL: selectedEntry.url,    
+                            dbName: updatedDbItem.name
+                        }, () => {
+                            console.log('Datos guardados en storage.local después de recargar');
+                            chrome.action.openPopup();
+                        });
+                    }
+                });
+            }
         }
     }
 });
@@ -178,7 +219,8 @@ async function saveTextToDatabase(db, dbName, text, url, favicon) {
             message: `El texto seleccionado ha sido guardado en la base de datos "${dbName}".`
         });
 
-        createContextMenu(db);
+        // Importante: Actualizar el menú contextual y la variable global dbItems
+        await loadDatabases();
     } catch (error) {
         console.error('Error al guardar el texto:', error);
     }
@@ -188,7 +230,7 @@ async function saveTextToDatabase(db, dbName, text, url, favicon) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'updateContextMenu') {
         openDatabase().then(db => {
-            createContextMenu(db);
+            loadDatabases(); // Asegurarse de que dbItems se actualiza
         }).catch(error => {
             console.error('Error al actualizar el menú contextual:', error);
         });
@@ -277,6 +319,9 @@ async function overwriteDatabaseEntry(db) {
             });
 
             console.log('Dato sobrescrito en la base de datos:', dbData.name);
+            
+            // Actualizar dbItems después de la modificación
+            loadDatabases();
         } else {
             console.log('No se encontraron bases de datos.');
         }
