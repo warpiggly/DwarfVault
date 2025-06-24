@@ -43,7 +43,7 @@ async function createContextMenu(db) {
 
     chrome.contextMenus.create({
         id: "saveTextRoot",
-        title: "--📥Save to Vault 🏰--",
+        title: "📥Save to Vault 🏰=",
         contexts: ["selection"]
     });
 
@@ -84,7 +84,7 @@ async function createContextMenu(db) {
             chrome.contextMenus.create({
                 id: `viewText_${dbItem.name}`,
                 title: `👁️ View DB : ${dbItem.name}`,
-                contexts: ["all"]
+                contexts: ["page"]
             });
 
             dbItem.entries.forEach((entry, index) => {
@@ -92,7 +92,7 @@ async function createContextMenu(db) {
                     id: `copyText_${dbItem.name}_${index}`,
                     parentId: `viewText_${dbItem.name}`,
                     title: `📜-${index + 1}: ${entry.text.substring(0, 30)}...`,
-                    contexts: ["all"]
+                    contexts: ["page"]
                 });
             });
           counter++;  
@@ -144,7 +144,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
                         entryIndex: entryIndex,
                         selectedText: selectedEntry.text,
                         selectedURL: selectedEntry.url,    
-                        dbName: dbItem.name
+                        dbName: dbItem,
+                        favicon: selectedEntry.favicon  // ✔️ ya se guarda
                     }, () => {
                         console.log('Datos guardados en storage.local');
                         // Abrir el popup con el dato seleccionado
