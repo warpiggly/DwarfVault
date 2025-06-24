@@ -76,13 +76,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // Obtener el entryIndex, el texto y el enlace almacenado en local storage al cargar el popup
-    chrome.storage.local.get(['entryIndex', 'selectedText', 'selectedURL', 'dbName'], (result) => {
+    chrome.storage.local.get(['entryIndex', 'selectedText', 'selectedURL', 'dbName' ,'favicon'], (result) => {
         if (result.selectedText) {
             // Mostrar el texto, el índice, la base de datos y el enlace en el popup
             const entryTextElement = document.getElementById('entryText');
             const entryIndexElement = document.getElementById('entryIndex');
             const dbNameElement = document.getElementById('dbName');
             const entryUrlElement = document.getElementById('entryUrl'); // Nuevo para el enlace
+            const faviconImg = document.getElementById('faviconImg');
+                    if (result.favicon && faviconImg) {
+                        faviconImg.src = result.favicon;
+                        faviconImg.style.display = "inline-block";
+                    } else {
+                        faviconImg.style.display = "none";
+                    }
+
 
             entryIndexElement.textContent = `INDEX: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
             dbNameElement.textContent = `Base de Datos: ${result.dbName}`; // Mostrar el nombre de la base de datos
@@ -135,12 +143,19 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.runtime.onMessage.addListener((message) => {
         if (message.action === 'openPopup') {
             // Obtener los datos del storage
-            chrome.storage.local.get(['entryIndex', 'selectedText', 'selectedURL', 'dbName'], (result) => {
+            chrome.storage.local.get(['entryIndex', 'selectedText', 'selectedURL', 'dbName','favicon'], (result) => {
                 if (result.selectedText) {
                     const entryIndexElement = document.getElementById('entryIndex');
                     const entryTextElement = document.getElementById('entryText');
                     const dbNameElement = document.getElementById('dbName');
                     const entryUrlElement = document.getElementById('entryUrl'); // Nuevo para el enlace
+                    const faviconImg = document.getElementById('faviconImg');
+                    if (result.favicon && faviconImg) {
+                        faviconImg.src = result.favicon;
+                        faviconImg.style.display = "inline-block";
+                    } else {
+                        faviconImg.style.display = "none";
+                    }
 
                     entryIndexElement.textContent = `INDEX: ${parseInt(result.entryIndex) + 1}`;  // Mostrar el índice
                     dbNameElement.textContent = `Base de Datos: ${result.dbName}`;
