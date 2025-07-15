@@ -55,12 +55,22 @@
         <div class="toggle-content">
             <label for="databaseSelect" class="secundarios">DWARF CHAMBER 🗃️ <span style="color: #cccccc;"> - Select a database</span></label>
             <select id="databaseSelect" class="secundarios2"></select>
+             
+            <div id="emojiSelector" class="emoji-selector">
+            <details id="emojiDropdown">
+             <summary style="cursor: pointer; font-size: 16px;">💠 Glyph Vault 💠 <span style="color: #cccccc;"> (click to expand emojis)</span></summary>
+            <div id="emojiList" style="margin-top: 10px; padding: 8px;"></div>
+            </details>
+            <p id="emojiCopyFeedback" style="color: green; display: none;">Emoji copied!</p>
+            </div>
+
             <button id="createDatabase" class="action-btn">FORJGE ⛏️ <span style="color: #cccccc;">- Create New Database</span></button>
             <button id="editDatabase" class="action-btn">REFORGE 🛠️ <span style="color: #cccccc;"> - Edit Database</span></button>
             <button id="deleteDatabase" class="delete-btn">DESTROY 🧝 <span style="color: #cccccc;"> - Delete Database</span></button>
             <button id="export-csv" class="action-btn">Export to CSV</button>
             <input type="file" id="importCSV" accept=".csv" style="display: none;">
             <button id="importDatabase" class="action-btn">IMPORT 📥 <span style="color: #cccccc;"> - Import CSV</span></button>
+
         </div>
     
         <!-- RELIQUIAS ENANAS Section -->

@@ -768,6 +768,32 @@ function saveDatabase(dbName, entries) {
     });
 }
 
+// Cargar emojis desde JSON y mostrarlos como botones
+fetch(chrome.runtime.getURL('emojis.json'))
+    .then(response => response.json())
+    .then(emojis => {
+        const emojiList = document.getElementById('emojiList');
+        const feedback = document.getElementById('emojiCopyFeedback');
+
+        emojis.forEach(emoji => {
+            const span = document.createElement('span');
+            span.textContent = emoji;
+            span.className = 'emoji-item';
+            span.style.cursor = 'pointer';
+            span.style.fontSize = '24px';
+            span.style.margin = '6px';
+            span.addEventListener('click', () => {
+                navigator.clipboard.writeText(emoji).then(() => {
+                    feedback.style.display = 'block';
+                    setTimeout(() => feedback.style.display = 'none', 1000);
+                });
+            });
+            emojiList.appendChild(span);
+        });
+    })
+    .catch(err => {
+        console.error("Error loading emoji list:", err);
+    });
 
 
 
