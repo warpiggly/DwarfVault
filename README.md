@@ -79,7 +79,7 @@ DwarfVault is a smart storage browser extension that allows users to create and 
 
 ## Credits
 
-- Developed by [Your Name or Team].
+- Developed by David Salazar Saldarriaga / Warpiggly.
 - Fonts and icons from open sources.
 
 ---
