@@ -91,7 +91,7 @@ async function createContextMenu(db) {
                 chrome.contextMenus.create({
                     id: `copyText_${dbItem.name}_${index}`,
                     parentId: `viewText_${dbItem.name}`,
-                    title: `📜-${index + 1}: ${entry.text.substring(0, 30)}...`,
+                    title: `[${new URL(entry.favicon || 'https://example.com').hostname}] 📜-${index + 1}: ${entry.text.substring(0, 30)}...`,
                     contexts: ["page"]
                 });
             });
