@@ -17,10 +17,17 @@ async function loadDatabases() {
 // Abrir la base de datos y crear almacenes si es necesario
 function openDatabase() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open('Dott-yDB', 1);
+        const request = indexedDB.open('Dott-yDB', 2); // Incrementar versión para actualización
 
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
+            
+            // Eliminar el store antiguo si existe (solo en desarrollo)
+            if (db.objectStoreNames.contains('databases')) {
+                db.deleteObjectStore('databases');
+            }
+            
+            // Crear nuevo store con la estructura actualizada
             if (!db.objectStoreNames.contains('databases')) {
                 db.createObjectStore('databases', { keyPath: 'name' });
             }
@@ -66,36 +73,113 @@ async function createContextMenu(db) {
         // Reinicia el contador cada vez que se llama a esta función
         let counter = 1;
 
-        for (const dbItem of databases) {
-            const entryCount = dbItem.entries.length;
+        // Separar bases de datos padre e hijas
+        const parentDatabases = databases.filter(db => !db.parentDatabase);
+        const childDatabases = databases.filter(db => db.parentDatabase);
 
-            // Imprimir el nombre de la base de datos para depuración
+        // ============================================
+        // MENÚ PARA GUARDAR TEXTO (cuando seleccionas texto)
+        // ============================================
+        for (const dbItem of parentDatabases) {
+            const entryCount = dbItem.entries.length;
+            
+            // Contar bases de datos hijas
+            const childCount = childDatabases.filter(child => child.parentDatabase === dbItem.name).length;
+            const childInfo = childCount > 0 ? ` [${childCount} sub-DB]` : '';
+
             console.log(`Base de datos: ${dbItem.name}, Número de entradas: ${entryCount}`);
 
-            
             chrome.contextMenus.create({
                 id: `saveText_${dbItem.name}`,
                 parentId: "saveTextRoot",
-                title: `${counter}. ${dbItem.name} - ${entryCount} Item(s) 🗂️`,
+                title: `${counter}. ${dbItem.name} - ${entryCount} Item(s)${childInfo} 🗂️`,
                 contexts: ["selection"]
             });
-            
 
+            // Agregar sub-bases de datos al menú contextual
+            const children = childDatabases.filter(child => child.parentDatabase === dbItem.name);
+            for (const childDb of children) {
+                chrome.contextMenus.create({
+                    id: `saveText_${childDb.name}`,
+                    parentId: `saveText_${dbItem.name}`,
+                    title: `↳ ${childDb.name} - ${childDb.entries.length} Item(s) 🗂️`,
+                    contexts: ["selection"]
+                });
+            }
+
+            counter++;  
+        }
+
+        // ============================================
+        // MENÚ PARA VER/COPIAR TEXTO (en cualquier página)
+        // Estructura: Padre > Hijas > Entradas de cada una
+        // ============================================
+        
+        // Crear menú raíz para visualización
+        chrome.contextMenus.create({
+            id: "viewTextRoot",
+            title: "👁️ View Saved Data 🏰",
+            contexts: ["page"]
+        });
+
+        let viewCounter = 1;
+        for (const dbItem of parentDatabases) {
+            const children = childDatabases.filter(child => child.parentDatabase === dbItem.name);
+            const childInfo = children.length > 0 ? ` [${children.length} sub-DB]` : '';
+            
+            // Crear menú para base de datos padre
             chrome.contextMenus.create({
-                id: `viewText_${dbItem.name}`,
-                title: `👁️ View DB : ${dbItem.name}`,
+                id: `viewParent_${dbItem.name}`,
+                parentId: "viewTextRoot",
+                title: `${viewCounter}. 📚 ${dbItem.name}${childInfo}`,
                 contexts: ["page"]
             });
 
-            dbItem.entries.forEach((entry, index) => {
+            // Si el padre tiene entradas propias, mostrarlas
+            if (dbItem.entries && dbItem.entries.length > 0) {
+                dbItem.entries.forEach((entry, index) => {
+                    chrome.contextMenus.create({
+                        id: `copyText_${dbItem.name}_${index}`,
+                        parentId: `viewParent_${dbItem.name}`,
+                        title: `📜 ${index + 1}: ${entry.text.substring(0, 30)}...`,
+                        contexts: ["page"]
+                    });
+                });
+            }
+
+            // Agregar un separador si hay entradas en el padre Y hay bases hijas
+            if (dbItem.entries.length > 0 && children.length > 0) {
                 chrome.contextMenus.create({
-                    id: `copyText_${dbItem.name}_${index}`,
-                    parentId: `viewText_${dbItem.name}`,
-                    title: `[${new URL(entry.favicon || 'https://example.com').hostname}] 📜-${index + 1}: ${entry.text.substring(0, 30)}...`,
+                    id: `separator_${dbItem.name}`,
+                    parentId: `viewParent_${dbItem.name}`,
+                    type: "separator",
                     contexts: ["page"]
                 });
-            });
-          counter++;  
+            }
+
+            // Mostrar bases de datos hijas bajo el padre
+            for (const childDb of children) {
+                chrome.contextMenus.create({
+                    id: `viewChild_${childDb.name}`,
+                    parentId: `viewParent_${dbItem.name}`,
+                    title: `📖↳ ${childDb.name} (${childDb.entries.length} items)`,
+                    contexts: ["page"]
+                });
+
+                // Mostrar entradas de la base de datos hija
+                if (childDb.entries && childDb.entries.length > 0) {
+                    childDb.entries.forEach((entry, index) => {
+                        chrome.contextMenus.create({
+                            id: `copyText_${childDb.name}_${index}`,
+                            parentId: `viewChild_${childDb.name}`,
+                            title: `[${new URL(entry.favicon || 'https://example.com').hostname}] 📜 ${index + 1}: ${entry.text.substring(0, 30)}...`,
+                            contexts: ["page"]
+                        });
+                    });
+                }
+            }
+
+            viewCounter++;
         }
         
     } catch (error) {
@@ -197,7 +281,7 @@ async function saveTextToDatabase(db, dbName, text, url, favicon) {
         });
 
         if (!dbData) {
-            dbData = { name: dbName, entries: [] };
+            dbData = { name: dbName, entries: [], parentDatabase: null };
         }
 
         dbData.entries.push({

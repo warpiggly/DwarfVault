@@ -12,7 +12,6 @@
     font-style: normal;
 }
 
-
 @font-face {
     font-family: 'Pixeled';
     src: url('fonts/Pixeled.ttf') format('truetype');
@@ -23,75 +22,70 @@
 body {
     margin: 0;
     padding: 0;
-    width: 500px; /* Cambia a 100% para ocupar todo el ancho de la ventana */
-    height: 700px; /* Cambia a 100vh para ocupar toda la altura de la ventana */
-    background-color: #272727; /* Fondo gris claro */
-    overflow: auto; /* Permite el desplazamiento */
-    position: relative; /* Necesario para el pseudo-elemento */
+    width: 500px;
+    height: 700px;
+    background-color: #272727;
+    overflow: auto;
+    position: relative;
 }
 
 body::before {
     content: "";
-    position: fixed; /* Cambia a fixed para que la imagen de fondo no se mueva al hacer scroll */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%; 
     background-image: url("image/Gemini_Generated_Image_4i7a8i4i7a8i4i7a.jfif");
-    background-size: cover; /* Esto asegura que la imagen cubra toda */
-    background-position: center; /* Centra la imagen en la ventana */
-    opacity: 0.3; /* Ajusta el valor entre 0 y 1 para cambiar la transparencia */
-    z-index: -1; /* Coloca el pseudo-elemento detrás del contenido del body */
+    background-size: cover;
+    background-position: center;
+    opacity: 0.3;
+    z-index: -1;
 }
 
-
-
-/* Encabezado */
 /* Encabezado */
 .header {
     font-family: 'Pixeled';
-    color: antiquewhite; /* Texto oscuro */
-    padding: 90px 0 5px; /* Ajusta el padding superior para dar espacio al logo */
+    color: antiquewhite;
+    padding: 90px 0 5px;
     text-align: center;
-    position: relative; /* Permite posicionar los elementos hijos de manera absoluta */
+    position: relative;
     margin-bottom: 0px;
     border-bottom: 0px solid rgba(46, 64, 87, 0.2);
     background-image: url("image/Heder2.png");
-    background-size: cover; /* Asegura que la imagen de fondo cubra todo el encabezado */
-    background-position: center; /* Centra la imagen de fondo */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra del encabezado */
-    animation: lights 4s 750ms linear infinite; /* Aplica la animación */
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Estilo específico para la imagen */
 .logo {
-    max-width: 175px; /* Ajusta el tamaño según sea necesario */
-    height: auto; /* Mantiene la proporción */
-    position: absolute; /* Mantiene la imagen en la posición especificada */
-    top: 83px; /* Mueve la imagen hacia abajo */
-    left: 50%; /* Centra horizontalmente */
-    transform: translate(-50%, -50%); /* Compensa el desplazamiento del 50% tanto horizontal como vertical */
-    z-index: 0; /* Envía la imagen detrás de los textos */
-    transition: transform 0.5s; /* Efecto de transición suave */
+    max-width: 175px;
+    height: auto;
+    position: absolute;
+    top: 83px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    transition: transform 0.5s;
 }
-
 
 /* Títulos */
 .title {
-    position: relative; /* Mantiene el posicionamiento relativo */
-    top: 12px; /* Sin desplazamiento hacia abajo */
-    left: 0px; /* Sin desplazamiento hacia la derecha */
-    z-index: 1; /* Asegura que el título esté por encima del logo */
-    font-size: 2em; /* Ajusta el tamaño según sea necesario */
+    position: relative;
+    top: 12px;
+    left: 0px;
+    z-index: 1;
+    font-size: 1.3em;
+    font-family: 'Righteous-Regular', sans-serif;
 }
 
 .subtitle {
-    text-align: center; /* Cambiar a 'left' o 'right' para mover a izquierda o derecha */
-    font-size: 0.5em; /* Ajusta el tamaño según sea necesario */
-    z-index: 1; /* Asegura que el subtítulo esté por encima del logo */
+    text-align: center;
+    font-size: 0.45em;
+    z-index: 1;
+    font-family: 'Righteous-Regular', sans-serif;
 }
-
-
 
 /* Estilos para la barra de búsqueda */
 #searchBar {
@@ -122,8 +116,6 @@ body::before {
     border-color: #ffc400;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(255, 196, 0, 0.5);
 }
-
-
 
 /* Hamburger menu icon */
 .hamburger-menu {
@@ -256,60 +248,158 @@ body::before {
     background: #FFD700;
 }
 
-
-/* Estilos para la tabla */
+/* Estilos para la tabla estilo Excel */
 table {
     width: 100%;
-    border-collapse: collapse; /* Elimina los espacios entre celdas */
-    margin-top: 20px;
-    font-family: 'SofadiOne-Regular'; /* Fuente medieval */
-    color: #f4e5c3; /* Texto claro */
-    background-color: rgba(121, 86, 73, 0.7); /* Color de fondo acorde a tu tema */
-    border: 2px solid #c0a080; /* Borde alrededor de la tabla */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Sombra */
+    border-collapse: collapse;
+    font-family: 'Righteous-Regular', sans-serif;
+    color: #f4e5c3;
+    background-color: rgba(121, 86, 73, 0.4);
+    font-size: 11px;
 }
 
 /* Estilo para las celdas de encabezado */
 table thead th {
-    background-color: #795649; /* Fondo oscuro para el encabezado */
-    color: #FFD700; /* Texto dorado */
-    font-family: 'SofadiOne-Regular', sans-serif; /* Fuente pixelada para el encabezado */
-    padding: 10px;
-    text-align: left; /* Alineación de texto */
-    border-bottom: 3px solid #DAA520; /* Borde inferior dorado */
+    background: linear-gradient(180deg, #8a6e2f 0%, #795649 100%);
+    color: #FFD700;
+    font-family: 'Righteous-Regular', sans-serif;
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 3px solid #DAA520;
+    border-right: 1px solid rgba(192, 160, 128, 0.2);
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Estilo para las celdas del cuerpo */
 table tbody td {
-    padding: 10px;
-    border-bottom: 1px solid #c0a080; /* Borde inferior claro */
-    background-color: rgba(218, 165, 32, 0.1); /* Fondo claro para las filas */
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(192, 160, 128, 0.15);
+    border-right: 1px solid rgba(192, 160, 128, 0.2);
+    background-color: transparent;
+    font-size: 11px;
+    transition: all 0.2s ease;
 }
 
 /* Estilo alternativo para las filas impares */
 table tbody tr:nth-child(odd) {
-    background-color: rgba(121, 86, 73, 0.5); /* Color de fondo para filas alternas */
+    background-color: rgba(121, 86, 73, 0.2);
+}
+
+table tbody tr:nth-child(even) {
+    background-color: rgba(218, 165, 32, 0.05);
 }
 
 /* Efecto al pasar el cursor sobre las filas */
 table tbody tr:hover {
-    background-color: rgba(255, 215, 0, 0.2); /* Destacar la fila en hover */
+    background-color: rgba(255, 215, 0, 0.15) !important;
+    transform: translateX(2px);
+    box-shadow: inset 3px 0 0 #FFD700;
     cursor: pointer;
 }
 
 /* Estilo para enlaces dentro de la tabla */
 table tbody td a {
-    color: #FFD700; /* Color dorado para los enlaces */
+    color: #ffc400;
     text-decoration: none;
-    font-family: 'Righteous-Regular', sans-serif; /* Fuente decorativa */
+    font-family: 'Righteous-Regular', sans-serif;
+    transition: all 0.2s ease;
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 table tbody td a:hover {
-    text-decoration: underline; /* Subrayado al pasar el cursor */
-    color: #ffc400; /* Color más claro en hover */
+    color: #FFD700;
+    text-decoration: underline;
 }
 
-h3{
-    font-family: 'Righteous-Regular', sans-serif; /* Fuente decorativa */
-    color:#ffc400;
+/* Títulos de secciones */
+h3 {
+    font-family: 'Righteous-Regular', sans-serif;
+    color: #ffc400;
+    margin: 15px 0 8px 0;
+    padding: 8px 10px;
+    background-color: rgba(121, 86, 73, 0.3);
+    border-left: 3px solid #FFD700;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Contenedor de tablas */
+#tablesContainer {
+    padding: 12px;
+    animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estilos para mensajes vacíos */
+.empty-message {
+    color: #d4c5a3;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+    background-color: rgba(121, 86, 73, 0.3);
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+/* Separadores */
+hr {
+    border: none;
+    border-top: 2px solid #c0a080;
+    margin: 30px 0;
+    opacity: 0.3;
+}
+
+/* Indicador de base de datos hija */
+.child-database-indicator {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: rgba(255, 196, 0, 0.2);
+    border: 1px solid #ffc400;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-left: 10px;
+    font-family: 'Pixeled', sans-serif;
+}
+
+/* Mejoras de accesibilidad */
+*:focus {
+    outline: 2px solid #FFD700;
+    outline-offset: 2px;
+}
+
+/* Scrollbar personalizado para el body */
+body::-webkit-scrollbar {
+    width: 12px;
+}
+
+body::-webkit-scrollbar-track {
+    background: #272727;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: #795649;
+    border-radius: 6px;
+    border: 2px solid #272727;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background: #8a6e2f;
 }

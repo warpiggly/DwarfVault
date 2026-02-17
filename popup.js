@@ -14,11 +14,65 @@ document.addEventListener('DOMContentLoaded', () => {
     openDatabase(loadDatabases);
 
     
-    // Evento para crear nueva base de datos
-    document.getElementById('createDatabase').addEventListener('click', () => {
+    // Evento para crear nueva base de datos PADRE
+    document.getElementById('createParentDatabase').addEventListener('click', () => {
+        const dbName = prompt("Enter the name of the new PARENT database:");
+        if (dbName && dbName.trim()) {
+            createDatabase(dbName.trim(), null); // null = es padre
+        }
+    });
+
+    // Evento para crear nueva base de datos HIJA
+    document.getElementById('createChildDatabase').addEventListener('click', () => {
         const dbName = prompt("Enter the name of the new database:");
         if (dbName && dbName.trim()) {
-            createDatabase(dbName.trim());
+            // Preguntar si quiere agregarla a un padre o crearla independiente
+            const addToParent = confirm(
+                `Do you want to add "${dbName}" inside a PARENT database?\n\n` +
+                `OK = Yes (choose parent database)\n` +
+                `Cancel = No (create as independent database)`
+            );
+            
+            if (addToParent) {
+                // Obtener lista de bases de datos padre disponibles
+                openDatabase((db) => {
+                    const transaction = db.transaction('databases', 'readonly');
+                    const store = transaction.objectStore('databases');
+                    
+                    const request = store.getAll();
+                    request.onsuccess = (event) => {
+                        const databases = event.target.result;
+                        const parentDatabases = databases.filter(db => !db.parentDatabase);
+                        
+                        if (parentDatabases.length === 0) {
+                            alert("No parent databases available. The database will be created as independent.");
+                            createDatabase(dbName.trim(), null);
+                            return;
+                        }
+                        
+                        // Crear una lista de opciones
+                        let options = "Available parent databases:\n\n";
+                        parentDatabases.forEach((db, index) => {
+                            options += `${index + 1}. ${db.name}\n`;
+                        });
+                        options += "\nEnter the number of the parent database:";
+                        
+                        const parentChoice = prompt(options);
+                        const parentIndex = parseInt(parentChoice) - 1;
+                        
+                        if (parentIndex >= 0 && parentIndex < parentDatabases.length) {
+                            const parentName = parentDatabases[parentIndex].name;
+                            createDatabase(dbName.trim(), parentName); // crear como hija
+                        } else {
+                            alert("Invalid selection. Database will be created as independent.");
+                            createDatabase(dbName.trim(), null);
+                        }
+                    };
+                });
+            } else {
+                // Crear como independiente (sin padre)
+                createDatabase(dbName.trim(), null);
+            }
         }
     });
 
@@ -40,15 +94,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // Evento para eliminar la base de datos seleccionada
     document.getElementById('deleteDatabase').addEventListener('click', () => {
         const dbName = document.getElementById('databaseSelect').value;
-        if (confirm(`¿Are you sure you want to delete the database  "${dbName}" and all its entries?`)) {
-            deleteDatabase(dbName);
-        }
+        
+        // Verificar si tiene bases de datos hijas
+        openDatabase((db) => {
+            const transaction = db.transaction('databases', 'readonly');
+            const store = transaction.objectStore('databases');
+            
+            const request = store.getAll();
+            request.onsuccess = (event) => {
+                const databases = event.target.result;
+                const childDatabases = databases.filter(db => db.parentDatabase === dbName);
+                
+                let confirmMessage = `Are you sure you want to delete the database "${dbName}" and all its entries?`;
+                
+                if (childDatabases.length > 0) {
+                    confirmMessage += `\n\nWARNING: This database has ${childDatabases.length} child database(s) that will also be deleted:`;
+                    childDatabases.forEach(child => {
+                        confirmMessage += `\n- ${child.name}`;
+                    });
+                }
+                
+                if (confirm(confirmMessage)) {
+                    deleteDatabase(dbName);
+                }
+            };
+        });
     });
 
 
     // Enlaza el botón con la función de exportar a CSV
     document.getElementById("export-csv").addEventListener("click", function() {
         exportDataAsCSV();
+    });
+
+    // EXPORT PARENT DATABASE (con todas sus hijas)
+    document.getElementById("export-parent").addEventListener("click", function() {
+        exportParentDatabase();
     });
 
     // IMPORT DATA BASES 
@@ -69,6 +150,32 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = function(event) {
             const csvData = event.target.result;
             processCSV(csvData, file.name.replace(".csv", "")); // Usa el nombre del archivo como nombre de la BD
+        };
+        reader.readAsText(file);
+    });
+
+    // IMPORT PARENT DATABASE (con todas sus hijas)
+    document.getElementById("importParent").addEventListener("click", function() {
+        document.getElementById("importParentFile").click();
+    });
+
+    document.getElementById("importParentFile").addEventListener("change", function(event) {
+        const file = event.target.files[0];
+        
+        if (!file) {
+            alert("Please select a JSON file first.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const jsonData = JSON.parse(event.target.result);
+                importParentDatabase(jsonData);
+            } catch (error) {
+                alert("Error reading file: Invalid JSON format");
+                console.error(error);
+            }
         };
         reader.readAsText(file);
     });
@@ -193,8 +300,8 @@ function checkAndCreateDatabase(dbName) {
     });
 }
 
-// Función para crear la base de datos
-function createDatabase(dbName) {
+// Función para crear la base de datos (ACTUALIZADA con soporte para jerarquía)
+function createDatabase(dbName, parentDatabase = null) {
     openDatabase((db) => {
         const transaction = db.transaction('databases', 'readwrite');
         const store = transaction.objectStore('databases');
@@ -203,13 +310,18 @@ function createDatabase(dbName) {
 
         request.onsuccess = (event) => {
             if (!event.target.result) {
-                store.add({ name: dbName, entries: [] }).onsuccess = () => {
+                const newDb = { 
+                    name: dbName, 
+                    entries: [],
+                    parentDatabase: parentDatabase  // Nuevo campo
+                };
+                
+                store.add(newDb).onsuccess = () => {
                     loadDatabases(db);
                     chrome.runtime.sendMessage({ action: 'updateContextMenu' });
-                    console.log(`Base de datos "${dbName}" creada.`);
                 };
             } else {
-                console.log(`La base de datos "${dbName}" ya existe.`);
+                alert('A database with this name already exists.');
             }
         };
 
@@ -219,28 +331,19 @@ function createDatabase(dbName) {
     });
 }
 
-// Función para eliminar la base de datos (si es necesario en algún momento)
-function deleteDatabase(dbName) {
-    openDatabase((db) => {
-        const transaction = db.transaction('databases', 'readwrite');
-        const store = transaction.objectStore('databases');
-
-        store.delete(dbName).onsuccess = () => {
-            loadDatabases(db);
-            chrome.runtime.sendMessage({ action: 'updateContextMenu' });
-            console.log(`Base de datos "${dbName}" eliminada.`);
-        };
-    });
-}
-
-// Función para abrir la base de datos y pasarla al callback
+// Abrir la base de datos
 function openDatabase(callback) {
-    const request = indexedDB.open('Dott-yDB', 1);
-    console.log("Abriendo la base de datos...");
+    const request = indexedDB.open('Dott-yDB', 2); // Incrementar versión
 
     request.onupgradeneeded = (event) => {
-        console.log("Actualizando la base de datos...");
         const db = event.target.result;
+        
+        // Eliminar el store antiguo si existe (solo para migración)
+        if (db.objectStoreNames.contains('databases')) {
+            db.deleteObjectStore('databases');
+        }
+        
+        // Crear nuevo store
         if (!db.objectStoreNames.contains('databases')) {
             db.createObjectStore('databases', { keyPath: 'name' });
         }
@@ -248,8 +351,7 @@ function openDatabase(callback) {
 
     request.onsuccess = (event) => {
         const db = event.target.result;
-        console.log("Base de datos abierta con éxito");
-        callback(db); // Pasar la base de datos al callback
+        if (callback) callback(db);
     };
 
     request.onerror = (event) => {
@@ -257,334 +359,123 @@ function openDatabase(callback) {
     };
 }
 
-// Cargar las bases de datos en el dropdown
+// Cargar todas las bases de datos en el selector (ACTUALIZADO para mostrar jerarquía)
 function loadDatabases(db) {
-    console.log("Cargando bases de datos...");
     const transaction = db.transaction('databases', 'readonly');
     const store = transaction.objectStore('databases');
 
-    const dbSelect = document.getElementById('databaseSelect');
-    dbSelect.innerHTML = ''; // Limpia el selector antes de agregar las opciones
-
-    const request = store.getAll();
-    request.onsuccess = (event) => {
+    store.getAll().onsuccess = (event) => {
         const databases = event.target.result;
-        console.log("Bases de datos encontradas:", databases); // Log para verificar qué bases de datos se encuentran
-        databases.forEach(db => {
+        const select = document.getElementById('databaseSelect');
+        select.innerHTML = '';
+
+        // Separar bases de datos padre e hijas
+        const parentDatabases = databases.filter(db => !db.parentDatabase);
+        const childDatabases = databases.filter(db => db.parentDatabase);
+
+        parentDatabases.forEach(dbItem => {
             const option = document.createElement('option');
-            option.value = db.name;
-            option.textContent = db.name;
-            dbSelect.appendChild(option);
+            option.value = dbItem.name;
+            option.textContent = dbItem.name;
+            select.appendChild(option);
+
+            // Agregar bases de datos hijas con indentación
+            const children = childDatabases.filter(child => child.parentDatabase === dbItem.name);
+            children.forEach(childDb => {
+                const childOption = document.createElement('option');
+                childOption.value = childDb.name;
+                childOption.textContent = `  ↳ ${childDb.name}`; // Indentación visual
+                select.appendChild(childOption);
+            });
         });
 
-        // Verificar si hay bases de datos cargadas
-        if (dbSelect.options.length > 0) {
-            console.log("Cargando la primera base de datos por defecto:", dbSelect.options[0].value);
-            loadEntries(dbSelect.options[0].value); // Cambio aquí - usar loadEntries en lugar de loadEntriesAsTable
-        } else {
-            console.log("No se encontraron bases de datos");
+        if (databases.length > 0) {
+            loadEntries(databases[0].name);
         }
     };
-
-    request.onerror = (event) => {
-        console.error('Error al cargar bases de datos:', event.target.errorCode);
-    };
 }
 
-// Función para cargar entradas y mostrarlas en la tabla
-function loadAllDatabasesAsTables() {
-    openDatabase((db) => {
-        const transaction = db.transaction('databases', 'readonly');
-        const store = transaction.objectStore('databases');
-        
-        const request = store.getAll();
-
-        request.onsuccess = (event) => {
-            const databases = event.target.result;
-            const tablesContainer = document.getElementById('tablesContainer'); // Contenedor para todas las tablas
-            tablesContainer.innerHTML = ''; // Limpiar contenedor
-
-            databases.forEach((dbData) => {
-                const entries = dbData.entries;
-                const dbName = dbData.name;
-
-                // Crear un contenedor para cada base de datos
-                const dbContainer = document.createElement('div');
-                dbContainer.classList.add('database-container');
-
-                // Título de la base de datos
-                const dbTitle = document.createElement('h3');
-                dbTitle.textContent = `Database: ${dbName}`;
-                dbContainer.appendChild(dbTitle);
-
-                // Crear la tabla para esta base de datos
-                const table = document.createElement('table');
-                table.classList.add('entries-table');
-                table.border = '1';
-
-                const thead = document.createElement('thead');
-                thead.innerHTML = `
-                    <tr>
-                        <th>#</th>
-                        <th>Favicon</th>
-                        <th>Text</th>
-                        <th>URL</th>
-                    </tr>
-                `;
-                table.appendChild(thead);
-
-                const tbody = document.createElement('tbody');
-                entries.forEach((entry, index) => {
-                    const row = document.createElement('tr');
-
-                    // Columna de índice
-                    const indexCell = document.createElement('td');
-                    indexCell.textContent = index + 1;
-                    row.appendChild(indexCell);
-
-                    // Columna de favicon (si existe)
-                    const faviconCell = document.createElement('td');
-                    if (entry.favicon) {
-                        const faviconImg = document.createElement('img');
-                        faviconImg.src = entry.favicon;
-                        faviconImg.alt = 'Favicon';
-                        faviconImg.style.width = '20px';
-                        faviconImg.style.height = '20px';
-                        faviconCell.appendChild(faviconImg);
-                    }
-                    row.appendChild(faviconCell);
-
-                    // Columna de texto
-                    const textCell = document.createElement('td');
-                    textCell.textContent = entry.text;
-                    row.appendChild(textCell);
-
-                    // Columna de URL
-                    const urlCell = document.createElement('td');
-                    const urlLink = document.createElement('a');
-                    urlLink.href = entry.url;
-                    urlLink.textContent = entry.url;
-                    urlLink.target = '_blank';
-                    urlCell.appendChild(urlLink);
-                    row.appendChild(urlCell);
-
-                    tbody.appendChild(row);
-                });
-
-                table.appendChild(tbody);
-                dbContainer.appendChild(table);
-                tablesContainer.appendChild(dbContainer);
-            });
-        };
-
-        request.onerror = (event) => {
-            console.error('Error al cargar bases de datos:', event.target.errorCode);
-        };
-    });
-}
-
-
-// Crear una nueva base de datos
-function createDatabase(dbName) {
-    openDatabase((db) => {
-        const transaction = db.transaction('databases', 'readwrite');
-        const store = transaction.objectStore('databases');
-        
-        const request = store.get(dbName);
-
-        request.onsuccess = (event) => {
-            if (!event.target.result) {
-                store.add({ name: dbName, entries: [] }).onsuccess = () => {
-                    loadDatabases(db);
-
-                    // Enviar mensaje al background para actualizar el menú contextual
-                    chrome.runtime.sendMessage({ action: 'updateContextMenu' });
-                };
-            } else {
-                alert('Ya existe una base de datos con ese nombre.');
-            }
-        };
-
-        request.onerror = (event) => {
-            console.error('Error al crear la base de datos:', event.target.errorCode);
-        };
-    });
-}
-
-
-
-// Cargar entradas desde una base de datos
+// Cargar entradas de una base de datos
 function loadEntries(dbName) {
     openDatabase((db) => {
         const transaction = db.transaction('databases', 'readonly');
         const store = transaction.objectStore('databases');
-        
+
         const request = store.get(dbName);
 
         request.onsuccess = (event) => {
             const dbData = event.target.result;
-            const entries = dbData ? dbData.entries : [];
-            const entriesList = document.getElementById('entriesList');
-            const searchBar = document.getElementById('searchBar');
-            
-            entriesList.innerHTML = '';
-            
-            // Función para renderizar la lista
-            const renderEntries = (filteredEntries) => {
-                entriesList.innerHTML = '';
-                filteredEntries.forEach((entry, index) => {
-                    const li = document.createElement('li');
+            const list = document.getElementById('entriesList');
+            list.innerHTML = '';
 
-                    // Número de entrada
-                    const numberSpan = document.createElement('span');
-                    numberSpan.classList.add('entry-number');
-                    numberSpan.textContent = `${index + 1}. `; // Número secuencial
-                    li.appendChild(numberSpan);
-
-                    // Favicon
+            if (dbData && dbData.entries) {
+                dbData.entries.forEach((entry, index) => {
+                    const listItem = document.createElement('li');
+                    
+                    // Crear contenedor para favicon + texto
+                    const contentDiv = document.createElement('div');
+                    contentDiv.style.display = 'flex';
+                    contentDiv.style.alignItems = 'center';
+                    contentDiv.style.gap = '8px';
+                    
+                    // Agregar favicon si existe
                     if (entry.favicon) {
                         const favicon = document.createElement('img');
                         favicon.src = entry.favicon;
-                        favicon.alt = 'Favicon';
-                        favicon.style.width = '40px';
-                        favicon.style.height = '40px';
-                        favicon.style.display = 'block';  // Para centrarlo como un elemento de bloque
-                        favicon.style.margin = '10px auto';  // Para centrar horizontalmente
-                        li.appendChild(favicon);
+                        favicon.style.width = '16px';
+                        favicon.style.height = '16px';
+                        contentDiv.appendChild(favicon);
                     }
-
-                    // Texto
+                    
+                    // Agregar texto
                     const textSpan = document.createElement('span');
-                    textSpan.innerHTML = `<span class="item-label">Texto:</span> ${entry.text.substring(0, 50)}${entry.text.length > 50 ? '...' : ''}`;
-                    li.appendChild(textSpan);
+                    textSpan.textContent = `${index + 1}. ${entry.text}`;
+                    contentDiv.appendChild(textSpan);
+                    
+                    listItem.appendChild(contentDiv);
 
-                    // URL
-                    const urlLink = document.createElement('a');
-                    urlLink.href = entry.url;
-                    urlLink.textContent = entry.url;
-                    urlLink.target = '_blank';
-                    urlLink.innerHTML = `<span class="item-label">URL:</span> ${entry.url}`;
-                    li.appendChild(document.createElement('br'));
-                    li.appendChild(urlLink);
-
-                    // Botón de copiar
-                    const copyButton = document.createElement('button');
-                    copyButton.textContent = 'Copy Text';
-                    copyButton.addEventListener('click', () => {
-                        navigator.clipboard.writeText(entry.text).then(() => {
-                            alert('Text copied to clipboard');
-                        });
-                    });
-                    li.appendChild(copyButton);
-
-                    // Botón para eliminar entrada
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
                     deleteButton.addEventListener('click', () => {
                         deleteEntry(dbName, index);
                     });
-                    li.appendChild(deleteButton);
 
-                    // Botón para editar entrada
-                    const editButton = document.createElement('button');
-                    editButton.textContent = 'Edit';
-                    editButton.addEventListener('click', () => {
-                        editEntry(dbName, index, entry);
-                    });
-                    li.appendChild(editButton);
-
-                    entriesList.appendChild(li);
+                    listItem.appendChild(deleteButton);
+                    list.appendChild(listItem);
                 });
-            };
-
-            // Renderizar todas las entradas inicialmente
-            renderEntries(entries);
-
-            // Filtrar y renderizar las entradas en función de la búsqueda
-            searchBar.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                const filteredEntries = entries.filter((entry, index) => {
-                    return entry.text.toLowerCase().includes(searchTerm) || `${index + 1}`.includes(searchTerm);
-                });
-                renderEntries(filteredEntries);
-            });
+            }
         };
 
         request.onerror = (event) => {
-            console.error('Error al cargar entradas:', event.target.errorCode);
+            console.error('Error al cargar las entradas:', event.target.errorCode);
         };
     });
 }
 
-
-// Eliminar entrada con confirmación
+// Eliminar una entrada específica
 function deleteEntry(dbName, entryIndex) {
-    const userConfirmed = confirm("Are you sure you want to delete this entry? This action cannot be undone");
-
-    if (!userConfirmed) {
-        // Si el usuario cancela, no se realiza ninguna acción
-        return;
-    }
-
-    // Proceder con la eliminación si se confirma
     openDatabase((db) => {
         const transaction = db.transaction('databases', 'readwrite');
         const store = transaction.objectStore('databases');
 
-        const getRequest = store.get(dbName);
+        const request = store.get(dbName);
 
-        getRequest.onsuccess = (event) => {
+        request.onsuccess = (event) => {
             const dbData = event.target.result;
-            if (dbData) {
+            if (dbData && dbData.entries) {
                 dbData.entries.splice(entryIndex, 1);
                 store.put(dbData).onsuccess = () => {
-                    loadEntries(dbName); // Recargar las entradas después de eliminar
-                    chrome.runtime.sendMessage({ action: 'updateContextMenu' }); // Actualizar el menú contextual
+                    loadEntries(dbName);
+                    chrome.runtime.sendMessage({ action: 'updateContextMenu' });
                 };
             }
         };
 
-        getRequest.onerror = (event) => {
-            console.error('Error al eliminar entrada:', event.target.errorCode);
+        request.onerror = (event) => {
+            console.error('Error al eliminar la entrada:', event.target.errorCode);
         };
     });
 }
-
-
-// Editar entrada
-function editEntry(dbName, entryIndex, entry) {
-    const newText = prompt("Edit Text:", entry.text);
-    const newUrl = prompt("Edit URL:", entry.url);
-
-    if (newText !== null && newUrl !== null) {
-        openDatabase((db) => {
-            const transaction = db.transaction('databases', 'readwrite');
-            const store = transaction.objectStore('databases');
-
-            const getRequest = store.get(dbName);
-
-            getRequest.onsuccess = (event) => {
-                const dbData = event.target.result;
-                if (dbData) {
-                    dbData.entries[entryIndex] = {
-                        ...entry,
-                        text: newText,
-                        url: newUrl
-                    };
-                    store.put(dbData).onsuccess = () => {
-                        loadEntries(dbName);
-                        chrome.runtime.sendMessage({ action: 'updateContextMenu' });
-                    };
-                }
-            };
-
-            getRequest.onerror = (event) => {
-                console.error('Error al editar entrada:', event.target.errorCode);
-            };
-        });
-    }
-}
-
 
 // Editar una base de datos
 function editDatabase(oldName, newName) {
@@ -597,11 +488,25 @@ function editDatabase(oldName, newName) {
         getRequest.onsuccess = (event) => {
             const dbData = event.target.result;
             if (dbData) {
-                store.delete(oldName).onsuccess = () => {
-                    dbData.name = newName;
-                    store.add(dbData).onsuccess = () => {
-                        loadDatabases(db);
-                        chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+                // Verificar si hay bases de datos hijas
+                store.getAll().onsuccess = (getAllEvent) => {
+                    const allDatabases = getAllEvent.target.result;
+                    const childDatabases = allDatabases.filter(db => db.parentDatabase === oldName);
+                    
+                    // Eliminar la base de datos antigua
+                    store.delete(oldName).onsuccess = () => {
+                        // Crear la base de datos con el nuevo nombre
+                        dbData.name = newName;
+                        store.add(dbData).onsuccess = () => {
+                            // Actualizar las referencias en las bases de datos hijas
+                            childDatabases.forEach(childDb => {
+                                childDb.parentDatabase = newName;
+                                store.put(childDb);
+                            });
+                            
+                            loadDatabases(db);
+                            chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+                        };
                     };
                 };
             }
@@ -613,15 +518,27 @@ function editDatabase(oldName, newName) {
     });
 }
 
-// Eliminar una base de datos
+// Eliminar una base de datos (ACTUALIZADO para eliminar también las hijas)
 function deleteDatabase(dbName) {
     openDatabase((db) => {
         const transaction = db.transaction('databases', 'readwrite');
         const store = transaction.objectStore('databases');
 
-        store.delete(dbName).onsuccess = () => {
-            loadDatabases(db);
-            chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+        // Primero obtener todas las bases de datos para encontrar las hijas
+        store.getAll().onsuccess = (event) => {
+            const allDatabases = event.target.result;
+            const childDatabases = allDatabases.filter(db => db.parentDatabase === dbName);
+            
+            // Eliminar todas las bases de datos hijas
+            childDatabases.forEach(childDb => {
+                store.delete(childDb.name);
+            });
+            
+            // Eliminar la base de datos padre
+            store.delete(dbName).onsuccess = () => {
+                loadDatabases(db);
+                chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+            };
         };
     });
 }
@@ -676,6 +593,185 @@ function exportDataAsCSV() {
 
         request.onerror = (event) => {
             console.error('Error al exportar datos:', event.target.errorCode);
+        };
+    });
+}
+
+// NUEVA FUNCIÓN: Exportar base de datos padre con todas sus hijas
+function exportParentDatabase() {
+    const dbName = document.getElementById('databaseSelect').value;
+
+    openDatabase((db) => {
+        const transaction = db.transaction('databases', 'readonly');
+        const store = transaction.objectStore('databases');
+
+        // Obtener todas las bases de datos
+        store.getAll().onsuccess = (event) => {
+            const allDatabases = event.target.result;
+            const selectedDb = allDatabases.find(db => db.name === dbName);
+
+            if (!selectedDb) {
+                alert("Database not found.");
+                return;
+            }
+
+            // Verificar si es una base de datos padre
+            if (selectedDb.parentDatabase) {
+                alert("Please select a parent database to export. This is a child database.");
+                return;
+            }
+
+            // Crear estructura de exportación
+            const exportData = {
+                version: "1.0",
+                exportDate: new Date().toISOString(),
+                parentDatabase: selectedDb,
+                childDatabases: allDatabases.filter(db => db.parentDatabase === dbName)
+            };
+
+            // Convertir a JSON
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            // Crear enlace de descarga
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${dbName}_complete.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            // Mostrar resumen
+            const childCount = exportData.childDatabases.length;
+            const totalEntries = selectedDb.entries.length + 
+                exportData.childDatabases.reduce((sum, child) => sum + child.entries.length, 0);
+            
+            alert(`✅ Exported successfully!\n\n` +
+                  `📁 Parent: ${dbName}\n` +
+                  `📂 Child databases: ${childCount}\n` +
+                  `📜 Total entries: ${totalEntries}`);
+        };
+    });
+}
+
+// NUEVA FUNCIÓN: Importar base de datos padre con todas sus hijas
+function importParentDatabase(importData) {
+    // Validar estructura del archivo
+    if (!importData.version || !importData.parentDatabase) {
+        alert("Invalid file format. Please select a valid parent database export file.");
+        return;
+    }
+
+    openDatabase((db) => {
+        const transaction = db.transaction('databases', 'readwrite');
+        const store = transaction.objectStore('databases');
+
+        // Verificar si ya existe una base de datos con ese nombre
+        const checkRequest = store.get(importData.parentDatabase.name);
+
+        checkRequest.onsuccess = (event) => {
+            if (event.target.result) {
+                const overwrite = confirm(
+                    `A database named "${importData.parentDatabase.name}" already exists.\n\n` +
+                    `Do you want to overwrite it?\n` +
+                    `⚠️ This will delete the existing database and all its children.`
+                );
+
+                if (!overwrite) {
+                    // Preguntar por un nuevo nombre
+                    const newName = prompt(
+                        "Enter a new name for the parent database:",
+                        importData.parentDatabase.name + "_imported"
+                    );
+
+                    if (!newName || !newName.trim()) {
+                        alert("Import cancelled.");
+                        return;
+                    }
+
+                    // Actualizar nombres
+                    const oldName = importData.parentDatabase.name;
+                    importData.parentDatabase.name = newName.trim();
+                    
+                    // Actualizar referencias en las hijas
+                    importData.childDatabases.forEach(child => {
+                        if (child.parentDatabase === oldName) {
+                            child.parentDatabase = newName.trim();
+                        }
+                    });
+                } else {
+                    // Eliminar la base de datos existente y sus hijas
+                    store.getAll().onsuccess = (getAllEvent) => {
+                        const allDbs = getAllEvent.target.result;
+                        const childrenToDelete = allDbs.filter(
+                            db => db.parentDatabase === importData.parentDatabase.name
+                        );
+
+                        // Eliminar hijas
+                        childrenToDelete.forEach(child => {
+                            store.delete(child.name);
+                        });
+
+                        // Eliminar padre
+                        store.delete(importData.parentDatabase.name);
+                    };
+                }
+            }
+
+            // Importar base de datos padre
+            setTimeout(() => {
+                const addParentRequest = store.add(importData.parentDatabase);
+
+                addParentRequest.onsuccess = () => {
+                    console.log("Parent database imported:", importData.parentDatabase.name);
+
+                    // Importar bases de datos hijas
+                    let importedChildren = 0;
+                    if (importData.childDatabases && importData.childDatabases.length > 0) {
+                        importData.childDatabases.forEach((childDb) => {
+                            store.add(childDb).onsuccess = () => {
+                                importedChildren++;
+                                console.log("Child database imported:", childDb.name);
+
+                                // Si es la última hija, mostrar mensaje de éxito
+                                if (importedChildren === importData.childDatabases.length) {
+                                    finishImport();
+                                }
+                            };
+                        });
+                    } else {
+                        finishImport();
+                    }
+
+                    function finishImport() {
+                        const totalEntries = importData.parentDatabase.entries.length +
+                            (importData.childDatabases?.reduce((sum, child) => 
+                                sum + child.entries.length, 0) || 0);
+
+                        alert(
+                            `✅ Import successful!\n\n` +
+                            `📁 Parent: ${importData.parentDatabase.name}\n` +
+                            `📂 Child databases: ${importData.childDatabases?.length || 0}\n` +
+                            `📜 Total entries: ${totalEntries}`
+                        );
+
+                        // Recargar la interfaz
+                        loadDatabases(db);
+                        chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+                    }
+                };
+
+                addParentRequest.onerror = (event) => {
+                    console.error("Error importing parent database:", event.target.error);
+                    alert("Error importing database. Please try again.");
+                };
+            }, 100); // Pequeño delay para asegurar que las eliminaciones se completen
+        };
+
+        checkRequest.onerror = (event) => {
+            console.error("Error checking database:", event.target.error);
         };
     });
 }
@@ -756,14 +852,79 @@ function cleanValue(value) {
 }
 
 function saveDatabase(dbName, entries) {
+    // Preguntar si quiere agregarla a un padre
+    const addToParent = confirm(
+        `Do you want to add "${dbName}" as a CHILD database inside a parent?\n\n` +
+        `OK = Yes (choose parent)\n` +
+        `Cancel = No (create as independent parent database)`
+    );
+
+    if (addToParent) {
+        // Obtener bases de datos padre disponibles
+        openDatabase(db => {
+            const transaction = db.transaction("databases", "readonly");
+            const store = transaction.objectStore("databases");
+            
+            store.getAll().onsuccess = (event) => {
+                const allDatabases = event.target.result;
+                const parentDatabases = allDatabases.filter(database => !database.parentDatabase);
+                
+                if (parentDatabases.length === 0) {
+                    alert("No parent databases available. The database will be created as a parent.");
+                    createImportedDatabase(dbName, entries, null);
+                    return;
+                }
+                
+                // Mostrar lista de padres
+                let options = "Available parent databases:\n\n";
+                parentDatabases.forEach((database, index) => {
+                    options += `${index + 1}. ${database.name}\n`;
+                });
+                options += "\nEnter the number of the parent database:";
+                
+                const parentChoice = prompt(options);
+                const parentIndex = parseInt(parentChoice) - 1;
+                
+                if (parentIndex >= 0 && parentIndex < parentDatabases.length) {
+                    const parentName = parentDatabases[parentIndex].name;
+                    createImportedDatabase(dbName, entries, parentName);
+                } else {
+                    alert("Invalid selection. Database will be created as parent.");
+                    createImportedDatabase(dbName, entries, null);
+                }
+            };
+        });
+    } else {
+        // Crear como padre
+        createImportedDatabase(dbName, entries, null);
+    }
+}
+
+// Nueva función auxiliar para crear la base de datos importada
+function createImportedDatabase(dbName, entries, parentDatabase) {
     openDatabase(db => {
         const transaction = db.transaction("databases", "readwrite");
         const store = transaction.objectStore("databases");
 
-        store.add({ name: dbName, entries: entries }).onsuccess = () => {
-            loadDatabases(db); // Recargar la lista de bases de datos
+        const dbData = { 
+            name: dbName, 
+            entries: entries,
+            parentDatabase: parentDatabase
+        };
+
+        const addRequest = store.add(dbData);
+        
+        addRequest.onsuccess = () => {
+            loadDatabases(db);
             chrome.runtime.sendMessage({ action: "updateContextMenu" });
-            alert(`Database "${dbName}" imported successfully!`);
+            
+            const dbType = parentDatabase ? `child of "${parentDatabase}"` : "parent database";
+            alert(`Database "${dbName}" imported successfully as ${dbType}!`);
+        };
+
+        addRequest.onerror = (event) => {
+            console.error("Error importing database:", event.target.error);
+            alert(`Error: A database named "${dbName}" already exists. Please rename the CSV file and try again.`);
         };
     });
 }
@@ -797,6 +958,18 @@ fetch(chrome.runtime.getURL('emojis.json'))
 
 
 
+// NUEVA FUNCIÓN: Cargar todas las bases de datos como tablas
+function loadAllDatabasesAsTables() {
+    openDatabase((db) => {
+        const transaction = db.transaction('databases', 'readonly');
+        const store = transaction.objectStore('databases');
 
-
-
+        store.getAll().onsuccess = (event) => {
+            const databases = event.target.result;
+            console.log('All databases loaded:', databases);
+            
+            // Aquí puedes agregar código para mostrar las bases de datos en formato de tabla
+            // si tienes una sección en tu HTML para eso
+        };
+    });
+}

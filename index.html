@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dott-y</title>
+    <title>Dott-y - Dwarf Vault</title>
     
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -21,71 +21,88 @@
             <li><a href="index.html">🗃️ HOME</a></li>
             <li><a href="View Board.html">📜 TABLES</a></li>
             <li><a href="History.html">📖 TUTORIAL</a></li>
-            
         </ul>
     </div>
 
     <div class="header">
         <h1 class="title">DWARF VAULT</h1>
         <img src="icons/Final Gif.gif" alt="Logo de Dott-y" class="logo" id="enanoGif">
-        <h3 class="subtitle">Copy 🏔️  Text</h3>
+        <h3 class="subtitle">Copy 🏔️ Text</h3>
     </div>
 
     <div>
         <div class="container2">
             <img src="image/Boton 3.png" alt="Imagen de fondo" class="background-image">
             <div class="texto-movible">
-                <h2>RUNES ⚒️ <span style="color: #cccccc;"></span></h2>
+                <h2>RUNES ⚔️ <span style="color: #cccccc;"></span></h2>
             </div>
         </div>
-    <div id="dbName" style="display: none;"></div> <!-- Aquí se mostrará el nombre de la base de datos -->
-    <div id="entryFavicon" class="copy">
-    <img id="faviconImg" src="" alt="Favicon" style="width: 24px; height: 24px; display: none;">
-    </div>
-    <div id="entryIndex" class="copy">Index: Not available</div> <!-- Aquí se mostrará el índice -->
-    <div id="entryText" class="copy">No text selected yet.</div>
-    <div id="entryUrl" class="copy">No text selected yet.</div>
-    <button id="copyButton" class="action-btn2">Copy Text</button>
+        
+        <!-- Información de la entrada seleccionada -->
+        <div id="dbName" style="display: none;"></div>
+        <div id="entryFavicon" class="copy">
+            <img id="faviconImg" src="" alt="Favicon" style="width: 24px; height: 24px; display: none;">
+        </div>
+        <div id="entryIndex" class="copy">Index: Not available</div>
+        <div id="entryText" class="copy">No text selected yet.</div>
+        <div id="entryUrl" class="copy">No text selected yet.</div>
+        <button id="copyButton" class="action-btn2">Copy Text</button>
     </div>
 
     <div class="container">
-        <!-- FORJA Section -->
+        <!-- FORGE Section -->
         <input type="checkbox" id="toggleForja" class="toggle">
         <label for="toggleForja" class="toggle-label">FORGE 🔨 <span style="color: #cccccc;"></span></label>
         <div class="toggle-content">
             <label for="databaseSelect" class="secundarios">DWARF CHAMBER 🗃️ <span style="color: #cccccc;"> - Select a database</span></label>
-            <select id="databaseSelect" class="secundarios2"></select>
+            <select id="databaseSelect" class="secundarios2">
+                <option value="">Loading databases...</option>
+            </select>
              
+            <!-- Emoji Selector -->
             <div id="emojiSelector" class="emoji-selector">
-            <details id="emojiDropdown">
-             <summary style="cursor: pointer; font-size: 16px;">💠 Glyph Vault 💠 <span style="color: #cccccc;"> (click to expand emojis)</span></summary>
-            <div id="emojiList" style="margin-top: 10px; padding: 8px;"></div>
-            </details>
-            <p id="emojiCopyFeedback" style="color: green; display: none;">Emoji copied!</p>
+                <details id="emojiDropdown">
+                    <summary style="cursor: pointer; font-size: 16px;">💎 Glyph Vault 💎 <span style="color: #cccccc;"> (click to expand emojis)</span></summary>
+                    <div id="emojiList" style="margin-top: 10px; padding: 8px;"></div>
+                </details>
+                <p id="emojiCopyFeedback" style="color: green; display: none;">Emoji copied!</p>
             </div>
 
-            <button id="createDatabase" class="action-btn">FORJGE ⛏️ <span style="color: #cccccc;">- Create New Database</span></button>
+            <!-- Database Management Buttons -->
+            <button id="createParentDatabase" class="action-btn">FORGE PARENT ⛏️ <span style="color: #cccccc;">- Create Parent Database</span></button>
+            <button id="createChildDatabase" class="action-btn">FORGE CHILD 🔨 <span style="color: #cccccc;">- Create Child Database</span></button>
             <button id="editDatabase" class="action-btn">REFORGE 🛠️ <span style="color: #cccccc;"> - Edit Database</span></button>
-            <button id="deleteDatabase" class="delete-btn">DESTROY 🧝 <span style="color: #cccccc;"> - Delete Database</span></button>
-            <button id="export-csv" class="action-btn">Export to CSV</button>
-            <input type="file" id="importCSV" accept=".csv" style="display: none;">
-            <button id="importDatabase" class="action-btn">IMPORT 📥 <span style="color: #cccccc;"> - Import CSV</span></button>
+            <button id="deleteDatabase" class="delete-btn">DESTROY 🧨 <span style="color: #cccccc;"> - Delete Database</span></button>
+            
+            <!-- Single Database Import/Export -->
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(192, 160, 128, 0.3);">
+                <p style="color: antiquewhite; font-family: 'Righteous-Regular', sans-serif; font-size: 12px; margin: 5px 0;">SINGLE DATABASE:</p>
+                <button id="export-csv" class="action-btn">EXPORT 📤 <span style="color: #cccccc;"> - Export to CSV</span></button>
+                <input type="file" id="importCSV" accept=".csv" style="display: none;">
+                <button id="importDatabase" class="action-btn">IMPORT 📥 <span style="color: #cccccc;"> - Import CSV</span></button>
+            </div>
 
+            <!-- Parent Database Import/Export -->
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(192, 160, 128, 0.3);">
+                <p style="color: antiquewhite; font-family: 'Righteous-Regular', sans-serif; font-size: 12px; margin: 5px 0;">PARENT DATABASE (with children):</p>
+                <button id="export-parent" class="action-btn">EXPORT PARENT 📦 <span style="color: #cccccc;"> - Export Complete Structure</span></button>
+                <input type="file" id="importParentFile" accept=".json" style="display: none;">
+                <button id="importParent" class="action-btn">IMPORT PARENT 📥 <span style="color: #cccccc;"> - Import Complete Structure</span></button>
+            </div>
         </div>
     
-        <!-- RELIQUIAS ENANAS Section -->
+        <!-- RELICS Section -->
         <input type="checkbox" id="toggleReliquias" class="toggle">
-        <label for="toggleReliquias" class="toggle-label">RELICS 🏰  <span style="color: #cccccc;"></span></label>
+        <label for="toggleReliquias" class="toggle-label">RELICS 🏰 <span style="color: #cccccc;"></span></label>
         <div class="toggle-content">
             <input type="text" id="searchBar" placeholder="Search by index or text...">
             <ul id="entriesList" class="entries-list"></ul>
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="popup.js"></script>
     <script src="scripts/Butons.js"></script>
     <script src="scripts/Menu.js"></script>
-
-    
 </body>
 </html>
