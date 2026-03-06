@@ -19,7 +19,6 @@
     "notifications",
     "tabs",
     "clipboardWrite",
-    "clipboardRead",
     "activeTab"
   ],
   "host_permissions": [

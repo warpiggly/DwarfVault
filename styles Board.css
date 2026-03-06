@@ -403,3 +403,230 @@ body::-webkit-scrollbar-thumb {
 body::-webkit-scrollbar-thumb:hover {
     background: #8a6e2f;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEWBOARD — Bloques colapsables por base de datos
+   ═══════════════════════════════════════════════════════════════ */
+
+.db-section {
+    margin-bottom: 15px;
+    background-color: rgba(121, 86, 73, 0.3);
+    border-radius: 8px;
+    border: 2px solid #c0a080;
+    overflow: hidden;
+}
+
+.db-header {
+    padding: 12px 15px;
+    background-color: #795649;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+.db-header:hover { background-color: #8a6e2f; }
+
+.db-title-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.db-toggle-icon {
+    color: #FFD700;
+    font-size: 12px;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+.db-toggle-icon--open { transform: rotate(-180deg); }
+
+.db-title-text {
+    font-family: 'Righteous-Regular', sans-serif;
+    color: #FFD700;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.db-info-section {
+    display: flex;
+    gap: 15px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 12px;
+}
+.db-info-entries  { color: #d4c5a3; }
+.db-info-children { color: #ffc400; }
+.db-info-total    { color: #FFD700; font-weight: bold; }
+
+.db-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out;
+    background-color: rgba(121, 86, 73, 0.1);
+}
+.db-content-wrapper { padding: 10px; }
+
+.db-label {
+    font-family: 'Righteous-Regular', sans-serif;
+    color: #ffc400;
+    font-size: 13px;
+    margin-bottom: 8px;
+    margin-left: 5px;
+}
+.db-label--child  { margin-left: 15px; }
+.db-label--spaced { margin-top: 15px; }
+
+.db-child-divider {
+    height: 1px;
+    background-color: #c0a080;
+    margin: 15px 0;
+    opacity: 0.3;
+}
+
+.db-empty-child {
+    color: #d4c5a3;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 11px;
+    font-style: italic;
+    margin-left: 25px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEWBOARD — Wrapper de tabla + footer
+   ═══════════════════════════════════════════════════════════════ */
+
+.table-wrapper {
+    margin-bottom: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 2px solid #c0a080;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+.table-wrapper--child {
+    margin-left: 15px;
+    width: calc(100% - 15px);
+}
+
+.table-footer {
+    padding: 8px 12px;
+    background-color: #795649;
+    border-top: 2px solid #DAA520;
+    font-size: 10px;
+    color: #d4c5a3;
+    font-family: 'Righteous-Regular', sans-serif;
+    display: flex;
+    justify-content: space-between;
+}
+.table-footer-count { color: #FFD700; }
+.table-footer-name  { opacity: 0.7; }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEWBOARD — Cabeceras de columnas
+   ═══════════════════════════════════════════════════════════════ */
+
+.th-favicon {
+    width: 28px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="%23FFD700"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 14px;
+}
+.th-index  { width: 35px; text-align: center; }
+.th-source { width: 85px; }
+.th-date   { width: 75px; text-align: center; }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEWBOARD — Celdas de datos
+   ═══════════════════════════════════════════════════════════════ */
+
+.td-index {
+    text-align: center;
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 11px;
+    background-color: rgba(121, 86, 73, 0.15);
+    width: 35px;
+}
+
+.td-favicon { text-align: center; width: 28px; }
+.td-favicon__img {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    border: 1px solid rgba(192, 160, 128, 0.3);
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.td-favicon__placeholder { font-size: 16px; opacity: 0.4; }
+
+.td-text { position: relative; max-width: 150px; cursor: pointer; }
+.td-text__content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.td-text__span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #f4e5c3;
+    line-height: 1.4;
+    min-width: 0;
+}
+.td-text__copy-icon {
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+.td-text:hover .td-text__copy-icon { opacity: 0.6; }
+.td-text--copied { background-color: rgba(76, 175, 80, 0.3) !important; }
+
+.td-url { width: 85px; min-width: 85px; max-width: 85px; }
+.td-url__container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+}
+.td-url__icon     { font-size: 11px; opacity: 0.7; flex-shrink: 0; }
+.td-url__domain   { font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-url__empty    { color: #d4c5a3; opacity: 0.5; font-size: 10px; }
+.td-url__fallback { font-size: 9px; }
+
+.td-date { text-align: center; width: 75px; min-width: 75px; max-width: 75px; font-size: 9px; color: #d4c5a3; }
+.td-date__container { display: flex; flex-direction: column; gap: 2px; }
+.td-date__day  { font-weight: bold; font-size: 9px; }
+.td-date__time { font-size: 8px; opacity: 0.7; }
+.td-date--empty { opacity: 0.5; }
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEWBOARD — Toast de copia
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes slideOut {
+    from { transform: translateX(0);     opacity: 1; }
+    to   { transform: translateX(400px); opacity: 0; }
+}
+
+.copy-notification {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    background-color: rgba(76, 175, 80, 0.95);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 11px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    animation: slideIn 0.2s ease-out;
+}
+.copy-notification--hiding { animation: slideOut 0.2s ease-out forwards; }
