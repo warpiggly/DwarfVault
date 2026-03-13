@@ -160,7 +160,7 @@ async function buildContextMenu(db) {
     // ── 2. Menú VER / COPIAR datos guardados ─────────────────────────────────
     chrome.contextMenus.create({
         id:       'viewTextRoot',
-        title:    '👁️ View Saved Data 🏰',
+        title:    'The Dwarf\'s Vault',
         contexts: ['page']
     });
 
