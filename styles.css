@@ -681,7 +681,17 @@ a:active {
 }
 
 .emoji-selector{
-
     font-family:'Righteous-Regular', sans-serif ;
+}
+
+/* Estado activo del botón ⛓ LINK en Quick Access.
+   Reemplaza el marrón base por un verde oscuro para indicar que está vinculado. */
+.link-btn-active {
+    background-color: #2f6b47;
+    border-color: #5aad77;
+    color: #d4fce6;
+}
+.link-btn-active:hover {
+    background-color: #3a824f;
 }
 

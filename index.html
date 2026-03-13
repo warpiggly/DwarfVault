@@ -59,6 +59,24 @@
                 <option value="">Loading databases...</option>
             </select>
              
+            <!-- Quick Access: configuración del menú contextual rápido -->
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(192, 160, 128, 0.3);">
+                <p style="color: antiquewhite; font-family: 'Righteous-Regular', sans-serif; font-size: 12px; margin: 5px 0;">QUICK ACCESS — CONTEXT MENU:</p>
+
+                <label for="favoritesDbSelect" class="secundarios">⭐ FAVORITES <span style="color: #cccccc;"> — Select active database</span></label>
+                <select id="favoritesDbSelect" class="secundarios2">
+                    <option value="">(None)</option>
+                </select>
+
+                <!-- Botón de sincronización: cuando está activo, cambiar uno cambia el otro -->
+                <button id="linkQuickAccess" class="action-btn" style="width:100%;">⛓️ LINK — Sync Favorites &amp; Links</button>
+
+                <label for="linksDbSelect" class="secundarios">🔗 LINKS <span style="color: #cccccc;"> — Select active database</span></label>
+                <select id="linksDbSelect" class="secundarios2">
+                    <option value="">(None)</option>
+                </select>
+            </div>
+
             <!-- Emoji Selector -->
             <div id="emojiSelector" class="emoji-selector">
                 <details id="emojiDropdown">

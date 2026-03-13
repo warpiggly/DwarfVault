@@ -108,9 +108,20 @@ function buildEntryTitle(entry, idx) {
 
 /**
  * Reconstruye el menú contextual a partir de las bases de datos existentes.
- * Secciones:
- *   1. "Save to Vault"  → aparece al seleccionar texto (contexts: selection).
- *   2. "View Saved Data" → aparece en cualquier página (contexts: page).
+ *
+ * Estructura:
+ *   [con texto seleccionado]
+ *   📥 Save to Vault → BD padre → BD hija
+ *
+ *   [siempre visible]
+ *   The Dwarf's Vault
+ *     ├── ⭐ Favorites → ítems (copia directa al portapapeles, 2 clics)
+ *     ├── 🔗 Links     → ítems (abre URL en nueva pestaña, 2 clics)
+ *     ├── ─────────────
+ *     └── 📂 Vault     → estructura completa padre/hijo (acceso avanzado)
+ *
+ * Favorites y Links solo aparecen si el usuario configuró una BD activa
+ * desde index.html. El límite es 15 ítems por sección para no saturar el menú.
  *
  * @param {IDBDatabase} db
  */
@@ -128,6 +139,12 @@ async function buildContextMenu(db) {
 
     // Actualizar caché global
     dbItems = databases;
+
+    // Leer qué BD eligió el usuario para Favorites y Links en index.html
+    const { activeFavoritesDb, activeLinksDb } = await chrome.storage.local.get([
+        'activeFavoritesDb',
+        'activeLinksDb'
+    ]);
 
     const parentDatabases = databases.filter(d => !d.parentDatabase);
     const childDatabases  = databases.filter(d =>  d.parentDatabase);
@@ -150,7 +167,6 @@ async function buildContextMenu(db) {
             contexts: ['selection']
         });
 
-        // Sub-items: bases de datos hijas bajo el padre
         children.forEach(childDb => {
             chrome.contextMenus.create({
                 id:       `save::${childDb.name}`,
@@ -161,29 +177,104 @@ async function buildContextMenu(db) {
         });
     });
 
-    // ── 2. Menú VER / COPIAR datos guardados ─────────────────────────────────
+    // ── 2. Menú VER datos guardados ───────────────────────────────────────────
     chrome.contextMenus.create({
         id:       'viewTextRoot',
-        title:    'The Dwarf\'s Vault',
+        title:    "The Dwarf's Vault 🏰",
+        contexts: ['page']
+    });
+
+    // ── 2a. ⭐ Favorites — copia directa al portapapeles ─────────────────────
+    // Muestra los ítems de la BD activa. Al hacer clic, el texto se copia
+    // al portapapeles sin abrir el popup (fav::DBName::index).
+    const favDb = activeFavoritesDb
+        ? databases.find(d => d.name === activeFavoritesDb)
+        : null;
+
+    if (favDb && favDb.entries.length > 0) {
+        chrome.contextMenus.create({
+            id:       'favsRoot',
+            parentId: 'viewTextRoot',
+            title:    `⭐ Favorites — ${favDb.name}`,
+            contexts: ['page']
+        });
+
+        const limit = Math.min(favDb.entries.length, 15);
+        for (let i = 0; i < limit; i++) {
+            const entry   = favDb.entries[i];
+            // Primera línea como snippet (sin \n para el título del menú)
+            const snippet = entry.text.split('\n')[0].substring(0, 40);
+            const ellipsis = entry.text.length > 40 ? '...' : '';
+            chrome.contextMenus.create({
+                id:       `fav::${favDb.name}::${i}`,
+                parentId: 'favsRoot',
+                title:    `${i + 1}: ${snippet}${ellipsis}`,
+                contexts: ['page']
+            });
+        }
+    }
+
+    // ── 2b. 🔗 Links — abre URL directamente en nueva pestaña ───────────────
+    // Muestra los ítems de la BD activa. Al hacer clic, abre entry.url
+    // en una nueva pestaña sin abrir el popup (link::DBName::index).
+    const linkDb = activeLinksDb
+        ? databases.find(d => d.name === activeLinksDb)
+        : null;
+
+    if (linkDb && linkDb.entries.length > 0) {
+        chrome.contextMenus.create({
+            id:       'linksRoot',
+            parentId: 'viewTextRoot',
+            title:    `🔗 Links — ${linkDb.name}`,
+            contexts: ['page']
+        });
+
+        const limit = Math.min(linkDb.entries.length, 15);
+        for (let i = 0; i < limit; i++) {
+            const entry    = linkDb.entries[i];
+            const hostname = getHostname(entry.url);
+            // Usar el texto guardado como etiqueta; si no hay texto, usar el hostname
+            const label = (entry.text.split('\n')[0] || hostname || `Link ${i + 1}`).substring(0, 40);
+            chrome.contextMenus.create({
+                id:       `link::${linkDb.name}::${i}`,
+                parentId: 'linksRoot',
+                title:    `${i + 1}: ${label}`,
+                contexts: ['page']
+            });
+        }
+    }
+
+    // Separador entre Quick Access (⭐/🔗) y el Vault completo
+    if ((favDb && favDb.entries.length > 0) || (linkDb && linkDb.entries.length > 0)) {
+        chrome.contextMenus.create({
+            id:       'quickAccessSep',
+            parentId: 'viewTextRoot',
+            type:     'separator',
+            contexts: ['page']
+        });
+    }
+
+    // ── 2c. 📂 Vault — estructura completa (acceso avanzado) ─────────────────
+    // Mismo comportamiento que antes: abre el popup con los datos de la entrada.
+    chrome.contextMenus.create({
+        id:       'vaultSection',
+        parentId: 'viewTextRoot',
+        title:    '📂 Vault',
         contexts: ['page']
     });
 
     parentDatabases.forEach((dbItem, i) => {
-        const children = childDatabases.filter(c => c.parentDatabase === dbItem.name);
-
-        // 📂 si tiene bases de datos hijas (es padre real)
-        // 🗃️ si es una base de datos independiente sin hijos
+        const children  = childDatabases.filter(c => c.parentDatabase === dbItem.name);
         const dbIcon    = children.length > 0 ? '🗃️' : '📂';
         const childInfo = children.length > 0 ? ` [${children.length} sub-DB]` : '';
 
         chrome.contextMenus.create({
             id:       `viewParent::${dbItem.name}`,
-            parentId: 'viewTextRoot',
+            parentId: 'vaultSection',
             title:    `${i + 1}. ${dbIcon} ${dbItem.name}${childInfo}`,
             contexts: ['page']
         });
 
-        // Entradas propias del padre
         dbItem.entries.forEach((entry, idx) => {
             chrome.contextMenus.create({
                 id:       `copy::${dbItem.name}::${idx}`,
@@ -193,7 +284,6 @@ async function buildContextMenu(db) {
             });
         });
 
-        // Separador si el padre tiene entradas propias Y tiene hijas
         if (dbItem.entries.length > 0 && children.length > 0) {
             chrome.contextMenus.create({
                 id:       `sep::${dbItem.name}`,
@@ -203,7 +293,6 @@ async function buildContextMenu(db) {
             });
         }
 
-        // Bases de datos hijas y sus entradas
         children.forEach(childDb => {
             chrome.contextMenus.create({
                 id:       `viewChild::${childDb.name}`,
@@ -269,6 +358,85 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         openDatabase().then(db =>
             saveTextToDatabase(db, dbName, textToSave, tab.url, tab.favIconUrl)
         );
+        return;
+    }
+
+    // ── ⭐ Favorites — copia el texto directamente al portapapeles ────────────
+    // No abre el popup. El texto se copia en la pestaña activa mediante
+    // executeScript, que hereda el gesto de usuario del clic de menú contextual.
+    if (menuItemId.startsWith('fav::')) {
+        const withoutPrefix = menuItemId.slice('fav::'.length);
+        const lastSep       = withoutPrefix.lastIndexOf('::');
+        const dbName        = withoutPrefix.slice(0, lastSep);
+        const entryIndex    = parseInt(withoutPrefix.slice(lastSep + 2), 10);
+
+        const dbItem = dbItems.find(d => d.name === dbName);
+        if (!dbItem || entryIndex < 0 || entryIndex >= dbItem.entries.length) return;
+
+        const textToCopy = dbItem.entries[entryIndex].text;
+
+        try {
+            // Inyectar la copia en la pestaña activa.
+            //
+            // MÉTODO PRIMARIO: document.execCommand('copy')
+            //   - Síncrono, no requiere permisos de clipboard en la página.
+            //   - Funciona siempre que el tab sea el activo (lo es: el usuario
+            //     acaba de hacer clic derecho en él).
+            //
+            // MÉTODO SECUNDARIO: navigator.clipboard.writeText()
+            //   - Solo se intenta si execCommand devuelve false.
+            //   - Requiere HTTPS + clipboard-write en la página → intermitente.
+            //   - Se dispara sin await para no bloquear si falla silenciosamente.
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: (text) => {
+                    // Crear un textarea invisible, seleccionar el texto y copiar
+                    const el = document.createElement('textarea');
+                    el.value = text;
+                    el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none';
+                    document.body.appendChild(el);
+                    el.focus();
+                    el.select();
+                    const ok = document.execCommand('copy'); // eslint-disable-line
+                    document.body.removeChild(el);
+
+                    // Si execCommand falló (algunos iframes restringidos), intentar
+                    // clipboard API sin bloquear — la promesa corre en segundo plano.
+                    if (!ok && navigator.clipboard) {
+                        navigator.clipboard.writeText(text).catch(() => {});
+                    }
+                    return ok;
+                },
+                args: [textToCopy]
+            });
+        } catch {
+            // La pestaña no acepta scripts (chrome://, extensiones, PDFs, etc.)
+        }
+
+        // Notificación de confirmación visible al usuario
+        const preview = textToCopy.split('\n')[0].substring(0, 60);
+        chrome.notifications.create({
+            type:    'basic',
+            iconUrl: 'icons/icon48.png',
+            title:   '⭐ Copiado al portapapeles',
+            message: preview + (textToCopy.length > 60 ? '...' : '')
+        });
+        return;
+    }
+
+    // ── 🔗 Links — abre la URL en una nueva pestaña ───────────────────────────
+    // No abre el popup. Usa chrome.tabs.create con la URL guardada en la entrada.
+    if (menuItemId.startsWith('link::')) {
+        const withoutPrefix = menuItemId.slice('link::'.length);
+        const lastSep       = withoutPrefix.lastIndexOf('::');
+        const dbName        = withoutPrefix.slice(0, lastSep);
+        const entryIndex    = parseInt(withoutPrefix.slice(lastSep + 2), 10);
+
+        const dbItem = dbItems.find(d => d.name === dbName);
+        if (!dbItem || entryIndex < 0 || entryIndex >= dbItem.entries.length) return;
+
+        const url = dbItem.entries[entryIndex].url;
+        if (url) chrome.tabs.create({ url });
         return;
     }
 

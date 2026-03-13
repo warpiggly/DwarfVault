@@ -101,10 +101,70 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Cambio de BD en el selector → recargar entradas y limpiar búsqueda
+    // Cambio de BD en el selector principal → recargar entradas y limpiar búsqueda
     document.getElementById('databaseSelect').addEventListener('change', (e) => {
         document.getElementById('searchBar').value = '';
         loadEntries(e.target.value);
+    });
+
+    // ── Quick Access: selección de BD activa para Favorites y Links ──────────
+
+    const linkBtn          = document.getElementById('linkQuickAccess');
+    const favSelect        = document.getElementById('favoritesDbSelect');
+    const linksSelect      = document.getElementById('linksDbSelect');
+
+    // Restaurar el estado del botón de enlace al abrir el popup
+    chrome.storage.local.get('quickAccessLinked', ({ quickAccessLinked }) => {
+        setLinkButtonState(linkBtn, !!quickAccessLinked);
+    });
+
+    // Toggle del botón ⛓ LINK — activa/desactiva la sincronización
+    linkBtn.addEventListener('click', () => {
+        chrome.storage.local.get('quickAccessLinked', ({ quickAccessLinked }) => {
+            const newLinked = !quickAccessLinked;
+            chrome.storage.local.set({ quickAccessLinked: newLinked }, () => {
+                setLinkButtonState(linkBtn, newLinked);
+
+                // Al activar el enlace, sincroniza Links con el valor actual de Favorites
+                if (newLinked) {
+                    const favValue = favSelect.value;
+                    linksSelect.value = favValue;
+                    chrome.storage.local.set({ activeLinksDb: favValue || null }, () => {
+                        chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+                    });
+                }
+            });
+        });
+    });
+
+    // Cambio de ⭐ Favorites — si está vinculado, arrastra a Links también
+    favSelect.addEventListener('change', (e) => {
+        const value = e.target.value || null;
+        chrome.storage.local.get('quickAccessLinked', ({ quickAccessLinked }) => {
+            const updates = { activeFavoritesDb: value };
+            if (quickAccessLinked) {
+                updates.activeLinksDb = value;
+                linksSelect.value = e.target.value;
+            }
+            chrome.storage.local.set(updates, () => {
+                chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+            });
+        });
+    });
+
+    // Cambio de 🔗 Links — si está vinculado, arrastra a Favorites también
+    linksSelect.addEventListener('change', (e) => {
+        const value = e.target.value || null;
+        chrome.storage.local.get('quickAccessLinked', ({ quickAccessLinked }) => {
+            const updates = { activeLinksDb: value };
+            if (quickAccessLinked) {
+                updates.activeFavoritesDb = value;
+                favSelect.value = e.target.value;
+            }
+            chrome.storage.local.set(updates, () => {
+                chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+            });
+        });
     });
 
     // Renombrar BD seleccionada
@@ -297,8 +357,9 @@ function createDatabase(dbName, parentDatabase = null) {
 }
 
 /**
- * Carga todas las bases de datos y actualiza el selector.
- * Recibe la conexión abierta por openDatabase(loadDatabases).
+ * Carga todas las bases de datos y actualiza:
+ *  - El selector principal (DWARF CHAMBER)
+ *  - Los selectores de Quick Access (⭐ Favorites y 🔗 Links)
  *
  * @param {IDBDatabase} db
  */
@@ -306,30 +367,31 @@ function loadDatabases(db) {
     const store = db.transaction('databases', 'readonly').objectStore('databases');
     store.getAll().onsuccess = (event) => {
         const databases = event.target.result;
-        const select    = document.getElementById('databaseSelect');
-        const prev      = select.value; // conservar selección actual si sigue existiendo
+
+        // ── Selector principal (DWARF CHAMBER) ───────────────────────────────
+        const select = document.getElementById('databaseSelect');
+        const prev   = select.value;
         select.innerHTML = '';
 
         const parents  = databases.filter(d => !d.parentDatabase);
         const children = databases.filter(d =>  d.parentDatabase);
 
         parents.forEach(dbItem => {
-            const opt    = document.createElement('option');
-            opt.value    = dbItem.name;
+            const opt       = document.createElement('option');
+            opt.value       = dbItem.name;
             opt.textContent = dbItem.name;
             select.appendChild(opt);
 
             children
                 .filter(c => c.parentDatabase === dbItem.name)
                 .forEach(childDb => {
-                    const childOpt    = document.createElement('option');
-                    childOpt.value    = childDb.name;
+                    const childOpt       = document.createElement('option');
+                    childOpt.value       = childDb.name;
                     childOpt.textContent = `  ↳ ${childDb.name}`;
                     select.appendChild(childOpt);
                 });
         });
 
-        // Restaurar selección previa o seleccionar la primera opción
         if (prev && select.querySelector(`option[value="${prev.replace(/"/g, '\\"')}"]`)) {
             select.value = prev;
         } else if (select.options.length > 0) {
@@ -337,7 +399,57 @@ function loadDatabases(db) {
         }
 
         if (select.value) loadEntries(select.value);
+
+        // ── Selectores de Quick Access ────────────────────────────────────────
+        // Leer la configuración guardada para restaurar la selección activa.
+        chrome.storage.local.get(['activeFavoritesDb', 'activeLinksDb'], (settings) => {
+            populateQuickAccessSelect('favoritesDbSelect', databases, settings.activeFavoritesDb);
+            populateQuickAccessSelect('linksDbSelect',     databases, settings.activeLinksDb);
+        });
     };
+}
+
+/**
+ * Llena un selector de Quick Access con todas las bases de datos disponibles
+ * y restaura la selección guardada.
+ *
+ * @param {string}   selectId    - ID del elemento <select> en el DOM.
+ * @param {Array}    databases   - Lista completa de bases de datos.
+ * @param {string|null} activeDb - Nombre de la BD actualmente activa (puede ser null).
+ */
+function populateQuickAccessSelect(selectId, databases, activeDb) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    select.innerHTML = '';
+
+    // Opción vacía — "ninguna"
+    const none       = document.createElement('option');
+    none.value       = '';
+    none.textContent = '(None)';
+    select.appendChild(none);
+
+    const parents  = databases.filter(d => !d.parentDatabase);
+    const children = databases.filter(d =>  d.parentDatabase);
+
+    parents.forEach(dbItem => {
+        const opt       = document.createElement('option');
+        opt.value       = dbItem.name;
+        opt.textContent = dbItem.name;
+        select.appendChild(opt);
+
+        children
+            .filter(c => c.parentDatabase === dbItem.name)
+            .forEach(childDb => {
+                const childOpt       = document.createElement('option');
+                childOpt.value       = childDb.name;
+                childOpt.textContent = `  ↳ ${childDb.name}`;
+                select.appendChild(childOpt);
+            });
+    });
+
+    // Restaurar la selección activa guardada
+    select.value = activeDb || '';
 }
 
 /**
@@ -784,6 +896,24 @@ function createImportedDatabase(dbName, entries, parentDatabase) {
 }
 
 // ── Utilidades ────────────────────────────────────────────────────────────────
+
+/**
+ * Actualiza el aspecto visual del botón ⛓ LINK según si está activo o no.
+ * Activo  → verde + texto "LINKED ✓"
+ * Inactivo → marrón base + texto "LINK"
+ *
+ * @param {HTMLElement} btn
+ * @param {boolean}     linked
+ */
+function setLinkButtonState(btn, linked) {
+    if (linked) {
+        btn.classList.add('link-btn-active');
+        btn.textContent = '⛓️ LINKED ✓ — Favorites & Links in sync';
+    } else {
+        btn.classList.remove('link-btn-active');
+        btn.textContent = '⛓️ LINK — Sync Favorites & Links';
+    }
+}
 
 /**
  * Descarga un Blob como archivo en el navegador.
