@@ -367,6 +367,14 @@ h2 {
     color: #e0e0e0;
 }
 
+/* Preserva saltos de línea, espacios y tabulaciones del texto guardado.
+   Sin esta regla el navegador colapsa los \n a espacios simples. */
+#entryText {
+    white-space: pre-wrap;   /* renderiza \n como salto visual             */
+    word-break: break-word;  /* evita desbordamiento en textos sin espacios */
+    text-align: left;
+}
+
 .action-btn2 {
     font-family: 'Righteous-Regular';
     display: block;           /* Cambiar a block para poder aplicar márgenes */

@@ -40,7 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (copyButton && entryTextEl) {
         copyButton.addEventListener('click', () => {
-            const text = entryTextEl.textContent.trim();
+            // Usar el texto original guardado en dataset para preservar saltos de línea
+            // y espacios exactos. textContent.trim() los eliminaría.
+            const text = entryTextEl.dataset.rawText;
             if (!text || text === 'No text selected yet.') {
                 alert('No hay texto para copiar.');
                 return;
@@ -240,7 +242,12 @@ function updateSelectedEntryPanel(result) {
         `INDEX: ${parseInt(result.entryIndex, 10) + 1}`;
     document.getElementById('dbName').textContent =
         `Database: ${result.dbName}`;
-    document.getElementById('entryText').textContent = result.selectedText;
+    // Guardar el texto original en dataset.rawText para que el botón "Copy Text"
+    // copie exactamente lo guardado (con saltos de línea, espacios, etc.).
+    // textContent lo renderiza visualmente gracias a white-space:pre-wrap en CSS.
+    const entryTextEl2 = document.getElementById('entryText');
+    entryTextEl2.textContent    = result.selectedText;
+    entryTextEl2.dataset.rawText = result.selectedText;
 
     // Favicon
     const faviconImg = document.getElementById('faviconImg');
@@ -389,8 +396,13 @@ function renderEntries(dbName, entries) {
             contentDiv.appendChild(favicon);
         }
 
-        const textSpan       = document.createElement('span');
-        textSpan.textContent = `${originalIndex + 1}. ${entry.text}`;
+        const textSpan = document.createElement('span');
+        // Mostrar solo la primera línea como preview en la lista para no romper el layout.
+        // El texto completo (con saltos de línea) vive en entry.text y se copia
+        // desde el panel superior al usar el botón "Copy Text".
+        const preview        = entry.text.split('\n')[0] || entry.text;
+        textSpan.textContent = `${originalIndex + 1}. ${preview}`;
+        textSpan.title       = entry.text; // tooltip con el texto completo al hacer hover
         contentDiv.appendChild(textSpan);
 
         li.appendChild(contentDiv);

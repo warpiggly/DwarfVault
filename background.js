@@ -19,6 +19,10 @@ const DB_VERSION = 2;
 /** Caché en memoria de las bases de datos para resolver clics rápidos. */
 let dbItems = [];
 
+// Nota: ya no usamos una variable en memoria para el texto capturado.
+// Usamos chrome.storage.session para que el texto persista aunque Chrome
+// termine y reactive el service worker entre el contextmenu y el onClicked.
+
 // ── Inicialización ────────────────────────────────────────────────────────────
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -222,14 +226,48 @@ async function buildContextMenu(db) {
 
 // ── Manejador de clics del menú contextual ────────────────────────────────────
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+/**
+ * Obtiene el texto seleccionado directamente desde la pestaña activa.
+ *
+ * chrome.scripting.executeScript inyecta código en la página EN EL MOMENTO
+ * del clic, cuando la selección aún está activa. window.getSelection().toString()
+ * preserva \n reales entre párrafos; info.selectionText los colapsa en espacios.
+ *
+ * @param {number} tabId
+ * @returns {Promise<string>} - Texto con saltos de línea originales, o '' si falla.
+ */
+async function getSelectionFromTab(tabId) {
+    try {
+        const [{ result }] = await chrome.scripting.executeScript({
+            target: { tabId },
+            // Esta función se ejecuta dentro de la página, no en el SW.
+            func: () => window.getSelection()?.toString() ?? ''
+        });
+        return result ?? '';
+    } catch {
+        // Páginas restringidas (chrome://, extensiones, PDFs, etc.)
+        return '';
+    }
+}
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const { menuItemId, selectionText } = info;
 
     // Guardar texto seleccionado en una BD
     if (menuItemId.startsWith('save::') && selectionText?.trim()) {
         const dbName = menuItemId.slice('save::'.length);
+
+        // Obtener el texto con formato original (saltos de línea, espacios).
+        // getSelectionFromTab() usa executeScript que corre en la pestaña ahora mismo,
+        // cuando la selección sigue activa. Es la única forma fiable de capturar \n.
+        const captured = await getSelectionFromTab(tab.id);
+
+        // Si executeScript no pudo ejecutarse (página restringida), caer en
+        // info.selectionText como último recurso (sin saltos de línea).
+        const textToSave = captured.trim() || selectionText.trim();
+
         openDatabase().then(db =>
-            saveTextToDatabase(db, dbName, selectionText.trim(), tab.url, tab.favIconUrl)
+            saveTextToDatabase(db, dbName, textToSave, tab.url, tab.favIconUrl)
         );
         return;
     }
