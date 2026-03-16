@@ -54,10 +54,7 @@
         <input type="checkbox" id="toggleForja" class="toggle">
         <label for="toggleForja" class="toggle-label">FORGE 🔨 <span style="color: #cccccc;"></span></label>
         <div class="toggle-content">
-            <label for="databaseSelect" class="secundarios">DWARF CHAMBER 🗃️ <span style="color: #cccccc;"> - Select a database</span></label>
-            <select id="databaseSelect" class="secundarios2">
-                <option value="">Loading databases...</option>
-            </select>
+            
              
             <!-- Quick Access: configuración del menú contextual rápido -->
             <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(192, 160, 128, 0.3);">
@@ -77,11 +74,16 @@
                 </select>
             </div>
 
+            <label for="databaseSelect" class="secundarios">DWARF CHAMBER 🗃️ <span style="color: #cccccc;"> - Select a database</span></label>
+            <select id="databaseSelect" class="secundarios2">
+                <option value="">Loading databases...</option>
+            </select>
+
             <!-- Emoji Selector -->
             <div id="emojiSelector" class="emoji-selector">
                 <details id="emojiDropdown">
                     <summary style="cursor: pointer; font-size: 16px;">💎 Glyph Vault 💎 <span style="color: #cccccc;"> (click to expand emojis)</span></summary>
-                    <div id="emojiList" style="margin-top: 10px; padding: 8px;"></div>
+                    <div id="emojiList" style="margin-top: 60px; padding: 46px;"></div>
                 </details>
                 <p id="emojiCopyFeedback" style="color: green; display: none;">Emoji copied!</p>
             </div>
