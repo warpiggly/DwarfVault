@@ -230,55 +230,13 @@ input:focus, select:focus {
     background-color: rgba(248, 248, 248, 0.6); /* Fondo gris claro con transparencia */
 }
 
-.action-btn {
-    padding: 10px 20px;
-    background-color: #795649; /* A dark wood-like brown */
-    color: #f4e5c3; /* A parchment-like off-white */
-    border: 2px solid #c0a080; /* A lighter brown border */
-    font-family: 'Righteous-Regular', sans-serif;
-    font-size: 12px;
-    text-shadow: 1px 1px 0px #a67c52; /* Gives a bit of depth to the text */
-    box-shadow: 2px 2px 0px #a67c52; /* Simulates an inset look */
-    border-radius: 4px; /* Slightly rounded corners */
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
+/* .action-btn hereda todos los estilos de `button` (mismo elemento HTML).
+   Solo sobreescribimos lo que difiere: el tamaño de fuente. */
+.action-btn { font-size: 12px; }
 
-.action-btn:hover {
-    background-color: #8a6e2f; /* A lighter, worn wood color for hover */
-    box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.3); /* A more pronounced shadow for hover */
-}
-
-.action-btn:active{
-    box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
-    transform: translateY(2px); /* Moves the button down to simulate a press */
-}
-
-/* Estilos específicos para el botón de eliminar */
-.delete-btn {
-    padding: 10px 20px;
-    background-color: #795649; /* A dark wood-like brown */
-    color: #f4e5c3; /* A parchment-like off-white */
-    border: 2px solid #c0a080; /* A lighter brown border */
-    font-family: 'Righteous-Regular', sans-serif;
-    font-size: 12px;
-    text-shadow: 1px 1px 0px #a67c52; /* Gives a bit of depth to the text */
-    box-shadow: 2px 2px 0px #a67c52; /* Simulates an inset look */
-    border-radius: 4px; /* Slightly rounded corners */
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.delete-btn:hover {
-    background-color: #8a2f2f; /* A lighter, worn wood color for hover */
-    box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.3); /* A more pronounced shadow for hover */
-}
-
-.delete-btn:active{
-    box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
-    transform: translateY(2px); /* Moves the button down to simulate a press */
-
-}
+/* .delete-btn igual que .action-btn, pero con hover en rojo. */
+.delete-btn { font-size: 12px; }
+.delete-btn:hover { background-color: #8a2f2f; }
 
 .entries-list {
     font-family: 'Righteous-Regular';
@@ -308,10 +266,25 @@ input:focus, select:focus {
 
 .entries-list img {
     display: block;
-    margin: 10px auto; /* Centra la imagen horizontalmente */
+    margin: 10px auto;
     max-width: 150px;
     height: auto;
     border-radius: 5px;
+}
+
+/* Contenedor de cada entrada en la lista RELICS */
+.entry-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+}
+
+.entry-favicon {
+    flex-shrink: 0;
+    border-radius: 2px;
 }
 
 .secundarios {
@@ -394,6 +367,14 @@ h2 {
     color: #e0e0e0;
 }
 
+/* Preserva saltos de línea, espacios y tabulaciones del texto guardado.
+   Sin esta regla el navegador colapsa los \n a espacios simples. */
+#entryText {
+    white-space: pre-wrap;   /* renderiza \n como salto visual             */
+    word-break: break-word;  /* evita desbordamiento en textos sin espacios */
+    text-align: left;
+}
+
 .action-btn2 {
     font-family: 'Righteous-Regular';
     display: block;           /* Cambiar a block para poder aplicar márgenes */
@@ -461,12 +442,12 @@ h2 {
 /* Para mover el texto libremente */
 .toggle-label {
     font-family: 'SofadiOne-Regular';
-    position: absolute; /* Permite mover el título libremente */
-    top: 20; /* Ajusta según sea necesario */
-    left: 10; /* Ajusta según sea necesario */
-    font-size: 20px; /* Tamaño de la fuente */
-    color: rgb(44, 44, 44); /* Color del texto */
-    text-align: center; /* Centra el texto */
+    position: absolute;
+    top: 20px;   /* corregido: faltaba la unidad px */
+    left: 10px;  /* corregido: faltaba la unidad px */
+    font-size: 20px;
+    color: rgb(44, 44, 44);
+    text-align: center;
     font-weight: bold;
 }
 /* Permitir que el contenido dentro del área se mueva libremente */
@@ -700,7 +681,17 @@ a:active {
 }
 
 .emoji-selector{
-
     font-family:'Righteous-Regular', sans-serif ;
+}
+
+/* Estado activo del botón ⛓ LINK en Quick Access.
+   Reemplaza el marrón base por un verde oscuro para indicar que está vinculado. */
+.link-btn-active {
+    background-color: #2f6b47;
+    border-color: #5aad77;
+    color: #d4fce6;
+}
+.link-btn-active:hover {
+    background-color: #3a824f;
 }
 

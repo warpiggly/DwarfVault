@@ -16,10 +16,10 @@
   "permissions": [
     "contextMenus",
     "storage",
+    "scripting",
     "notifications",
     "tabs",
     "clipboardWrite",
-    "clipboardRead",
     "activeTab"
   ],
   "host_permissions": [
@@ -33,6 +33,11 @@
         {
             "matches": ["<all_urls>"],
             "js": ["scripts/Butons.js"]
+        },
+        {
+            "matches": ["<all_urls>"],
+            "js": ["scripts/content.js"],
+            "run_at": "document_idle"
         }
     ],
   "action": {
