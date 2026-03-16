@@ -180,7 +180,7 @@ async function buildContextMenu(db) {
     // ── 2. Menú VER datos guardados ───────────────────────────────────────────
     chrome.contextMenus.create({
         id:       'viewTextRoot',
-        title:    "The Dwarf's Vault 🏰",
+        title:    "The Dwarf's Vault",
         contexts: ['page']
     });
 
