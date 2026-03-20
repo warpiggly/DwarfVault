@@ -243,18 +243,60 @@ async function buildContextMenu(db) {
             });
         }
     }
+    // Separador entre Set Active Vault / Quick Access y el Vault completo
+    chrome.contextMenus.create({
+        id:       'quickAccessSep',
+        parentId: 'viewTextRoot',
+        type:     'separator',
+        contexts: ['page']
+    });
+    // ── 2c. ⚙️ Set Active Vault — cambiar Favorites/Links desde el menú ────
+    // NUEVO: Submenú que lista todas las BD disponibles para que el usuario
+    // pueda cambiar la tabla activa de Favorites y Links sin abrir el popup.
+    // Al seleccionar una tabla, se actualizan AMBOS (activeFavoritesDb y
+    // activeLinksDb) en chrome.storage.local y se reconstruye el menú.
+    chrome.contextMenus.create({
+        id:       'setActiveRoot',
+        parentId: 'viewTextRoot',
+        title:    '⚙️ Set Active Vault',
+        contexts: ['page']
+    });
 
-    // Separador entre Quick Access (⭐/🔗) y el Vault completo
-    if ((favDb && favDb.entries.length > 0) || (linkDb && linkDb.entries.length > 0)) {
+    // Opción para desactivar Quick Access (ninguna tabla activa)
+    const noneActive = !activeFavoritesDb && !activeLinksDb;
+    chrome.contextMenus.create({
+        id:       'setActive::(None)',
+        parentId: 'setActiveRoot',
+        title:    `${noneActive ? '✓ ' : ''}(None) — Disable Quick Access`,
+        contexts: ['page']
+    });
+
+    // Listar todas las BD con jerarquía, marcando la activa con ✓
+    parentDatabases.forEach((dbItem, i) => {
+        const isActive = dbItem.name === activeFavoritesDb;
         chrome.contextMenus.create({
-            id:       'quickAccessSep',
-            parentId: 'viewTextRoot',
-            type:     'separator',
+            id:       `setActive::${dbItem.name}`,
+            parentId: 'setActiveRoot',
+            title:    `${isActive ? '✓ ' : ''}${i + 1}. ${dbItem.name} (${dbItem.entries.length})`,
             contexts: ['page']
         });
-    }
 
-    // ── 2c. 📂 Vault — estructura completa (acceso avanzado) ─────────────────
+        // Hijas de este padre
+        const children = childDatabases.filter(c => c.parentDatabase === dbItem.name);
+        children.forEach(childDb => {
+            const isChildActive = childDb.name === activeFavoritesDb;
+            chrome.contextMenus.create({
+                id:       `setActive::${childDb.name}`,
+                parentId: 'setActiveRoot',
+                title:    `${isChildActive ? '✓ ' : ''}  ↳ ${childDb.name} (${childDb.entries.length})`,
+                contexts: ['page']
+            });
+        });
+    });
+
+
+
+    // ── 2d. 📂 Vault — estructura completa (acceso avanzado) ─────────────────
     // Mismo comportamiento que antes: abre el popup con los datos de la entrada.
     chrome.contextMenus.create({
         id:       'vaultSection',
@@ -449,6 +491,35 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
         const url = dbItem.entries[entryIndex].url;
         if (url) chrome.tabs.create({ url });
+        return;
+    }
+
+    // ── ⚙️ Set Active Vault — cambiar la tabla activa desde el menú ────────
+    // NUEVO: Al hacer clic en un ítem del submenú "Set Active Vault",
+    // se actualizan AMBOS selectores (Favorites y Links) en chrome.storage.local
+    // y se reconstruye el menú contextual para reflejar el cambio.
+    if (menuItemId.startsWith('setActive::')) {
+        const selectedDb = menuItemId.slice('setActive::'.length);
+        // Si eligió "(None)", desactivar ambos; si no, activar la BD elegida
+        const newValue = selectedDb === '(None)' ? null : selectedDb;
+
+        await chrome.storage.local.set({
+            activeFavoritesDb: newValue,
+            activeLinksDb:     newValue
+        });
+
+        // Reconstruir menú para mostrar el ✓ actualizado y las nuevas entradas
+        await loadDatabases();
+
+        // Notificación de confirmación
+        chrome.notifications.create({
+            type:    'basic',
+            iconUrl: 'icons/icon48.png',
+            title:   '⚙️ Active Vault Changed',
+            message: newValue
+                ? `"${newValue}" is now your active Favorites & Links vault.`
+                : 'Quick Access disabled. No active vault selected.'
+        });
         return;
     }
 
