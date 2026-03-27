@@ -54,61 +54,73 @@
         <input type="checkbox" id="toggleForja" class="toggle">
         <label for="toggleForja" class="toggle-label">FORGE 🔨 <span style="color: #cccccc;"></span></label>
         <div class="toggle-content">
-            
-             
-            <!-- Quick Access: configuración del menú contextual rápido -->
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(192, 160, 128, 0.3);">
-                <p style="color: antiquewhite; font-family: 'Righteous-Regular', sans-serif; font-size: 12px; margin: 5px 0;">QUICK ACCESS — CONTEXT MENU:</p>
 
-                <label for="favoritesDbSelect" class="secundarios">⭐ FAVORITES <span style="color: #cccccc;"> — Select active database</span></label>
-                <select id="favoritesDbSelect" class="secundarios2">
-                    <option value="">(None)</option>
-                </select>
-
-                <!-- Botón de sincronización: cuando está activo, cambiar uno cambia el otro -->
-                <button id="linkQuickAccess" class="action-btn" style="width:100%;">⛓️ LINK — Sync Favorites &amp; Links</button>
-
-                <label for="linksDbSelect" class="secundarios">🔗 LINKS <span style="color: #cccccc;"> — Select active database</span></label>
-                <select id="linksDbSelect" class="secundarios2">
-                    <option value="">(None)</option>
-                </select>
-            </div>
-
-            <label for="databaseSelect" class="secundarios">DWARF CHAMBER 🗃️ <span style="color: #cccccc;"> - Select a database</span></label>
+            <!-- 1. Dwarf Chamber: selector principal de base de datos (va primero porque todo depende de esto) -->
+            <label for="databaseSelect" class="secundarios">🏛️ DWARF CHAMBER <span style="color: #cccccc;"> — Select a vault</span></label>
             <select id="databaseSelect" class="secundarios2">
                 <option value="">Loading databases...</option>
             </select>
 
-            <!-- Emoji Selector -->
-            <div id="emojiSelector" class="emoji-selector">
+            <!-- 2. Database Management: agrupados en grid para mejor acceso visual -->
+            <div class="forge-section">
+                <p class="forge-section-title">MANAGEMENT</p>
+                <div class="forge-btn-grid">
+                    <button id="createParentDatabase" class="action-btn forge-btn">⛏️ NEW VAULT <span style="color: #cccccc;">Parent</span></button>
+                    <button id="createChildDatabase" class="action-btn forge-btn">🔨 NEW CHEST <span style="color: #cccccc;">Child</span></button>
+                    <button id="editDatabase" class="action-btn forge-btn">🛠️ REFORGE <span style="color: #cccccc;">Edit</span></button>
+                    <button id="deleteDatabase" class="delete-btn forge-btn">💀 DESTROY <span style="color: #cccccc;">Delete</span></button>
+                </div>
+            </div>
+
+            <!-- 3. Import/Export: unificados en una sola sección con dos filas -->
+            <div class="forge-section">
+                <p class="forge-section-title">TRADE — Import &amp; Export</p>
+                <!-- Single database row -->
+                <div class="forge-btn-row">
+                    <button id="export-csv" class="action-btn forge-btn">📤 EXPORT <span style="color: #cccccc;">CSV</span></button>
+                    <input type="file" id="importCSV" accept=".csv" style="display: none;">
+                    <button id="importDatabase" class="action-btn forge-btn">📥 IMPORT <span style="color: #cccccc;">CSV</span></button>
+                </div>
+                <!-- Parent database row (con hijos) -->
+                <div class="forge-btn-row">
+                    <button id="export-parent" class="action-btn forge-btn">📦 EXPORT <span style="color: #cccccc;">Full Vault</span></button>
+                    <input type="file" id="importParentFile" accept=".json" style="display: none;">
+                    <button id="importParent" class="action-btn forge-btn">🗃️ IMPORT <span style="color: #cccccc;">Full Vault</span></button>
+                </div>
+            </div>
+
+            <!-- 4. Quick Access: layout compacto con dos columnas y boton sync central -->
+            <div class="forge-section">
+                <p class="forge-section-title">QUICK ACCESS — Context Menu</p>
+                <div class="quick-access-grid">
+                    <!-- Columna izquierda: Favorites -->
+                    <div class="quick-access-col">
+                        <label for="favoritesDbSelect" class="secundarios quick-access-label">⭐ FAVORITES</label>
+                        <select id="favoritesDbSelect" class="secundarios2">
+                            <option value="">(None)</option>
+                        </select>
+                    </div>
+                    <!-- Columna derecha: Links -->
+                    <div class="quick-access-col">
+                        <label for="linksDbSelect" class="secundarios quick-access-label">🔗 LINKS</label>
+                        <select id="linksDbSelect" class="secundarios2">
+                            <option value="">(None)</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Boton sync centrado debajo -->
+                <button id="linkQuickAccess" class="action-btn" style="width:100%; margin-top: 8px;">⛓️ LINK — Sync Both</button>
+            </div>
+
+            <!-- 5. Emoji Selector: utilidad secundaria al final -->
+            <div id="emojiSelector" class="emoji-selector forge-section">
                 <details id="emojiDropdown">
-                    <summary style="cursor: pointer; font-size: 16px;">💎 Glyph Vault 💎 <span style="color: #cccccc;"> (click to expand emojis)</span></summary>
-                    <div id="emojiList" style="margin-top: 60px; padding: 46px;"></div>
+                    <summary style="cursor: pointer; font-size: 16px;">💎 Glyph Vault 💎 <span style="color: #cccccc;"> (click to expand)</span></summary>
+                    <div id="emojiList" class="emoji-grid"></div>
                 </details>
                 <p id="emojiCopyFeedback" style="color: green; display: none;">Emoji copied!</p>
             </div>
 
-            <!-- Database Management Buttons -->
-            <button id="createParentDatabase" class="action-btn">FORGE PARENT ⛏️ <span style="color: #cccccc;">- Create Parent Database</span></button>
-            <button id="createChildDatabase" class="action-btn">FORGE CHILD 🔨 <span style="color: #cccccc;">- Create Child Database</span></button>
-            <button id="editDatabase" class="action-btn">REFORGE 🛠️ <span style="color: #cccccc;"> - Edit Database</span></button>
-            <button id="deleteDatabase" class="delete-btn">DESTROY 🧨 <span style="color: #cccccc;"> - Delete Database</span></button>
-            
-            <!-- Single Database Import/Export -->
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(192, 160, 128, 0.3);">
-                <p style="color: antiquewhite; font-family: 'Righteous-Regular', sans-serif; font-size: 12px; margin: 5px 0;">SINGLE DATABASE:</p>
-                <button id="export-csv" class="action-btn">EXPORT 📤 <span style="color: #cccccc;"> - Export to CSV</span></button>
-                <input type="file" id="importCSV" accept=".csv" style="display: none;">
-                <button id="importDatabase" class="action-btn">IMPORT 📥 <span style="color: #cccccc;"> - Import CSV</span></button>
-            </div>
-
-            <!-- Parent Database Import/Export -->
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid rgba(192, 160, 128, 0.3);">
-                <p style="color: antiquewhite; font-family: 'Righteous-Regular', sans-serif; font-size: 12px; margin: 5px 0;">PARENT DATABASE (with children):</p>
-                <button id="export-parent" class="action-btn">EXPORT PARENT 📦 <span style="color: #cccccc;"> - Export Complete Structure</span></button>
-                <input type="file" id="importParentFile" accept=".json" style="display: none;">
-                <button id="importParent" class="action-btn">IMPORT PARENT 📥 <span style="color: #cccccc;"> - Import Complete Structure</span></button>
-            </div>
         </div>
     
         <!-- RELICS Section -->
