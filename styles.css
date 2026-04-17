@@ -810,3 +810,123 @@ a:active {
     background-color: #3a824f;
 }
 
+/* Entrada con poco texto: centrar favicon + texto dentro del li. */
+.entry-content-centered {
+    justify-content: center !important;
+    text-align: center !important;
+}
+.entry-content-centered span {
+    text-align: center !important;
+}
+
+/* === RELICS: botones de acción por entrada (Edit + Delete) ================ */
+.entry-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    justify-content: center;
+}
+
+.entry-actions .action-btn,
+.entry-actions .delete-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* === Modal de edición de entrada ========================================== */
+.edit-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.edit-modal {
+    font-family: 'Righteous-Regular', sans-serif;
+    width: 92%;
+    max-width: 450px;
+    max-height: 88%;
+    background-color: #2a1f18;
+    background-image: linear-gradient(135deg, rgba(121, 86, 73, 0.4), rgba(0, 0, 0, 0));
+    border: 2px solid #c0a080;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(255, 196, 0, 0.35), inset 0 0 12px rgba(0, 0, 0, 0.5);
+    padding: 18px;
+    color: #f4e5c3;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+.edit-modal-title {
+    margin: 0 0 4px;
+    font-family: 'SofadiOne-Regular', sans-serif;
+    text-align: center;
+    color: antiquewhite;
+    text-shadow: 0 0 8px rgba(255, 196, 0, 0.4);
+    letter-spacing: 1px;
+}
+
+.edit-modal-label {
+    font-size: 12px;
+    color: #d4c5a3;
+    letter-spacing: 0.5px;
+    margin-bottom: -4px;
+}
+
+.edit-modal-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 220px;
+    resize: vertical;
+    padding: 10px;
+    font-family: 'Righteous-Regular', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #f4e5c3;
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 2px solid #c0a080;
+    border-radius: 6px;
+    outline: none;
+    white-space: pre-wrap;
+    tab-size: 4;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edit-modal-textarea:focus,
+.edit-modal-url:focus {
+    border-color: #ffc400;
+    box-shadow: 0 0 8px rgba(255, 196, 0, 0.45);
+}
+
+.edit-modal-url {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 13px;
+    color: #f4e5c3;
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 2px solid #c0a080;
+    border-radius: 6px;
+    outline: none;
+}
+
+.edit-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.edit-modal-actions .action-btn,
+.edit-modal-actions .delete-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+

@@ -101,9 +101,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Cambio de BD en el selector principal → recargar entradas y limpiar búsqueda
+    // Cambio de BD en el selector principal → recargar entradas y limpiar búsqueda.
+    // Se persiste la elección en storage.local para que el popup la recuerde
+    // entre aperturas (cambios manuales + clics en "📂 Vault" del menú contextual).
     document.getElementById('databaseSelect').addEventListener('change', (e) => {
         document.getElementById('searchBar').value = '';
+        chrome.storage.local.set({ dbName: e.target.value || null });
         loadEntries(e.target.value);
     });
 
@@ -397,20 +400,32 @@ function loadDatabases(db) {
                 });
         });
 
-        if (prev && select.querySelector(`option[value="${prev.replace(/"/g, '\\"')}"]`)) {
-            select.value = prev;
-        } else if (select.options.length > 0) {
-            select.value = select.options[0].value;
-        }
+        // Prioridad para decidir qué Vault mostrar:
+        //   1. dbName guardado en storage.local (lo escribe background.js al abrir
+        //      el popup desde "📂 Vault" y este popup al cambiar el selector).
+        //   2. El valor previo del <select> (misma sesión de popup, tras recargas).
+        //   3. El primer option disponible.
+        const hasOption = (name) =>
+            !!name && !!select.querySelector(`option[value="${String(name).replace(/"/g, '\\"')}"]`);
 
-        if (select.value) loadEntries(select.value);
+        chrome.storage.local.get(
+            ['dbName', 'activeFavoritesDb', 'activeLinksDb'],
+            (settings) => {
+                if (hasOption(settings.dbName)) {
+                    select.value = settings.dbName;
+                } else if (hasOption(prev)) {
+                    select.value = prev;
+                } else if (select.options.length > 0) {
+                    select.value = select.options[0].value;
+                }
 
-        // ── Selectores de Quick Access ────────────────────────────────────────
-        // Leer la configuración guardada para restaurar la selección activa.
-        chrome.storage.local.get(['activeFavoritesDb', 'activeLinksDb'], (settings) => {
-            populateQuickAccessSelect('favoritesDbSelect', databases, settings.activeFavoritesDb);
-            populateQuickAccessSelect('linksDbSelect',     databases, settings.activeLinksDb);
-        });
+                if (select.value) loadEntries(select.value);
+
+                // Quick Access se restaura en el mismo get para ahorrar un roundtrip.
+                populateQuickAccessSelect('favoritesDbSelect', databases, settings.activeFavoritesDb);
+                populateQuickAccessSelect('linksDbSelect',     databases, settings.activeLinksDb);
+            }
+        );
     };
 }
 
@@ -522,16 +537,171 @@ function renderEntries(dbName, entries) {
         textSpan.title       = entry.text; // tooltip con el texto completo al hacer hover
         contentDiv.appendChild(textSpan);
 
+        // Texto corto → centrar contenido; largo → izquierda (como estaba).
+        if (entry.text.trim().length <= 60 && !entry.text.includes('\n')) {
+            contentDiv.classList.add('entry-content-centered');
+        }
+
         li.appendChild(contentDiv);
+
+        // Contenedor de acciones (Edit + Delete) para alinearlos lado a lado.
+        const actions = document.createElement('div');
+        actions.className = 'entry-actions';
+
+        // Botón de editar: abre el modal con el texto/URL actuales.
+        const editBtn       = document.createElement('button');
+        editBtn.textContent = '✏️ Edit';
+        editBtn.className   = 'action-btn edit-btn';
+        editBtn.addEventListener('click', () => openEditModal(dbName, originalIndex, entry));
+        actions.appendChild(editBtn);
 
         // Botón de borrar
         const deleteBtn       = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
+        deleteBtn.textContent = '🗑 Delete';
         deleteBtn.className   = 'delete-btn';
         deleteBtn.addEventListener('click', () => deleteEntry(dbName, originalIndex));
-        li.appendChild(deleteBtn);
+        actions.appendChild(deleteBtn);
+
+        li.appendChild(actions);
 
         list.appendChild(li);
+    });
+}
+
+/**
+ * Abre un modal de edición sobre el popup con un <textarea> (preserva
+ * saltos de línea, tabulaciones y espacios) y un input de URL. Al guardar
+ * persiste los cambios en IndexedDB vía editEntry().
+ *
+ * @param {string} dbName
+ * @param {number} entryIndex
+ * @param {{text: string, url: string, favicon: string}} entry
+ */
+function openEditModal(dbName, entryIndex, entry) {
+    // Si ya existe uno abierto, cerrarlo antes de crear otro.
+    document.querySelector('.edit-modal-backdrop')?.remove();
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'edit-modal-backdrop';
+
+    const modal = document.createElement('div');
+    modal.className = 'edit-modal';
+
+    const title = document.createElement('h3');
+    title.className   = 'edit-modal-title';
+    title.textContent = '✏️ REFORGE ENTRY';
+    modal.appendChild(title);
+
+    // Textarea — mantiene \n, espacios y tabulaciones intactos.
+    const textLabel = document.createElement('label');
+    textLabel.className   = 'edit-modal-label';
+    textLabel.textContent = 'Text';
+    modal.appendChild(textLabel);
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'edit-modal-textarea';
+    textarea.value     = entry.text || '';
+    textarea.spellcheck = false;
+    modal.appendChild(textarea);
+
+    // Input de URL.
+    const urlLabel = document.createElement('label');
+    urlLabel.className   = 'edit-modal-label';
+    urlLabel.textContent = 'URL';
+    modal.appendChild(urlLabel);
+
+    const urlInput = document.createElement('input');
+    urlInput.type      = 'url';
+    urlInput.className = 'edit-modal-url';
+    urlInput.value     = entry.url || '';
+    modal.appendChild(urlInput);
+
+    // Botones.
+    const btnRow = document.createElement('div');
+    btnRow.className = 'edit-modal-actions';
+
+    const saveBtn       = document.createElement('button');
+    saveBtn.textContent = '💾 Save';
+    saveBtn.className   = 'action-btn';
+
+    const cancelBtn       = document.createElement('button');
+    cancelBtn.textContent = '✖ Cancel';
+    cancelBtn.className   = 'delete-btn';
+
+    btnRow.appendChild(saveBtn);
+    btnRow.appendChild(cancelBtn);
+    modal.appendChild(btnRow);
+
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+
+    // Foco inicial al textarea para que el usuario pueda escribir sin clicar.
+    textarea.focus();
+
+    const close = () => {
+        backdrop.remove();
+        document.removeEventListener('keydown', onKey);
+    };
+
+    // Esc cierra sin guardar; Ctrl+Enter guarda.
+    const onKey = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); close(); }
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            saveBtn.click();
+        }
+    };
+    document.addEventListener('keydown', onKey);
+
+    // Clic fuera del modal cierra sin guardar.
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) close();
+    });
+
+    cancelBtn.addEventListener('click', close);
+
+    saveBtn.addEventListener('click', () => {
+        // textarea.value es la cadena pura: \n, espacios y tabs se preservan.
+        const newText = textarea.value;
+        const newUrl  = urlInput.value.trim();
+        if (!newText.trim()) {
+            alert('Text cannot be empty.');
+            return;
+        }
+        editEntry(dbName, entryIndex, newText, newUrl).then(close);
+    });
+}
+
+/**
+ * Actualiza una entrada existente preservando el texto exactamente como
+ * lo introdujo el usuario (saltos de línea, espacios, tabs).
+ *
+ * @param {string} dbName
+ * @param {number} entryIndex
+ * @param {string} newText
+ * @param {string} newUrl
+ * @returns {Promise<void>}
+ */
+function editEntry(dbName, entryIndex, newText, newUrl) {
+    return new Promise((resolve, reject) => {
+        openDatabase((db) => {
+            const store = db.transaction('databases', 'readwrite').objectStore('databases');
+            store.get(dbName).onsuccess = (event) => {
+                const dbData = event.target.result;
+                if (!dbData?.entries?.[entryIndex]) { resolve(); return; }
+
+                dbData.entries[entryIndex].text = newText;
+                dbData.entries[entryIndex].url  = newUrl;
+
+                const req = store.put(dbData);
+                req.onsuccess = () => {
+                    loadEntries(dbName);
+                    chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+                    resolve();
+                };
+                req.onerror = (e) => reject(e.target.error);
+            };
+        });
     });
 }
 
@@ -598,8 +768,16 @@ function deleteDatabase(dbName) {
         const store = db.transaction('databases', 'readwrite').objectStore('databases');
         store.getAll().onsuccess = (event) => {
             const children = event.target.result.filter(d => d.parentDatabase === dbName);
+            const deletedNames = new Set([dbName, ...children.map(c => c.name)]);
             children.forEach(child => store.delete(child.name));
             store.delete(dbName).onsuccess = () => {
+                // Si la BD recordada quedó huérfana, limpiar el puntero para que
+                // la próxima apertura no intente seleccionar una tabla borrada.
+                chrome.storage.local.get('dbName', ({ dbName: remembered }) => {
+                    if (remembered && deletedNames.has(remembered)) {
+                        chrome.storage.local.set({ dbName: null });
+                    }
+                });
                 openDatabase(loadDatabases);
                 chrome.runtime.sendMessage({ action: 'updateContextMenu' });
             };

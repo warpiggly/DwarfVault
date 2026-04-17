@@ -336,8 +336,8 @@ body::before {
     font-family: 'Pixeled';
     margin: 1.5em 0; /* Añade margen entre párrafos */
     margin: 30px;
-    font-size: 2.0rem; /* Ajusta el tamaño del título */
-    font-weight: 300; /* Peso de la fuente */
+    font-size: 15px; /* Ajusta el tamaño del título */
+    font-weight: 150; /* Peso de la fuente */
     
   }
   .history h2:hover {
