@@ -46,45 +46,44 @@ body::before {
 /* Encabezado */
 .header {
     font-family: 'Pixeled';
-    color: antiquewhite;
-    padding: 90px 0 5px;
+    color: antiquewhite; /* Texto oscuro */
+    padding: 90px 0 5px; /* Ajusta el padding superior para dar espacio al logo */
     text-align: center;
-    position: relative;
+    position: relative; /* Permite posicionar los elementos hijos de manera absoluta */
     margin-bottom: 0px;
     border-bottom: 0px solid rgba(46, 64, 87, 0.2);
     background-image: url("image/Heder2.png");
-    background-size: cover;
-    background-position: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-size: cover; /* Asegura que la imagen de fondo cubra todo el encabezado */
+    background-position: center; /* Centra la imagen de fondo */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra del encabezado */
 }
 
 /* Estilo específico para la imagen */
 .logo {
-    max-width: 175px;
-    height: auto;
-    position: absolute;
-    top: 83px;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 0;
-    transition: transform 0.5s;
+    max-width: 175px; /* Ajusta el tamaño según sea necesario */
+    height: auto; /* Mantiene la proporción */
+    position: absolute; /* Mantiene la imagen en la posición especificada */
+    top: 83px; /* Mueve la imagen hacia abajo */
+    left: 50%; /* Centra horizontalmente */
+    transform: translate(-50%, -50%); /* Compensa el desplazamiento del 50% tanto horizontal como vertical */
+    z-index: 0; /* Envía la imagen detrás de los textos */
+    transition: transform 0.5s; /* Efecto de transición suave */
 }
 
 /* Títulos */
+/* Títulos */
 .title {
-    position: relative;
-    top: 12px;
-    left: 0px;
-    z-index: 1;
-    font-size: 1.3em;
-    font-family: 'Righteous-Regular', sans-serif;
+    position: relative; /* Mantiene el posicionamiento relativo */
+    top: 12px; /* Sin desplazamiento hacia abajo */
+    left: 0px; /* Sin desplazamiento hacia la derecha */
+    z-index: 1; /* Asegura que el título esté por encima del logo */
+    font-size: 2em; /* Ajusta el tamaño según sea necesario */
 }
 
 .subtitle {
-    text-align: center;
-    font-size: 0.45em;
-    z-index: 1;
-    font-family: 'Righteous-Regular', sans-serif;
+    text-align: center; /* Cambiar a 'left' o 'right' para mover a izquierda o derecha */
+    font-size: 0.5em; /* Ajusta el tamaño según sea necesario */
+    z-index: 1; /* Asegura que el subtítulo esté por encima del logo */
 }
 
 /* Estilos para la barra de búsqueda */
@@ -319,7 +318,7 @@ table tbody td a:hover {
 }
 
 /* Títulos de secciones */
-h3 {
+/* h3 {
     font-family: 'Righteous-Regular', sans-serif;
     color: #ffc400;
     margin: 15px 0 8px 0;
@@ -328,10 +327,11 @@ h3 {
     border-left: 3px solid #FFD700;
     border-radius: 4px;
     font-size: 14px;
-}
+} */
 
 /* Contenedor de tablas */
 #tablesContainer {
+    width: 98%;
     padding: 12px;
     animation: fadeIn 0.4s ease-in;
 }
@@ -411,7 +411,7 @@ body::-webkit-scrollbar-thumb:hover {
 .db-section {
     margin-bottom: 15px;
     background-color: rgba(121, 86, 73, 0.3);
-    border-radius: 8px;
+    border-radius: 4px;
     border: 2px solid #c0a080;
     overflow: hidden;
 }
@@ -497,10 +497,11 @@ body::-webkit-scrollbar-thumb:hover {
 
 .table-wrapper {
     margin-bottom: 10px;
-    border-radius: 6px;
+    border-radius: 2px;
     overflow: hidden;
     border: 2px solid #c0a080;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    width: 100%;
 }
 .table-wrapper--child {
     margin-left: 15px;

@@ -294,7 +294,8 @@ input:focus, select:focus {
 
 /* Estilos para el select */
 .secundarios2 {
-    width: calc(100% - 20px);
+    width: 100%;
+    box-sizing: border-box;
     padding: 12px 45px 12px 15px;
     font-family: 'Righteous-Regular', sans-serif;
     font-size: 16px;
@@ -370,6 +371,8 @@ h2 {
 /* Preserva saltos de línea, espacios y tabulaciones del texto guardado.
    Sin esta regla el navegador colapsa los \n a espacios simples. */
 #entryText {
+    width: 90%;
+    box-sizing: border-box;
     white-space: pre-wrap;   /* renderiza \n como salto visual             */
     word-break: break-word;  /* evita desbordamiento en textos sin espacios */
     text-align: left;
@@ -394,7 +397,9 @@ h2 {
 /* Estilos para ocultar el contenido de inicio */
 .toggle-content {
     display: none;
-    padding: 48px 20px;
+    width: 93%;
+    box-sizing: border-box;
+    padding: 48px 6px;
     background-color: rgba(0, 0, 0, 0); /* Fondo semitransparente para resaltar el contenido */
     position: relative; /* Permite posicionar elementos dentro libremente */
     color: white; /* Cambia el color del texto */
@@ -436,7 +441,8 @@ h2 {
     width: 50%; /* Asegura que ocupe todo el ancho */
     height: 50px; /* Ajusta la altura según sea necesario */
     cursor: pointer; /* Cambia el cursor para indicar que se puede hacer clic */
-    margin: 20px auto; /* Agrega un margen alrededor del contenedor y centra horizontalmente */
+    margin-top: 20px ; /* Agrega un margen alrededor del contenedor y centra horizontalmente */
+    margin-bottom: 35px ;
 }
 
 /* Para mover el texto libremente */
@@ -519,7 +525,8 @@ a:active {
 
 /* Estilos para la barra de búsqueda */
 #searchBar {
-    width: calc(100% - 20px);
+    width: 100%;
+    box-sizing: border-box;
     padding: 12px 45px 12px 15px;
     font-family: 'Righteous-Regular', sans-serif;
     font-size: 16px;
@@ -534,6 +541,7 @@ a:active {
     background-repeat: no-repeat;
     background-position: calc(100% - 15px) center;
     background-size: 20px;
+    margin-bottom: 35px;
 }
 
 #searchBar::placeholder {

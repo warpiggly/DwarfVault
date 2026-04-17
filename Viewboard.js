@@ -77,7 +77,7 @@ function buildDatabaseSection(dbItem, children) {
 
     const toggleIcon   = document.createElement('span');
     toggleIcon.className = 'db-toggle-icon';
-    toggleIcon.textContent = '▼';
+    toggleIcon.textContent = '⛏️ ';
 
     const titleText    = document.createElement('span');
     titleText.className  = 'db-title-text';

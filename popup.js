@@ -309,6 +309,11 @@ function updateSelectedEntryPanel(result) {
     entryTextEl2.textContent    = result.selectedText;
     entryTextEl2.dataset.rawText = result.selectedText;
 
+    // Texto corto → centrado; texto largo/multilínea → izquierda.
+    const txt = result.selectedText || '';
+    const isShort = txt.length <= 80 && !txt.includes('\n');
+    entryTextEl2.style.textAlign = isShort ? 'center' : 'left';
+
     // Favicon
     const faviconImg = document.getElementById('faviconImg');
     if (faviconImg) {
