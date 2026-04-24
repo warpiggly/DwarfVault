@@ -27,8 +27,8 @@ DwarfVault is a **lightning-fast, privacy-first browser extension** that lets yo
 | 🔍 Keyword search | ✅ | ✅ | ✅ |
 | 📋 Export/Import CSV | ✅ | ✅ | ✅ |
 | 🧠 **Semantic search** (AI) | ❌ | ✅ **NEW** | ✅ |
-| 🗺️ **Visual map** (UMAP) | ❌ | ❌ | ✅ |
-| 🏷️ **Auto-tagging** (k-NN) | ❌ | ❌ | ✅ |
+| 🗺️ **Visual map** (UMAP) | ❌ | ❌ | ✅ **NEW**  |
+| 🏷️ **Auto-tagging** (k-NN) | ❌ | ❌ | ✅ **NEW** |
 | 📊 **Analytics dashboard** | ❌ | ✅ **NEW** | ✅ |
 | 🔔 Notification toggle | ✅ | ✅ | ✅ |
 | 🔐 Security hardened | ✅ | ✅ | ✅ |
@@ -303,7 +303,7 @@ A: Not yet. Currently Chrome/Edge only (Manifest V3). Firefox version planned fo
 A: No. This is completely anonymous, open-source software.
 
 **Q: How do I report a bug?**  
-A: Open an issue on GitHub or contact: davidsalazar@intelsa.co
+A: Open an issue on GitHub or contact: WarpigglyTech@gmail.com
 
 ---
 
@@ -383,7 +383,7 @@ MIT License — Free for personal and commercial use.
 ## 🙏 Credits
 
 **Developer:** David Salazar Saldarriaga (DearDeivy / Warpiggly)  
-**Email:** davidsalazar@intelsa.co  
+**Email:** WarpigglyTech@gmail.com 
 **Open Source:** MIT Licensed
 
 **Libraries & Resources:**
@@ -396,7 +396,7 @@ MIT License — Free for personal and commercial use.
 ## 📞 Support & Contact
 
 - 🐛 **Bug Reports:** Open an issue on GitHub
-- 💬 **Questions:** davidsalazar@intelsa.co
+- 💬 **Questions:** WarpigglyTech@gmail.com
 - ⭐ **Like it?** Star this repo to show support!
 
 ---
@@ -407,7 +407,7 @@ MIT License — Free for personal and commercial use.
 
 *DwarfVault — Save. Organize. Discover.*
 
-[🌟 GitHub](https://github.com/DearDeivy/DwarfVault) • [📧 Email](mailto:davidsalazar@intelsa.co) • [🚀 Version 1.2](https://github.com/DearDeivy/DwarfVault/releases)
+[🌟 GitHub](https://github.com/DearDeivy/DwarfVault) • [📧 Email](mailto:WarpigglyTech@gmail.com) • [🚀 Version 1.2](https://github.com/DearDeivy/DwarfVault/releases)
 
 </div>
 
