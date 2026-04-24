@@ -269,9 +269,10 @@ function createTableRow(entry, index) {
     const faviconCell   = document.createElement('td');
     faviconCell.className = 'td-favicon';
 
-    if (entry.favicon) {
+    const safeFavicon = DwarfSecurity.safeFaviconOrEmpty(entry.favicon);
+    if (safeFavicon) {
         const img    = document.createElement('img');
-        img.src      = entry.favicon;
+        img.src      = safeFavicon;
         img.alt      = '';
         img.className = 'td-favicon__img';
         faviconCell.appendChild(img);
@@ -323,14 +324,15 @@ function createTableRow(entry, index) {
     const urlCell   = document.createElement('td');
     urlCell.className = 'td-url';
 
-    if (entry.url) {
+    const safeEntryUrl = DwarfSecurity.safeUrlOrEmpty(entry.url);
+    if (safeEntryUrl) {
         const link   = document.createElement('a');
-        link.href    = entry.url;
+        link.href    = safeEntryUrl;
         link.target  = '_blank';
         link.rel     = 'noopener noreferrer';
 
         try {
-            const urlObj   = new URL(entry.url);
+            const urlObj   = new URL(safeEntryUrl);
             const hostname = urlObj.hostname.replace('www.', '');
 
             const urlContainer = document.createElement('div');
@@ -402,6 +404,9 @@ function createTableRow(entry, index) {
  * @param {string} message
  */
 function showCopyNotification(message) {
+    // Respetar el toggle global 🔔/🔕 del popup.
+    if (typeof DwarfNotify !== 'undefined' && !DwarfNotify.isEnabledSync()) return;
+
     // Remover notificación previa si existe
     document.querySelector('.copy-notification')?.remove();
 

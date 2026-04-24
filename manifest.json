@@ -8,11 +8,13 @@
                 "default": "Ctrl+Y",
                 "mac": "Command+Y"
             },
-            "description": "Abrir el popup de la extensión"
+            "description": "Open the extension popup"
         }
     },
 
-  "description": "Guarda texto seleccionado en bases de datos personalizadas.",
+  "description": "Save, organize and instantly access selected text in local custom databases. Private, fast, and keyboard-friendly.",
+  "short_description": "Save selected text to custom local databases. Private, fast, keyboard-friendly right-click vault.",
+  "author": "David Salazar Saldarriaga (DearDeivy / Warpiggly)",
   "permissions": [
     "contextMenus",
     "storage",
@@ -22,24 +24,10 @@
     "clipboardWrite",
     "activeTab"
   ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
   "background": {
     "service_worker": "background.js"
   },
 
-  "content_scripts": [
-        {
-            "matches": ["<all_urls>"],
-            "js": ["scripts/Butons.js"]
-        },
-        {
-            "matches": ["<all_urls>"],
-            "js": ["scripts/content.js"],
-            "run_at": "document_idle"
-        }
-    ],
   "action": {
     "default_popup": "index.html",
     "default_icon": {
@@ -54,11 +42,8 @@
     "128": "icons/icon128.png"
   },
 
-  "web_accessible_resources": [
-  {
-    "resources": ["emojis.json"],
-    "matches": ["<all_urls>"]
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; base-uri 'self'; frame-ancestors 'none'"
   }
-]
 
 }

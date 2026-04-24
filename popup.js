@@ -44,14 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // y espacios exactos. textContent.trim() los eliminaría.
             const text = entryTextEl.dataset.rawText;
             if (!text || text === 'No text selected yet.') {
-                alert('No hay texto para copiar.');
+                alert('No text to copy.');
                 return;
             }
             navigator.clipboard.writeText(text)
                 .then(() => window.close())
                 .catch(err => {
                     console.error('[DwarfVault] Error al copiar:', err);
-                    alert('Hubo un problema al copiar el texto.');
+                    alert('There was a problem copying the text.');
                 });
         });
     }
@@ -60,14 +60,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Crear BD padre
     document.getElementById('createParentDatabase').addEventListener('click', () => {
-        const dbName = prompt('Enter the name of the new PARENT database:');
-        if (dbName?.trim()) createDatabase(dbName.trim(), null);
+        const raw  = prompt('Enter the name of the new PARENT database:');
+        const name = DwarfSecurity.sanitizeDbName(raw);
+        if (!name) {
+            if (raw !== null) alert('Invalid name. Use visible characters (max 100).');
+            return;
+        }
+        createDatabase(name, null);
     });
 
     // Crear BD hija
     document.getElementById('createChildDatabase').addEventListener('click', () => {
-        const dbName = prompt('Enter the name of the new database:');
-        if (!dbName?.trim()) return;
+        const raw    = prompt('Enter the name of the new database:');
+        const dbName = DwarfSecurity.sanitizeDbName(raw);
+        if (!dbName) {
+            if (raw !== null) alert('Invalid name. Use visible characters (max 100).');
+            return;
+        }
 
         const addToParent = confirm(
             `Do you want to add "${dbName}" inside a PARENT database?\n\n` +
@@ -75,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         if (!addToParent) {
-            createDatabase(dbName.trim(), null);
+            createDatabase(dbName, null);
             return;
         }
 
@@ -85,17 +94,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const parents = event.target.result.filter(d => !d.parentDatabase);
                 if (parents.length === 0) {
                     alert('No parent databases available. Creating as independent.');
-                    createDatabase(dbName.trim(), null);
+                    createDatabase(dbName, null);
                     return;
                 }
                 const list   = parents.map((d, i) => `${i + 1}. ${d.name}`).join('\n');
                 const choice = prompt(`Available parent databases:\n\n${list}\n\nEnter the number:`);
                 const idx    = parseInt(choice, 10) - 1;
                 if (idx >= 0 && idx < parents.length) {
-                    createDatabase(dbName.trim(), parents[idx].name);
+                    createDatabase(dbName, parents[idx].name);
                 } else {
                     alert('Invalid selection. Creating as independent.');
-                    createDatabase(dbName.trim(), null);
+                    createDatabase(dbName, null);
                 }
             };
         });
@@ -175,10 +184,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const select  = document.getElementById('databaseSelect');
         const oldName = select.value;
         if (!oldName) return;
-        const newName = prompt('Enter the new database name:', oldName);
-        if (newName?.trim() && newName.trim() !== oldName) {
-            editDatabase(oldName, newName.trim());
+        const raw     = prompt('Enter the new database name:', oldName);
+        const newName = DwarfSecurity.sanitizeDbName(raw);
+        if (!newName) {
+            if (raw !== null) alert('Invalid name. Use visible characters (max 100).');
+            return;
         }
+        if (newName !== oldName) editDatabase(oldName, newName);
     });
 
     // Eliminar BD seleccionada (y sus hijas)
@@ -266,6 +278,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // ── Toggle global de notificaciones 🔔 / 🔕 ────────────────────────────
+    // Persiste en chrome.storage.local vía DwarfNotify. Afecta tanto a las
+    // notificaciones de sistema (chrome.notifications) como a los toasts
+    // in-app (feedback de emoji, toast de "Text copied!" en View Board).
+    const notifBtn = document.getElementById('toggleNotifications');
+    if (notifBtn) {
+        const paintNotifBtn = (enabled) => {
+            if (enabled) {
+                notifBtn.classList.remove('notif-btn-off');
+                notifBtn.textContent = '🔔 NOTIFICATIONS — ON';
+            } else {
+                notifBtn.classList.add('notif-btn-off');
+                notifBtn.textContent = '🔕 NOTIFICATIONS — OFF';
+            }
+        };
+
+        DwarfNotify.isEnabled().then(paintNotifBtn);
+
+        notifBtn.addEventListener('click', async () => {
+            const current = await DwarfNotify.isEnabled();
+            await DwarfNotify.setEnabled(!current);
+            paintNotifBtn(!current);
+        });
+    }
+
     // ── Selector de emojis ───────────────────────────────────────────────────
 
     fetch(chrome.runtime.getURL('emojis.json'))
@@ -281,6 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 span.title       = 'Click to copy';
                 span.addEventListener('click', () => {
                     navigator.clipboard.writeText(emoji).then(() => {
+                        // Respetar el toggle 🔔/🔕. La caché es síncrona.
+                        if (!DwarfNotify.isEnabledSync()) return;
                         feedback.style.display = 'block';
                         setTimeout(() => { feedback.style.display = 'none'; }, 1000);
                     });
@@ -317,19 +356,31 @@ function updateSelectedEntryPanel(result) {
     const isShort = txt.length <= 80 && !txt.includes('\n');
     entryTextEl2.style.textAlign = isShort ? 'center' : 'left';
 
-    // Favicon
+    // Favicon — validar antes de asignar a src. Si el esquema no es
+    // http(s) o data:image/, se oculta el <img> en lugar de cargarlo.
+    // Importante: asignar src="" o no tenerlo provoca que el navegador
+    // intente resolver la URL de la página actual (ruido en la consola),
+    // por eso usamos removeAttribute cuando no hay favicon seguro.
     const faviconImg = document.getElementById('faviconImg');
     if (faviconImg) {
-        faviconImg.src          = result.favicon || '';
-        faviconImg.style.display = result.favicon ? 'inline-block' : 'none';
+        const safeFavicon = DwarfSecurity.safeFaviconOrEmpty(result.favicon);
+        if (safeFavicon) {
+            faviconImg.src           = safeFavicon;
+            faviconImg.style.display = 'inline-block';
+        } else {
+            faviconImg.removeAttribute('src');
+            faviconImg.style.display = 'none';
+        }
     }
 
-    // Enlace — construido con DOM (sin innerHTML) para prevenir XSS
+    // Enlace — construido con DOM (sin innerHTML) para prevenir XSS.
+    // Además validamos el esquema: solo http(s) llega al href real.
     const entryUrlEl = document.getElementById('entryUrl');
     entryUrlEl.innerHTML = '';
-    if (result.selectedURL) {
+    const safeLinkUrl = DwarfSecurity.safeUrlOrEmpty(result.selectedURL);
+    if (safeLinkUrl) {
         const link       = document.createElement('a');
-        link.href        = result.selectedURL;
+        link.href        = safeLinkUrl;
         link.target      = '_blank';
         link.rel         = 'noopener noreferrer';
         link.textContent = 'Open Link';
@@ -518,9 +569,10 @@ function renderEntries(dbName, entries) {
         const contentDiv = document.createElement('div');
         contentDiv.className = 'entry-content';
 
-        if (entry.favicon) {
+        const safeFav = DwarfSecurity.safeFaviconOrEmpty(entry.favicon);
+        if (safeFav) {
             const favicon    = document.createElement('img');
-            favicon.src      = entry.favicon;
+            favicon.src      = safeFav;
             favicon.alt      = '';
             favicon.width    = 16;
             favicon.height   = 16;
@@ -668,7 +720,15 @@ function openEditModal(dbName, entryIndex, entry) {
             alert('Text cannot be empty.');
             return;
         }
-        editEntry(dbName, entryIndex, newText, newUrl).then(close);
+        // Evitar dobles guardados mientras la transacción está en vuelo.
+        saveBtn.disabled = true;
+        editEntry(dbName, entryIndex, newText, newUrl)
+            .then(close)
+            .catch((err) => {
+                console.error('[DwarfVault] Error saving entry:', err);
+                alert('Error saving entry. Please try again.');
+                saveBtn.disabled = false;
+            });
     });
 }
 
@@ -871,8 +931,12 @@ function exportParentDatabase() {
  *
  * @param {Object} importData
  */
-function importParentDatabase(importData) {
-    if (!importData.version || !importData.parentDatabase) {
+function importParentDatabase(rawImport) {
+    // Validar y sanear: nombres, URLs y favicons de todas las entries se
+    // filtran aquí antes de tocar IndexedDB. Cualquier esquema javascript:/
+    // data:text/html que viniese en el JSON se convierte en cadena vacía.
+    const importData = DwarfSecurity.sanitizeImportData(rawImport);
+    if (!importData) {
         alert('Invalid file format. Please select a valid DwarfVault export file.');
         return;
     }
@@ -940,14 +1004,14 @@ function importParentDatabase(importData) {
                 });
             } else {
                 // Renombrar la BD importada
-                const newName = prompt(
+                const rawNew   = prompt(
                     'Enter a new name for the imported database:',
                     importData.parentDatabase.name + '_imported'
                 );
-                if (!newName?.trim()) { alert('Import cancelled.'); return; }
+                const trimmed  = DwarfSecurity.sanitizeDbName(rawNew);
+                if (!trimmed) { alert('Import cancelled.'); return; }
 
                 const oldName  = importData.parentDatabase.name;
-                const trimmed  = newName.trim();
                 const renamed  = {
                     ...importData,
                     parentDatabase: { ...importData.parentDatabase, name: trimmed },
@@ -998,17 +1062,30 @@ function parseCSVLine(text) {
  * @param {string} dbName  - Nombre derivado del nombre del archivo.
  */
 function processCSV(csvData, dbName) {
+    const safeName = DwarfSecurity.sanitizeDbName(dbName);
+    if (!safeName) { alert('Invalid file name for the imported database.'); return; }
+
     const lines = csvData.split(/\r?\n/).filter(l => l.trim());
     if (lines.length < 2) { alert('Invalid CSV format.'); return; }
 
+    // Cada fila se pasa por sanitizeEntry: URL y favicon con esquemas
+    // peligrosos (javascript:, data:text/html, file:, blob:...) se neutralizan
+    // a cadena vacía. Las filas sin texto se descartan.
     const entries = [];
     for (let i = 1; i < lines.length; i++) {
         const row = parseCSVLine(lines[i]);
-        if (row.length >= 4) {
-            entries.push({ text: row[1], url: row[2], favicon: row[3] });
-        }
+        if (row.length < 4) continue;
+        const sanitized = DwarfSecurity.sanitizeEntry({
+            text: row[1], url: row[2], favicon: row[3]
+        });
+        if (sanitized) entries.push(sanitized);
     }
-    saveImportedDatabase(dbName, entries);
+
+    if (entries.length === 0) {
+        alert('No valid entries found in the CSV file.');
+        return;
+    }
+    saveImportedDatabase(safeName, entries);
 }
 
 /**

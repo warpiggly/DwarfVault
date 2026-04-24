@@ -90,6 +90,30 @@ This project is licensed under the MIT License.
 
 ---
 
+## Packaging for the Chrome Web Store
+
+When building the ZIP to upload to the Chrome Web Store, include ONLY
+the files the extension needs at runtime. Exclude development-only
+files so they don't ship to end users:
+
+**Exclude from the ZIP:**
+- `memori.md` — internal architecture notes
+- `README.md` — development docs (optional to include)
+- `.git/` — version control metadata
+- `.gitignore`
+- Any `*.md` files other than the ones you want published
+
+**Include in the ZIP:**
+- `manifest.json`
+- `background.js`, `popup.js`, `Viewboard.js`
+- `index.html`, `View Board.html`, `History.html`
+- `scripts/` (security.js, notifications.js, db.js, Butons.js, Menu.js, content.js)
+- `styles.css`, `styles Board.css`, `styles History.css`
+- `emojis.json`
+- `icons/`, `fonts/`, `image/`
+
+---
+
 ## Screenshots
 
 _Add screenshots of the extension in action here._

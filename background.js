@@ -13,6 +13,14 @@
  * contengan guiones bajos.
  */
 
+// Módulos compartidos. importScripts es síncrono, así que el resto del
+// archivo puede usar self.DwarfSecurity y self.DwarfNotify inmediatamente.
+try {
+    importScripts('scripts/security.js', 'scripts/notifications.js');
+} catch (e) {
+    console.error('[DwarfVault] No se pudo cargar módulos compartidos:', e);
+}
+
 const DB_NAME    = 'Dott-yDB';
 const DB_VERSION = 2;
 
@@ -159,11 +167,15 @@ async function buildContextMenu(db) {
     parentDatabases.forEach((dbItem, i) => {
         const children  = childDatabases.filter(c => c.parentDatabase === dbItem.name);
         const childInfo = children.length > 0 ? ` [${children.length} sub-DB]` : '';
+        // Los IDs (save::X) usan el nombre real del registro para que el
+        // lookup en onClicked siga funcionando; los TÍTULOS se sanean para
+        // que nombres con \n o control chars no rompan el layout del menú.
+        const safeParentTitle = DwarfSecurity.sanitizeDbName(dbItem.name);
 
         chrome.contextMenus.create({
             id:       `save::${dbItem.name}`,
             parentId: 'saveTextRoot',
-            title:    `${i + 1}. ${dbItem.name} — ${dbItem.entries.length} item(s)${childInfo} 🗂️`,
+            title:    `${i + 1}. ${safeParentTitle} — ${dbItem.entries.length} item(s)${childInfo} 🗂️`,
             contexts: ['selection']
         });
 
@@ -171,7 +183,7 @@ async function buildContextMenu(db) {
             chrome.contextMenus.create({
                 id:       `save::${childDb.name}`,
                 parentId: `save::${dbItem.name}`,
-                title:    `↳ ${childDb.name} — ${childDb.entries.length} item(s) 🗂️`,
+                title:    `↳ ${DwarfSecurity.sanitizeDbName(childDb.name)} — ${childDb.entries.length} item(s) 🗂️`,
                 contexts: ['selection']
             });
         });
@@ -195,7 +207,7 @@ async function buildContextMenu(db) {
         chrome.contextMenus.create({
             id:       'favsRoot',
             parentId: 'viewTextRoot',
-            title:    `⭐ Favorites — ${favDb.name}`,
+            title:    `⭐ Favorites — ${DwarfSecurity.sanitizeDbName(favDb.name)}`,
             contexts: ['page']
         });
 
@@ -225,7 +237,7 @@ async function buildContextMenu(db) {
         chrome.contextMenus.create({
             id:       'linksRoot',
             parentId: 'viewTextRoot',
-            title:    `🔗 Links — ${linkDb.name}`,
+            title:    `🔗 Links — ${DwarfSecurity.sanitizeDbName(linkDb.name)}`,
             contexts: ['page']
         });
 
@@ -277,7 +289,7 @@ async function buildContextMenu(db) {
         chrome.contextMenus.create({
             id:       `setActive::${dbItem.name}`,
             parentId: 'setActiveRoot',
-            title:    `${isActive ? '✓ ' : ''}${i + 1}. ${dbItem.name} (${dbItem.entries.length})`,
+            title:    `${isActive ? '✓ ' : ''}${i + 1}. ${DwarfSecurity.sanitizeDbName(dbItem.name)} (${dbItem.entries.length})`,
             contexts: ['page']
         });
 
@@ -288,7 +300,7 @@ async function buildContextMenu(db) {
             chrome.contextMenus.create({
                 id:       `setActive::${childDb.name}`,
                 parentId: 'setActiveRoot',
-                title:    `${isChildActive ? '✓ ' : ''}  ↳ ${childDb.name} (${childDb.entries.length})`,
+                title:    `${isChildActive ? '✓ ' : ''}  ↳ ${DwarfSecurity.sanitizeDbName(childDb.name)} (${childDb.entries.length})`,
                 contexts: ['page']
             });
         });
@@ -313,7 +325,7 @@ async function buildContextMenu(db) {
         chrome.contextMenus.create({
             id:       `viewParent::${dbItem.name}`,
             parentId: 'vaultSection',
-            title:    `${i + 1}. ${dbIcon} ${dbItem.name}${childInfo}`,
+            title:    `${i + 1}. ${dbIcon} ${DwarfSecurity.sanitizeDbName(dbItem.name)}${childInfo}`,
             contexts: ['page']
         });
 
@@ -339,7 +351,7 @@ async function buildContextMenu(db) {
             chrome.contextMenus.create({
                 id:       `viewChild::${childDb.name}`,
                 parentId: `viewParent::${dbItem.name}`,
-                title:    `📦↳ ${childDb.name} (${childDb.entries.length} items)`,
+                title:    `📦↳ ${DwarfSecurity.sanitizeDbName(childDb.name)} (${childDb.entries.length} items)`,
                 contexts: ['page']
             });
 
@@ -461,12 +473,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             // La pestaña no acepta scripts (chrome://, extensiones, PDFs, etc.)
         }
 
-        // Notificación de confirmación visible al usuario
+        // Notificación de confirmación visible al usuario (respeta el toggle
+        // 🔔/🔕 del popup — si está OFF, no se muestra nada).
         const preview = textToCopy.split('\n')[0].substring(0, 60);
-        chrome.notifications.create({
+        DwarfNotify.send({
             type:    'basic',
             iconUrl: 'icons/icon48.png',
-            title:   '⭐ Copiado al portapapeles',
+            title:   '⭐ Copied to clipboard',
             message: preview + (textToCopy.length > 60 ? '...' : '')
         });
         return;
@@ -489,8 +502,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }
         if (!dbItem || entryIndex < 0 || entryIndex >= dbItem.entries.length) return;
 
-        const url = dbItem.entries[entryIndex].url;
-        if (url) chrome.tabs.create({ url });
+        // Validar esquema: solo http(s). Bloquea javascript:/data:/file:
+        // si la URL vino de un CSV/JSON importado sin validar en versiones previas.
+        const url = DwarfSecurity.safeUrlOrEmpty(dbItem.entries[entryIndex].url);
+        if (url) {
+            chrome.tabs.create({ url });
+        } else {
+            DwarfNotify.send({
+                type:    'basic',
+                iconUrl: 'icons/icon48.png',
+                title:   '🔗 Link blocked',
+                message: 'The stored URL is invalid or uses a disallowed scheme.'
+            });
+        }
         return;
     }
 
@@ -512,7 +536,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         await loadDatabases();
 
         // Notificación de confirmación
-        chrome.notifications.create({
+        DwarfNotify.send({
             type:    'basic',
             iconUrl: 'icons/icon48.png',
             title:   '⚙️ Active Vault Changed',
@@ -564,7 +588,11 @@ function openPopupWithEntry(dbItem, entryIndex) {
         dbName:       dbItem.name,
         favicon:      entry.favicon
     }, () => {
-        chrome.action.openPopup();
+        // openPopup puede rechazar si ya hay popup abierto o si no hay
+        // gesto reciente del usuario. Loguear en debug y seguir.
+        chrome.action.openPopup().catch((err) => {
+            console.debug('[DwarfVault] openPopup rejected:', err?.message);
+        });
     });
 }
 
@@ -594,11 +622,14 @@ async function saveTextToDatabase(db, dbName, text, url, favicon) {
             dbData = { name: dbName, entries: [], parentDatabase: null };
         }
 
+        // Validar URL y favicon antes de persistir. Si algún sitio malicioso
+        // intentase inyectar javascript:/data:text/html en tab.url o tab.favIconUrl
+        // (improbable pero defensivo), se guarda cadena vacía en su lugar.
         dbData.entries.push({
             text,
-            url,
-            favicon,
-            date: new Date().toISOString()
+            url:     DwarfSecurity.safeUrlOrEmpty(url),
+            favicon: DwarfSecurity.safeFaviconOrEmpty(favicon),
+            date:    new Date().toISOString()
         });
 
         await new Promise((resolve, reject) => {
@@ -607,11 +638,11 @@ async function saveTextToDatabase(db, dbName, text, url, favicon) {
             req.onerror   = (e) => reject(e.target.error);
         });
 
-        chrome.notifications.create({
+        DwarfNotify.send({
             type:     'basic',
             iconUrl:  'icons/icon48.png',
-            title:    'Guardado en DwarfVault',
-            message:  `Texto guardado en "${dbName}".`
+            title:    'Saved to DwarfVault',
+            message:  `Text saved to "${dbName}".`
         });
 
         // Actualizar caché y menú
@@ -634,6 +665,8 @@ chrome.runtime.onMessage.addListener((message) => {
 
 chrome.commands.onCommand.addListener((command) => {
     if (command === 'open-extension') {
-        chrome.action.openPopup();
+        chrome.action.openPopup().catch((err) => {
+            console.debug('[DwarfVault] openPopup rejected:', err?.message);
+        });
     }
 });

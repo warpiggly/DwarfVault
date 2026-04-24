@@ -810,6 +810,19 @@ a:active {
     background-color: #3a824f;
 }
 
+/* Estado desactivado del botón 🔔/🔕 NOTIFICATIONS.
+   Tono apagado/grisáceo para indicar "silenciado" sin gritar como un error rojo. */
+.notif-btn-off {
+    background-color: #4a3f36;
+    border-color: #7a6a5a;
+    color: #b8a896;
+    opacity: 0.85;
+}
+.notif-btn-off:hover {
+    background-color: #5a4d42;
+    opacity: 1;
+}
+
 /* Entrada con poco texto: centrar favicon + texto dentro del li. */
 .entry-content-centered {
     justify-content: center !important;

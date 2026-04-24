@@ -26,13 +26,13 @@
 
     <div class="header">
         <h1 class="title">DWARF VAULT</h1>
-        <img src="icons/Final Gif.gif" alt="Logo de Dott-y" class="logo" id="enanoGif">
+        <img src="icons/Final Gif.gif" alt="Dott-y logo" class="logo" id="enanoGif">
         <h3 class="subtitle">Copy 🏔️ Text</h3>
     </div>
 
     <div>
         <div class="container2">
-            <img src="image/Boton 3.png" alt="Imagen de fondo" class="background-image">
+            <img src="image/Boton 3.png" alt="" class="background-image">
             <div class="texto-movible">
                 <h2>RUNES ⚔️ <span style="color: #cccccc;"></span></h2>
             </div>
@@ -41,7 +41,9 @@
         <!-- Información de la entrada seleccionada -->
         <div id="dbName" style="display: none;"></div>
         <div id="entryFavicon" class="copy">
-            <img id="faviconImg" src="" alt="Favicon" style="width: 24px; height: 24px; display: none;">
+            <!-- Sin src inicial para evitar un 404 silencioso al cargar el popup.
+                 popup.js asignará src solo cuando haya un favicon seguro. -->
+            <img id="faviconImg" alt="" style="width: 24px; height: 24px; display: none;">
         </div>
         <div id="entryIndex" class="copy">Index: Not available</div>
         <div id="entryText" class="copy">No text selected yet.</div>
@@ -112,7 +114,15 @@
                 <button id="linkQuickAccess" class="action-btn" style="width:100%; margin-top: 8px;">⛓️ LINK — Sync Both</button>
             </div>
 
-            <!-- 5. Emoji Selector: utilidad secundaria al final -->
+            <!-- 5. Settings: preferencias globales del usuario -->
+            <div class="forge-section">
+                <p class="forge-section-title">SETTINGS</p>
+                <button id="toggleNotifications" class="action-btn" style="width:100%;">
+                    🔔 NOTIFICATIONS — ON
+                </button>
+            </div>
+
+            <!-- 6. Emoji Selector: utilidad secundaria al final -->
             <div id="emojiSelector" class="emoji-selector forge-section">
                 <details id="emojiDropdown">
                     <summary style="cursor: pointer; font-size: 16px;">💎 Glyph Vault 💎 <span style="color: #cccccc;"> (click to expand)</span></summary>
@@ -133,6 +143,8 @@
     </div>
 
     <!-- Scripts -->
+    <script src="scripts/security.js"></script>
+    <script src="scripts/notifications.js"></script>
     <script src="scripts/db.js"></script>
     <script src="popup.js"></script>
     <script src="scripts/Butons.js"></script>
