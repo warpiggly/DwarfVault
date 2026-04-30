@@ -3,7 +3,7 @@
 > **Save. Organize. Discover.** A private, offline Chrome extension for managing text databases with AI-powered semantic search coming in v1.3
 
 <div align="center">
-  <img src="icons/Final%20Gif.gif" alt="Dott-y" width="110">
+  <img src="icons/Final%20Gif.gif" alt="Dott-y" width="510">
 </div>
 
 ---
@@ -21,7 +21,7 @@ DwarfVault is a **lightning-fast, privacy-first browser extension** that lets yo
 **Designed for:** researchers, data scientists, developers, writers, and anyone who needs a reliable personal knowledge base inside the browser.
 
 <div align="center">
-  <img src="image/1.jpg" alt="The Vault Keeper at work" width="920">
+  <img src="image/1.jpg" alt="The Vault Keeper at work" width="420">
 </div>
 
 ---
