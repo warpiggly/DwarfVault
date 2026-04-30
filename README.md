@@ -3,7 +3,7 @@
 > **Save. Organize. Discover.** A private, offline Chrome extension for managing text databases with AI-powered semantic search coming in v1.3
 
 <div align="center">
-  <img src="icons/Final%20Gif.gif" alt="Dott-y" width="510">
+  <img src="icons/Final%20Gif.gif" alt="Dott-y" width="250">
 </div>
 
 ---
