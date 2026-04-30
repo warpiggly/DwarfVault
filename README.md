@@ -31,6 +31,7 @@ DwarfVault is a **lightning-fast, privacy-first browser extension** that lets yo
 | 🏷️ **Auto-tagging** (k-NN) | ❌ | ❌ | ✅ **NEW** |
 | 📊 **Analytics dashboard** | ❌ | ✅ **NEW** | ✅ |
 | 🔔 Notification toggle | ✅ | ✅ | ✅ |
+| 🔓 **Native Click** (unlock right-click on Spotify, etc.) | ✅ **NEW** | ✅ | ✅ |
 | 🔐 Security hardened | ✅ | ✅ | ✅ |
 
 ---
@@ -71,6 +72,24 @@ DwarfVault is a **lightning-fast, privacy-first browser extension** that lets yo
 - **Toggle on/off** in SETTINGS
 - Get notified when you save text
 - Mute all notifications with one click
+
+### 🔓 Native Click — Context Menu Unlock *(v1.2 NEW)*
+Some sites (Spotify, Notion, online editors…) hijack the right-click event to show their own custom menu, blocking access to the browser's native menu — and to DwarfVault's "Save to Vault" entry.
+
+- **Toggle in SETTINGS** — `🔒 NATIVE CLICK — OFF` ↔ `🔓 NATIVE CLICK — ON`
+- **Per-tab** — only affects the active tab; doesn't leak to other sites
+- **Instant restore** — turn it off and the page's custom menu comes back without a reload
+- **Safe** — uses `stopImmediatePropagation()` in capture phase; doesn't break the page
+
+**How to use:**
+```
+1. Open a site with a custom right-click menu (e.g. Spotify Web)
+2. Open the popup → SETTINGS → click 🔒 NATIVE CLICK
+3. Right-click anywhere → native browser menu (with "Save to Vault") appears
+4. Click the toggle again to restore the site's custom menu
+```
+
+> ⚠️ Won't work on restricted pages (`chrome://`, Web Store, PDFs). The button auto-disables there.
 
 ---
 
@@ -190,6 +209,7 @@ DwarfVault/
 │   ├── db.js                 (IndexedDB interface)
 │   ├── security.js           (XSS prevention, validation)
 │   ├── notifications.js      (Toast notifications)
+│   ├── contextUnlock.js      (Native Click — unlock right-click)
 │   ├── ml.js                 (AI wrapper - Phase 1)
 │   ├── ml-worker.js          (AI computation - Phase 1)
 │   ├── Butons.js             (Button handlers)
@@ -251,6 +271,7 @@ DwarfVault/
 - ✅ Context menu integration
 - ✅ Security hardening
 - ✅ Notification toggle
+- ✅ **Native Click toggle** — unlock right-click on Spotify, Notion, and other sites with custom context menus
 - ✅ 100% offline operation
 
 ### v1.3 🚀 (Next — May 2026)

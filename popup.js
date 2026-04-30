@@ -303,6 +303,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ── Toggle Native Click 🔒/🔓 — delegado en scripts/contextUnlock.js ────
+    DwarfContextUnlock.init(document.getElementById('toggleContextUnlock'));
+
     // ── Selector de emojis ───────────────────────────────────────────────────
 
     fetch(chrome.runtime.getURL('emojis.json'))
@@ -607,11 +610,11 @@ function renderEntries(dbName, entries) {
         editBtn.addEventListener('click', () => openEditModal(dbName, originalIndex, entry));
         actions.appendChild(editBtn);
 
-        // Botón de borrar
+        // Botón de borrar — abre modal de confirmación, no borra directamente.
         const deleteBtn       = document.createElement('button');
         deleteBtn.textContent = '🗑 Delete';
         deleteBtn.className   = 'delete-btn';
-        deleteBtn.addEventListener('click', () => deleteEntry(dbName, originalIndex));
+        deleteBtn.addEventListener('click', () => openDeleteConfirmModal(dbName, originalIndex, entry));
         actions.appendChild(deleteBtn);
 
         li.appendChild(actions);
@@ -729,6 +732,127 @@ function openEditModal(dbName, entryIndex, entry) {
                 alert('Error saving entry. Please try again.');
                 saveBtn.disabled = false;
             });
+    });
+}
+
+/**
+ * Modal de confirmación para borrar una entrada. Muestra un preview de lo
+ * que se va a eliminar (índice, dominio, URL y texto) y obliga al usuario
+ * a pulsar "Delete" una segunda vez antes de borrar nada.
+ *
+ * Reutiliza .edit-modal-backdrop / .edit-modal para mantener consistencia
+ * visual con el modal de edición.
+ *
+ * @param {string} dbName
+ * @param {number} entryIndex
+ * @param {{text: string, url: string, favicon: string}} entry
+ */
+function openDeleteConfirmModal(dbName, entryIndex, entry) {
+    // Si ya existe un modal abierto, cerrarlo antes de crear otro.
+    document.querySelector('.edit-modal-backdrop')?.remove();
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'edit-modal-backdrop';
+
+    const modal = document.createElement('div');
+    modal.className = 'edit-modal delete-confirm-modal';
+
+    const title = document.createElement('h3');
+    title.className   = 'edit-modal-title';
+    title.textContent = '💀 CONFIRM DELETE';
+    modal.appendChild(title);
+
+    const warning = document.createElement('p');
+    warning.className   = 'delete-confirm-warning';
+    warning.textContent = 'This action cannot be undone. Press Delete again to confirm.';
+    modal.appendChild(warning);
+
+    // ── Preview de la entrada ───────────────────────────────────────────────
+    const preview = document.createElement('div');
+    preview.className = 'delete-confirm-preview';
+
+    // Cabecera: "Entry #N from "DBName""
+    const header = document.createElement('p');
+    header.className = 'delete-confirm-header';
+    header.textContent =
+        `Entry #${entryIndex + 1} from "${DwarfSecurity.sanitizeDbName(dbName)}"`;
+    preview.appendChild(header);
+
+    // URL (solo si pasa el filtro de seguridad). Mostramos el hostname para
+    // que el usuario reconozca de qué sitio viene la entrada.
+    const safeUrl = DwarfSecurity.safeUrlOrEmpty(entry.url);
+    if (safeUrl) {
+        const urlLine = document.createElement('p');
+        urlLine.className = 'delete-confirm-url';
+        let host = '';
+        try { host = new URL(safeUrl).hostname.replace('www.', ''); } catch { /* noop */ }
+        urlLine.textContent = host ? `🔗 ${host}` : `🔗 ${safeUrl}`;
+        urlLine.title = safeUrl; // hover muestra la URL completa
+        preview.appendChild(urlLine);
+    }
+
+    // Texto: truncado a ~240 chars con elipsis. Usamos textContent para
+    // evitar XSS y preservar literalmente lo guardado.
+    const textBlock = document.createElement('pre');
+    textBlock.className = 'delete-confirm-text';
+    const fullText  = entry.text || '';
+    const truncated = fullText.length > 240
+        ? fullText.slice(0, 240) + '…'
+        : fullText;
+    textBlock.textContent = truncated || '(empty)';
+    preview.appendChild(textBlock);
+
+    modal.appendChild(preview);
+
+    // ── Botones ─────────────────────────────────────────────────────────────
+    const btnRow = document.createElement('div');
+    btnRow.className = 'edit-modal-actions';
+
+    const cancelBtn       = document.createElement('button');
+    cancelBtn.textContent = '✖ Cancel';
+    cancelBtn.className   = 'action-btn';
+
+    const confirmBtn       = document.createElement('button');
+    confirmBtn.textContent = '🗑 Delete';
+    confirmBtn.className   = 'delete-btn';
+
+    // Cancel a la izquierda, Delete a la derecha → el destructivo NO es
+    // el primer foco/objetivo natural, hay que moverse para llegar a él.
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(confirmBtn);
+    modal.appendChild(btnRow);
+
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+
+    // Foco inicial en Cancel — más seguro que enfocar el botón destructivo.
+    // Si el usuario pulsa Enter sin querer, NO se borra nada.
+    cancelBtn.focus();
+
+    const close = () => {
+        backdrop.remove();
+        document.removeEventListener('keydown', onKey);
+    };
+
+    // Esc cierra sin borrar. Enter en el botón Delete confirma (foco explícito).
+    const onKey = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); close(); }
+    };
+    document.addEventListener('keydown', onKey);
+
+    // Clic fuera del modal cancela (mismo comportamiento que el modal de edición).
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) close();
+    });
+
+    cancelBtn.addEventListener('click', close);
+
+    confirmBtn.addEventListener('click', () => {
+        // Evitar dobles clicks mientras la transacción IDB está en vuelo.
+        confirmBtn.disabled = true;
+        cancelBtn.disabled  = true;
+        deleteEntry(dbName, entryIndex);
+        close();
     });
 }
 

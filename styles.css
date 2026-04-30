@@ -692,6 +692,13 @@ a:active {
     font-family:'Righteous-Regular', sans-serif ;
 }
 
+/* Glyph Vault va pegado a DWARF CHAMBER (mismo grupo lógico de "selección"),
+   así que suprimimos el separador superior heredado de .forge-section. */
+#emojiSelector.forge-section {
+    border-top: none;
+    padding-top: 0;
+}
+
 /* Grid de emojis: ocupa todo el ancho, emojis grandes y bien distribuidos */
 .emoji-grid {
     display: grid;
@@ -823,6 +830,22 @@ a:active {
     opacity: 1;
 }
 
+/* Estado activo del botón 🔓 NATIVE CLICK.
+   Tono verde-azulado para señalar "desbloqueado": el menú contextual
+   modificado de la página está suprimido y vuelve el menú nativo. */
+#toggleContextUnlock:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+.ctx-btn-on {
+    background-color: #2f6a82;
+    border-color: #4ea0bf;
+    color: #e6f4fb;
+}
+.ctx-btn-on:hover {
+    background-color: #387a96;
+}
+
 /* Entrada con poco texto: centrar favicon + texto dentro del li. */
 .entry-content-centered {
     justify-content: center !important;
@@ -941,5 +964,60 @@ a:active {
 .edit-modal-actions .delete-btn {
     padding: 8px 16px;
     font-size: 13px;
+}
+
+/* === Modal de confirmación de borrado ====================================== */
+/* Reutiliza .edit-modal-backdrop / .edit-modal. Solo añadimos lo específico:
+   tamaño más compacto, aviso destacado y bloque de preview con scroll. */
+.delete-confirm-modal {
+    max-width: 420px;
+}
+
+.delete-confirm-warning {
+    margin: 0;
+    text-align: center;
+    color: #ffb88a;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+}
+
+.delete-confirm-preview {
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 2px solid #c0a080;
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.delete-confirm-header {
+    margin: 0;
+    font-size: 12px;
+    color: #d4c5a3;
+    letter-spacing: 0.4px;
+}
+
+.delete-confirm-url {
+    margin: 0;
+    font-size: 11px;
+    color: #a8c4d8;
+    word-break: break-all;
+}
+
+.delete-confirm-text {
+    margin: 0;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 8px;
+    font-family: 'Righteous-Regular', monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #f4e5c3;
+    background-color: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(192, 160, 128, 0.4);
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
