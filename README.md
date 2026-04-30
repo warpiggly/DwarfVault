@@ -1,374 +1,383 @@
-# 🏔️ DwarfVault — Your Personal AI Text Vault
+# DwarfVault — Your Personal Text Vault
 
 > **Save. Organize. Discover.** A private, offline Chrome extension for managing text databases with AI-powered semantic search coming in v1.3
 
-![DwarfVault Logo](icons/Final%20Gif.gif)
+<div align="center">
+  <img src="icons/Final%20Gif.gif" alt="Dott-y" width="110">
+</div>
 
 ---
 
-## 🎯 What is DwarfVault?
+## What is DwarfVault?
 
-DwarfVault is a **lightning-fast, privacy-first browser extension** that lets you:
-- ✅ Save text from any website with a single right-click
-- ✅ Organize into unlimited custom databases
-- ✅ Search by keyword OR by meaning (v1.3+)
-- ✅ Export/Import for backup
-- ✅ Zero cloud, 100% local storage
+DwarfVault is a **lightning-fast, privacy-first browser extension** that lets you save, organize, and retrieve text from any website — entirely offline, with no servers involved.
 
-**Perfect for:** Researchers, data scientists, developers, writers, students — anyone who saves and organizes text.
+- Save text from any website with a single right-click
+- Organize into unlimited custom databases (parent and child vaults)
+- Search by keyword or by meaning (v1.3+)
+- Export and import for backup and portability
+- Zero cloud, 100% local storage
+
+**Designed for:** researchers, data scientists, developers, writers, and anyone who needs a reliable personal knowledge base inside the browser.
+
+<div align="center">
+  <img src="image/1.jpg" alt="The Vault Keeper at work" width="420">
+</div>
 
 ---
 
-## 📊 Version Comparison
+## Version Comparison
 
 | Feature | v1.2 (Current) | v1.3 (Coming) | v1.4+ |
-|---------|---|---|---|
-| 💾 Save text to databases | ✅ | ✅ | ✅ |
-| 🔍 Keyword search | ✅ | ✅ | ✅ |
-| 📋 Export/Import CSV | ✅ | ✅ | ✅ |
-| 🧠 **Semantic search** (AI) | ❌ | ✅ **NEW** | ✅ |
-| 🗺️ **Visual map** (UMAP) | ❌ | ❌ | ✅ **NEW**  |
-| 🏷️ **Auto-tagging** (k-NN) | ❌ | ❌ | ✅ **NEW** |
-| 📊 **Analytics dashboard** | ❌ | ✅ **NEW** | ✅ |
-| 🔔 Notification toggle | ✅ | ✅ | ✅ |
-| 🔓 **Native Click** (unlock right-click on Spotify, etc.) | ✅ **NEW** | ✅ | ✅ |
-| 🔐 Security hardened | ✅ | ✅ | ✅ |
+|---------|:-:|:-:|:-:|
+| Save text to databases | ✅ | ✅ | ✅ |
+| Keyword search | ✅ | ✅ | ✅ |
+| Export / Import CSV | ✅ | ✅ | ✅ |
+| **Semantic search** (AI) | ❌ | ✅ NEW | ✅ |
+| **Visual map** (UMAP) | ❌ | ❌ | ✅ NEW |
+| **Auto-tagging** (k-NN) | ❌ | ❌ | ✅ NEW |
+| **Analytics dashboard** | ❌ | ✅ NEW | ✅ |
+| Notification toggle | ✅ | ✅ | ✅ |
+| **Native Click** (unlock right-click on Spotify, etc.) | ✅ NEW | ✅ | ✅ |
+| Security hardened | ✅ | ✅ | ✅ |
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🔨 FORGE — Database Management
-- **Create** parent & child databases (organize hierarchically)
-- **Edit** database names on the fly
-- **Delete** entire vaults with one click
-- **Quick Access** — Link favorite databases to context menu
+### FORGE — Database Management
 
-### 📥 TRADE — Import/Export
-- Export single database as **CSV** (for spreadsheets)
-- Export full vault as **JSON** (with all children)
+- Create parent and child databases to organize knowledge hierarchically
+- Rename vaults on the fly
+- Delete entire vaults with a single action
+- Link favorite databases to the context menu for instant access
+
+### TRADE — Import / Export
+
+- Export a single database as **CSV** (compatible with spreadsheet tools)
+- Export a full vault with all child databases as **JSON**
 - Import CSV to restore or merge databases
-- **Backup your data** anytime, anywhere
+- Full backup and restore support at any time
 
-### 🏰 RELICS — Entry Management
-- **🔍 Keyword Search** — Find by text or index
-- **🧠 Semantic Search** (v1.3+) — Find by meaning ("ML" finds "machine learning")
-- **Edit** entries inline
-- **Copy** to clipboard (⌘/Ctrl+C ready)
-- **View** URL & favicon from original page
-- **Delete** individual entries
+### RELICS — Entry Management
 
-### 💎 Glyph Vault — Emoji Selector
-- Quick access to 100+ emojis
-- Copy to clipboard instantly
-- Organize your favorite glyphs
+- **Keyword Search** — find entries by text content or index number
+- **Semantic Search** (v1.3+) — find entries by meaning, not just exact words
+- Edit entries inline without leaving the popup
+- Copy to clipboard with one click
+- View the source URL and favicon from the original page
+- Delete entries with a confirmation step to prevent accidents
 
-### 📜 TABLES — Database Viewer
-- See all databases and entries in table format
-- Column view with index, text, URL, favicon
-- Sortable & searchable
+### Glyph Vault — Character Selector
 
-### 🔔 Smart Notifications
-- **Toggle on/off** in SETTINGS
-- Get notified when you save text
-- Mute all notifications with one click
+- Quick access to over 100 characters and symbols
+- Copy any glyph to the clipboard instantly
+- Integrated directly into the FORGE panel
 
-### 🔓 Native Click — Context Menu Unlock *(v1.2 NEW)*
-Some sites (Spotify, Notion, online editors…) hijack the right-click event to show their own custom menu, blocking access to the browser's native menu — and to DwarfVault's "Save to Vault" entry.
+### TABLES — Database Viewer
 
-- **Toggle in SETTINGS** — `🔒 NATIVE CLICK — OFF` ↔ `🔓 NATIVE CLICK — ON`
-- **Per-tab** — only affects the active tab; doesn't leak to other sites
-- **Instant restore** — turn it off and the page's custom menu comes back without a reload
-- **Safe** — uses `stopImmediatePropagation()` in capture phase; doesn't break the page
+- Full table view of all databases and entries
+- Columns: index, text, source URL, favicon
+- Sortable and searchable
 
-**How to use:**
-```
-1. Open a site with a custom right-click menu (e.g. Spotify Web)
-2. Open the popup → SETTINGS → click 🔒 NATIVE CLICK
-3. Right-click anywhere → native browser menu (with "Save to Vault") appears
-4. Click the toggle again to restore the site's custom menu
-```
+### Smart Notifications
 
-> ⚠️ Won't work on restricted pages (`chrome://`, Web Store, PDFs). The button auto-disables there.
+- Toggle system notifications on or off from SETTINGS
+- Receive confirmation when text is saved
+- Mute all notifications with a single click
+
+### Native Click — Context Menu Unlock
+
+Some websites (Spotify, Notion, and similar) override the browser's right-click menu with their own, blocking access to the native menu — and to DwarfVault's "Save to Vault" entry. The Native Click toggle restores the browser's default context menu on the active tab without reloading the page.
+
+- Toggle from SETTINGS: `Native Click OFF` / `Native Click ON`
+- Affects only the active tab — does not leak to other sites
+- Deactivating restores the site's custom menu instantly, no reload required
+- Automatically disabled on restricted pages (`chrome://`, Web Store, PDF files)
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
-### Installation (Developer Mode)
+### Installation — Developer Mode
 
 ```
-1. Clone or download this repo
-2. Go to chrome://extensions/
+1. Clone or download this repository
+2. Navigate to chrome://extensions/
 3. Enable "Developer mode" (top right)
 4. Click "Load unpacked"
 5. Select the DwarfVault folder
-6. Done! ✅ Extension appears in your toolbar
+6. The extension icon appears in your toolbar
 ```
 
-**Keyboard Shortcut:** `Ctrl+Y` (Windows/Linux) or `Cmd+Y` (Mac) to open the popup.
+**Keyboard shortcut:** `Ctrl+Y` (Windows / Linux) or `Cmd+Y` (Mac) to open the popup.
 
 ---
 
-## 🎬 Usage Guide
+## Usage Guide
 
-### 1️⃣ **Create Your First Database** 🏛️
+### 1. Create Your First Database
 
 ```
-📍 FORGE 🔨 → NEW VAULT (Parent) → Enter name → Create
+FORGE → NEW VAULT (Parent) → Enter a name → Confirm
 ```
 
-The database is created and stored locally. You can now save text to it.
+The database is stored locally. You can now save text to it.
 
-### 2️⃣ **Save Text from Any Website** 📥
+### 2. Save Text from Any Website
 
-**Method A: Right-Click Context Menu**
+**Method A — Right-click context menu**
 ```
-1. Select any text on a website
-2. Right-click → "The Dwarf's Vault" → Select database
-3. Text + URL + favicon saved automatically ✅
-```
-
-**Method B: Use Popup**
-```
-1. Open popup (Ctrl+Y)
-2. Select database in FORGE
-3. Paste text → Copy Text button
-4. Done!
+1. Select any text on a webpage
+2. Right-click → "The Dwarf's Vault" → Choose a database
+3. Text, URL, and favicon are saved automatically
 ```
 
-### 3️⃣ **Search & Manage Entries** 🔍
+**Method B — Popup**
+```
+1. Open the popup with Ctrl+Y
+2. Select a database in FORGE
+3. Paste your text and confirm
+```
 
-**Keyword Search:**
+### 3. Search and Manage Entries
+
+**Keyword search:**
 ```
-RELICS 🏰 → Keyword tab → Type word → See results
+RELICS → Type a word or index number → Results appear instantly
 ```
 
-**Semantic Search (v1.3+):**
+**Semantic search (v1.3+):**
 ```
-RELICS 🏰 → 🧠 Semantic tab → "machine learning" → 
+RELICS → Semantic tab → "machine learning" →
 Returns: "deep learning", "neural networks", etc. (by meaning)
 ```
 
-### 4️⃣ **Export & Backup** 💾
+### 4. Export and Backup
 
-**Single Database (CSV):**
+**Single database (CSV):**
 ```
-FORGE 🔨 → TRADE → 📤 EXPORT CSV → File saved
-```
-
-**Full Vault with Children (JSON):**
-```
-FORGE 🔨 → TRADE → 📦 EXPORT Full Vault → Backup created
+FORGE → TRADE → EXPORT CSV
 ```
 
-**Import:**
+**Full vault with child databases (JSON):**
 ```
-FORGE 🔨 → TRADE → 📥 IMPORT CSV or 🗃️ IMPORT Full Vault
+FORGE → TRADE → EXPORT Full Vault
 ```
 
-### 5️⃣ **View All Data** 📊
+**Restore from backup:**
+```
+FORGE → TRADE → IMPORT CSV  or  IMPORT Full Vault
+```
 
-Click **"TABLES"** in navigation to see a table view of all databases and entries with sortable columns.
+### 5. View All Data
+
+Click **TABLES** in the navigation bar to see a full table view of all databases and entries with sortable columns.
 
 ---
 
-## 🧠 Semantic Search (v1.3) — How It Works
+## Semantic Search — How It Works
 
-Instead of finding exact keywords, **semantic search understands meaning**.
+Instead of matching exact keywords, semantic search understands the **meaning** behind words.
 
 **Example:**
 ```
-You save: "Python machine learning libraries like TensorFlow"
-You search: "deep learning frameworks"
+Saved text:  "Python machine learning libraries like TensorFlow"
+Search query: "deep learning frameworks"
 
-Result: ✅ FOUND — 87% similarity match
+Result: match found — 87% similarity
 ```
 
-**Under the hood:**
-- ✅ AI converts your text to "meaning vectors" (384-dimensional)
-- ✅ Compares vectors to find similar concepts
-- ✅ Ranks results by relevance (0-100%)
-- ✅ All runs offline in your browser (no servers)
+Under the hood:
+- The AI converts text into meaning vectors (384 dimensions)
+- Vectors are compared using cosine similarity
+- Results are ranked by relevance from 0 to 100%
+- The model runs entirely offline in the browser after the first download (~22 MB, cached locally)
 
-First search takes 2-10 sec (model downloads), then <1 sec each.
+First search takes 2–10 seconds for model initialization; subsequent searches run in under one second.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 DwarfVault/
-├── 📄 manifest.json          (Extension config, permissions)
-├── 📄 index.html             (Main popup UI)
-├── 📄 popup.js               (Popup logic & database CRUD)
-├── 📄 background.js          (Service worker, context menus)
-├── 📄 View Board.html        (Table view of all DBs)
-├── 📄 History.html           (Tutorial page)
-├── 📁 scripts/
-│   ├── db.js                 (IndexedDB interface)
-│   ├── security.js           (XSS prevention, validation)
-│   ├── notifications.js      (Toast notifications)
-│   ├── contextUnlock.js      (Native Click — unlock right-click)
-│   ├── ml.js                 (AI wrapper - Phase 1)
-│   ├── ml-worker.js          (AI computation - Phase 1)
-│   ├── Butons.js             (Button handlers)
-│   └── Menu.js               (Navigation menu)
-├── 📁 icons/                 (Extension icons 16x48x128px)
-├── 📁 fonts/                 (Custom fonts)
-├── 📁 image/                 (UI assets)
-├── 📄 styles.css             (Main styles)
-├── 📄 styles Board.css       (Table view styles)
-├── 📄 styles History.css     (Tutorial styles)
-└── 📄 emojis.json            (Emoji database)
+├── manifest.json              Extension config and permissions
+├── index.html                 Main popup UI
+├── popup.js                   Popup logic and database CRUD
+├── background.js              Service worker, context menus
+├── View Board.html            Table view of all databases
+├── History.html               Tutorial page
+├── scripts/
+│   ├── db.js                  IndexedDB interface
+│   ├── security.js            XSS prevention and input validation
+│   ├── notifications.js       System notification module
+│   ├── contextUnlock.js       Native Click — context menu unlock
+│   ├── ml.js                  AI wrapper (Phase 1)
+│   ├── ml-worker.js           AI computation in a Web Worker
+│   ├── Butons.js              Button interaction handlers
+│   └── Menu.js                Navigation menu logic
+├── icons/                     Extension icons (16 / 48 / 128 px)
+├── fonts/                     Custom typefaces
+├── image/                     UI and artwork assets
+├── styles.css                 Main stylesheet
+├── styles Board.css           Table view styles
+├── styles History.css         Tutorial styles
+└── emojis.json                Glyph Vault character database
 ```
 
 ---
 
-## 🔒 Security & Privacy
+## Security and Privacy
 
-### ✅ Your Data is Always Yours
-- **100% offline** — Nothing sent to servers
-- **Client-side only** — IndexedDB stores everything locally
-- **No tracking** — No analytics, no ads, no telemetry
-- **Open source** — Audit the code yourself
+<div align="center">
+  <img src="image/5.jpg" alt="The Vault" width="380">
+</div>
 
-### 🔐 Security Hardened (v1.2+)
-- **CSP enabled** — `script-src 'self'` prevents injection attacks
-- **XSS protection** — All URLs & database names validated
-- **Import validation** — CSV/JSON import sanitized
-- **Favicon safety** — Only safe image URLs allowed
-- **No eval()** — Manifest V3 compliant
+### Your Data is Always Yours
+
+- **100% offline** — nothing is sent to any server
+- **Client-side only** — IndexedDB stores everything in your local browser
+- **No tracking** — no analytics, no advertising, no telemetry
+- **Open source** — the full codebase is available for audit
+
+### Security Hardening (v1.2+)
+
+- **CSP enabled** — `script-src 'self'` blocks injection attacks
+- **XSS protection** — all URLs and database names are validated before use
+- **Import validation** — CSV and JSON imports are sanitized on load
+- **Favicon safety** — only verified image URLs are rendered
+- **No `eval()`** — fully Manifest V3 compliant
 
 ---
 
-## ⚙️ Technical Details
+## Technical Details
+
+<div align="center">
+  <img src="image/3.jpg" alt="The Engineer" width="380">
+</div>
 
 | Component | Technology |
 |-----------|-----------|
 | **Storage** | IndexedDB (local, persistent) |
 | **UI** | Vanilla JS, HTML5, CSS3 |
-| **Architecture** | Chrome Manifest V3 (modern) |
-| **Threading** | Web Workers (non-blocking) |
-| **AI** (v1.3+) | Transformers.js + MiniLM model |
-| **Performance** | <1 sec search, <100ms copy |
+| **Architecture** | Chrome Manifest V3 |
+| **Threading** | Web Workers (non-blocking AI computation) |
+| **AI** (v1.3+) | Transformers.js + MiniLM-L6-v2 |
+| **Search performance** | under 1 second after model load |
 
-### Permissions Used
-- `contextMenus` — Right-click save menu
-- `storage` — Store user preferences
-- `notifications` — Toast notifications
-- `tabs`, `activeTab` — Get current URL
-- `clipboardWrite` — Copy text to clipboard
-- `scripting` — Content script injection
+### Permissions
 
----
-
-## 🚀 Roadmap
-
-### v1.2 ✅ (Current)
-- ✅ Core CRUD operations
-- ✅ CSV import/export
-- ✅ Context menu integration
-- ✅ Security hardening
-- ✅ Notification toggle
-- ✅ **Native Click toggle** — unlock right-click on Spotify, Notion, and other sites with custom context menus
-- ✅ 100% offline operation
-
-### v1.3 🚀 (Next — May 2026)
-- 🧠 **Semantic search** with AI embeddings
-- 📊 **Analytics dashboard** (TF-IDF, word clouds)
-- 🔔 Notification improvements
-- 🎨 UI polish
-
-### v1.4+ 🔮 (Planned)
-- 🗺️ **UMAP visualization** (see data in 2D)
-- 🏷️ **Auto-tagging** with k-NN classifier
-- 🔍 **Duplicate detection** (MinHash + LSH)
-- ⚡ **Performance optimizations**
-- 📱 Mobile app exploration
-
-**See full roadmap:** [ROADMAP_v1.3-v1.7.md](ROADMAP_v1.3-v1.7.md)
+| Permission | Purpose |
+|------------|---------|
+| `contextMenus` | Right-click save and quick-access menu |
+| `storage` | Persist user preferences |
+| `notifications` | System toast notifications |
+| `tabs`, `activeTab` | Read current page URL and favicon |
+| `clipboardWrite` | Copy text to clipboard |
+| `scripting` | Content script injection (Native Click, text capture) |
 
 ---
 
-## 📚 Documentation
+## Roadmap
+
+### v1.2 — Current
+
+- Core CRUD operations (create, read, update, delete)
+- CSV import and export
+- Context menu integration with parent/child vault structure
+- Security hardening (CSP, XSS validation, favicon safety)
+- Notification toggle
+- Native Click toggle — unlock right-click on sites with custom context menus
+- 100% offline operation
+
+### v1.3 — Next (May 2026)
+
+- Semantic search with AI embeddings (MiniLM + Transformers.js)
+- Analytics dashboard (TF-IDF, word frequency)
+- Notification system improvements
+- UI polish
+
+### v1.4+ — Planned
+
+- UMAP visualization — explore your data in 2D space
+- Auto-tagging with k-NN classifier
+- Duplicate detection using MinHash + LSH
+- Performance optimizations
+- Firefox version exploration
+
+See the full roadmap: [ROADMAP_v1.3-v1.7.md](ROADMAP_v1.3-v1.7.md)
+
+---
+
+## Documentation
 
 | Document | Purpose |
 |----------|---------|
-| [README.md](README.md) | This file — overview & quick start |
+| [README.md](README.md) | Overview and quick start |
 | [ROADMAP_v1.3-v1.7.md](ROADMAP_v1.3-v1.7.md) | 7-phase AI roadmap with architecture |
 | [PHASE_1_INTEGRATION.md](PHASE_1_INTEGRATION.md) | Step-by-step guide for v1.3 |
-| [PHASE_1_CODE_EXAMPLES.md](PHASE_1_CODE_EXAMPLES.md) | Copy-paste code snippets |
-| [README_FASE_1.md](README_FASE_1.md) | Summary in simple Spanish |
+| [PHASE_1_CODE_EXAMPLES.md](PHASE_1_CODE_EXAMPLES.md) | Code snippets for v1.3 integration |
+| [README_FASE_1.md](README_FASE_1.md) | Summary in Spanish |
 
 ---
 
-## ❓ FAQ
+## FAQ
 
-**Q: Is my data safe?**  
-A: Yes. All data stays in your browser's IndexedDB. Nothing leaves your device.
+**Is my data safe?**
+All data stays in your browser's IndexedDB. Nothing leaves your device.
 
-**Q: Can I sync across devices?**  
-A: Not yet. Use Export/Import to backup and restore on other devices.
+**Can I sync across devices?**
+Not in v1.2. Use Export/Import to move data between devices.
 
-**Q: How much data can I store?**  
-A: Usually 50MB+ depending on your browser. Typical usage: thousands of entries.
+**How much data can I store?**
+Typically 50 MB or more depending on browser settings. Most users store thousands of entries without issue.
 
-**Q: Will semantic search work offline?**  
-A: Yes, after the first download. The AI model caches locally (~22MB).
+**Will semantic search work offline?**
+Yes, after the first model download. The model (~22 MB) is cached locally by the browser.
 
-**Q: Can I use this on Firefox/Safari?**  
-A: Not yet. Currently Chrome/Edge only (Manifest V3). Firefox version planned for v1.4.
+**Is this available on Firefox or Safari?**
+Not yet. DwarfVault currently supports Chrome and Edge (Manifest V3). A Firefox port is planned for v1.4.
 
-**Q: Do you collect any data?**  
-A: No. This is completely anonymous, open-source software.
+**Do you collect any data?**
+No. DwarfVault is completely local, anonymous, and open source.
 
-**Q: How do I report a bug?**  
-A: Open an issue on GitHub or contact: WarpigglyTech@gmail.com
-
----
-
-## 🎓 Learning Resources
-
-Want to understand how DwarfVault works internally? Check these:
-- **Web Extensions**: https://developer.chrome.com/docs/extensions/
-- **IndexedDB**: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
-- **Web Workers**: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API
-- **Transformers.js** (AI): https://huggingface.co/docs/transformers.js
-- **Semantic Search**: Understanding word embeddings and cosine similarity
+**How do I report a bug?**
+Open an issue on GitHub or contact: WarpigglyTech@gmail.com
 
 ---
 
-## 📦 Packaging for Chrome Web Store
+## Packaging for Distribution
 
-When building the extension ZIP for distribution, **exclude** development files:
+When building the extension ZIP for the Chrome Web Store, exclude development files:
 
 ```
-❌ Exclude:
-   - ROADMAP_*.md
-   - PHASE_*.md
-   - README_*.md
-   - .git/
-   - .gitignore
-   - *.jsonl (conversation logs)
+Exclude:
+  ROADMAP_*.md
+  PHASE_*.md
+  README_*.md
+  .git/
+  .gitignore
+  *.jsonl
 
-✅ Include:
-   - manifest.json
-   - index.html, View Board.html, History.html
-   - background.js, popup.js, Viewboard.js
-   - scripts/ (all .js files)
-   - styles*.css
-   - icons/, fonts/, image/
-   - emojis.json
+Include:
+  manifest.json
+  index.html, View Board.html, History.html
+  background.js, popup.js, Viewboard.js
+  scripts/
+  styles*.css
+  icons/, fonts/, image/
+  emojis.json
 ```
 
-**Result:** ~500 KB extension ZIP (optimized for distribution)
+Target size: approximately 500 KB zipped.
 
 ---
 
-## 👨‍💻 Development
+## Development
 
-### Clone & Setup
+### Clone and Set Up
+
 ```bash
 git clone https://github.com/DearDeivy/DwarfVault.git
 cd DwarfVault
@@ -376,59 +385,59 @@ cd DwarfVault
 ```
 
 ### Build for Production
+
 ```bash
-# Create distribution ZIP excluding dev files
 zip -r DwarfVault-v1.2.zip . \
   -x "*.md" "*.git*" "*.jsonl" ".DS_Store"
 ```
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Found a bug? Want to add a feature?
+Found a bug or want to propose a feature?
+
 1. Fork the repository
 2. Create a branch: `git checkout -b feature/your-feature`
-3. Commit changes: `git commit -m "Add feature"`
+3. Commit your changes: `git commit -m "Add feature"`
 4. Push: `git push origin feature/your-feature`
-5. Open a Pull Request
+5. Open a pull request
 
 ---
 
-## 📜 License
+## License
 
-MIT License — Free for personal and commercial use.
-
----
-
-## 🙏 Credits
-
-**Developer:** David Salazar Saldarriaga (DearDeivy / Warpiggly)  
-**Email:** WarpigglyTech@gmail.com 
-**Open Source:** MIT Licensed
-
-**Libraries & Resources:**
-- Transformers.js (HuggingFace) — AI models
-- Righteous Font — Custom typography
-- Emojis — Unicode Consortium
+MIT License — free for personal and commercial use.
 
 ---
 
-## 📞 Support & Contact
+## Credits
 
-- 🐛 **Bug Reports:** Open an issue on GitHub
-- 💬 **Questions:** WarpigglyTech@gmail.com
-- ⭐ **Like it?** Star this repo to show support!
+**Developer:** David Salazar Saldarriaga (DearDeivy / Warpiggly)
+**Contact:** WarpigglyTech@gmail.com
+**License:** MIT
+
+**Libraries and resources used:**
+- Transformers.js (HuggingFace) — in-browser AI models
+- Righteous Font — custom typography
+- Unicode Consortium — character database
+
+---
+
+## Support
+
+- Bug reports: open an issue on GitHub
+- Questions: WarpigglyTech@gmail.com
+- If this project is useful to you, consider starring the repository.
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by DearDeivy**
+**Made by DearDeivy**
 
 *DwarfVault — Save. Organize. Discover.*
 
-[🌟 GitHub](https://github.com/DearDeivy/DwarfVault) • [📧 Email](mailto:WarpigglyTech@gmail.com) • [🚀 Version 1.2](https://github.com/DearDeivy/DwarfVault/releases)
+[GitHub](https://github.com/DearDeivy/DwarfVault) &nbsp;·&nbsp; [Email](mailto:WarpigglyTech@gmail.com) &nbsp;·&nbsp; [Version 1.2](https://github.com/DearDeivy/DwarfVault/releases)
 
 </div>
-
