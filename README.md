@@ -21,7 +21,7 @@ DwarfVault is a **lightning-fast, privacy-first browser extension** that lets yo
 **Designed for:** researchers, data scientists, developers, writers, and anyone who needs a reliable personal knowledge base inside the browser.
 
 <div align="center">
-  <img src="image/1.jpg" alt="The Vault Keeper at work" width="420">
+  <img src="image/1.jpg" alt="The Vault Keeper at work" width="920">
 </div>
 
 ---
