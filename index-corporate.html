@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DwarfVault — Sheet</title>
+    <link rel="stylesheet" href="styles-corporate.css">
+</head>
+<body data-style="corporate">
+
+    <!-- Style toggle: pill switch profesional (fixed, fuera del wrapper).
+         En corporate arranca con aria-checked="true" → bolita a la derecha.
+         El styleToggle.js setea el estado correcto en init() de todas formas. -->
+    <button type="button"
+            class="style-toggle-btn"
+            id="styleToggleBtn"
+            role="switch"
+            aria-checked="true"
+            title="Change Style"
+            aria-label="Change Style"></button>
+
+    <!-- Wrapper interior: aporta el padding que separa todo de los bordes
+         del popup. Su `overflow: hidden` clipa el contenido pero NO clipa
+         los dropdowns del menubar porque estos se expanden hacia abajo
+         dentro del área del wrapper. -->
+    <div class="popup-wrapper">
+
+        <!-- ══════════════════════════════════════════════════════════
+             HEADER ZONE — logo corporate (izquierda) + 3 estrellas
+             centradas que sustituyen al menú hamburguesa dwarven.
+             Cada estrella es un <a href> que navega a las otras vistas.
+             ══════════════════════════════════════════════════════════ -->
+        <header class="sheet-header" id="sheetHeader">
+
+            <!-- Logo corporate (casco dwarven), pegado a la izquierda. -->
+            <img class="header-logo" src="image/Logo-Corporate.png" alt="DwarfVault">
+
+            <!-- Navegación entre vistas. Equivalente al hamburger menu
+                 de la versión dwarven (HOME / TABLES / TUTORIAL).
+                 Cada estrella usa la misma imagen — el comportamiento
+                 lo dictan los `href` (no necesita JS). -->
+            <nav class="header-nav" aria-label="Page navigation">
+                <a class="header-star" href="index.html"        title="Home"     aria-label="Home — dwarven view">
+                    <img src="image/Estrellas-cambiopagina.png" alt="">
+                </a>
+                <a class="header-star" href="View Board.html"   title="Tables"   aria-label="Tables — full database view">
+                    <img src="image/Estrellas-cambiopagina.png" alt="">
+                </a>
+                <a class="header-star" href="History.html"      title="Tutorial" aria-label="Tutorial — how to use">
+                    <img src="image/Estrellas-cambiopagina.png" alt="">
+                </a>
+            </nav>
+
+        </header>
+
+        <!-- ══════════════════════════════════════════════════════════
+             MENUBAR — fuera del card principal para que los dropdowns
+             se expandan SOBRE la rejilla sin ser cortados.
+             ══════════════════════════════════════════════════════════ -->
+        <nav class="sheet-menubar" role="menubar" aria-label="Application menu">
+
+            <div class="menu" data-menu="vault">
+                <button type="button"
+                        class="menu-trigger"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-controls="menu-vault">Vault</button>
+                <div id="menu-vault" class="menu-dropdown" role="menu" hidden>
+                    <button type="button" class="menu-item" role="menuitem" data-action="new-parent">＋ New Parent</button>
+                    <button type="button" class="menu-item" role="menuitem" data-action="new-child">＋ New Child</button>
+                    <div class="menu-separator" role="separator"></div>
+                    <button type="button" class="menu-item" role="menuitem" data-action="rename">✎ Rename</button>
+                    <button type="button" class="menu-item menu-item-danger" role="menuitem" data-action="delete">× Delete</button>
+                </div>
+            </div>
+
+            <div class="menu" data-menu="data">
+                <button type="button"
+                        class="menu-trigger"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-controls="menu-data">Data</button>
+                <div id="menu-data" class="menu-dropdown" role="menu" hidden>
+                    <button type="button" class="menu-item" role="menuitem" data-action="import">⇩ Import CSV</button>
+                    <button type="button" class="menu-item" role="menuitem" data-action="export">⇧ Export CSV</button>
+                </div>
+            </div>
+
+        </nav>
+
+        <!-- ══════════════════════════════════════════════════════════
+             MAIN CARD — controls + grid + tabs. Border + glow sutil.
+             ══════════════════════════════════════════════════════════ -->
+        <div class="sheet-main">
+
+            <!-- Controles: vault selector + search en la misma fila -->
+            <div class="sheet-controls">
+                <select id="vaultSelect" class="toolbar-select" aria-label="Select parent vault">
+                    <option value="">Loading…</option>
+                </select>
+                <input
+                    type="search"
+                    id="searchInput"
+                    class="toolbar-search"
+                    placeholder="Search in this sheet…"
+                    aria-label="Search entries in current sheet"
+                >
+            </div>
+
+            <!-- Grid -->
+            <div class="sheet-grid-wrapper">
+                <table class="sheet-grid" id="sheetGrid">
+                    <thead>
+                        <tr>
+                            <th class="col-index">#</th>
+                            <th class="col-favicon" title="Source favicon">Icon</th>
+                            <th class="col-text">Text</th>
+                            <th class="col-url">URL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sheetGridBody"></tbody>
+                </table>
+
+                <div class="sheet-empty" id="sheetEmpty" hidden>
+                    <p class="sheet-empty-title">No vaults yet</p>
+                    <p class="sheet-empty-hint">Open the <strong>Vault</strong> menu and pick <strong>＋ New Parent</strong> to create your first vault.</p>
+                </div>
+            </div>
+
+            <!-- Bottom tabs -->
+            <div class="sheet-tabs" id="sheetTabs" role="tablist" aria-label="Sheets in this vault">
+                <!-- Tabs inyectados por corporate.js -->
+            </div>
+
+        </div>
+
+        <!-- File input oculto: lo dispara el menú Data → Import CSV. -->
+        <input type="file" id="importInput" accept=".csv" hidden>
+
+    </div>
+
+    <!-- Toast: position:fixed, fuera del wrapper para no ser clipado. -->
+    <div class="sheet-toast" id="sheetToast" role="status" aria-live="polite" hidden></div>
+
+    <!-- Scripts: shared utilities first, then corporate logic, then toggle,
+         por último los embers ambientales (puramente visuales, no bloquean). -->
+    <script src="scripts/security.js"></script>
+    <script src="scripts/db.js"></script>
+    <script src="scripts/corporate.js"></script>
+    <script src="scripts/styleToggle.js"></script>
+    <script src="scripts/embers.js"></script>
+</body>
+</html>

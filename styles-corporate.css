@@ -1,0 +1,957 @@
+/* ═══════════════════════════════════════════════════════════════
+   DwarfVault — Corporate redesign (spreadsheet view)
+
+   Paleta heredada de la versión dwarven para mantener la identidad:
+     --wood:       #795649   (madera oscura, fondo de elementos sólidos)
+     --wood-hover: #8a6e2f   (madera quemada, hover)
+     --border:     #c0a080   (borde tan claro, grid lines)
+     --parchment:  #f4e5c3   (texto principal sobre fondos oscuros)
+     --gold:       #ffc400   (acento: foco, tab activa, separadores)
+     --ink:        #2a1f18   (fondo oscuro general, "papel quemado")
+
+   Por qué CSS variables: facilita futuros temas (claro/oscuro corporativo)
+   sin tocar HTML ni JS.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+    --wood:        #795649;
+    --wood-hover:  #8a6e2f;
+    --wood-deep:   #5a3f34;
+    --border:      #c0a080;
+    --border-soft: rgba(192, 160, 128, 0.35);
+    --parchment:   #f4e5c3;
+    --parchment-dim: #d4c5a3;
+    --gold:        #ffc400;
+    --ink:         #2a1f18;
+    --ink-soft:    #3a2c22;
+    --danger:      #8a2f2f;
+    --danger-soft: rgba(138, 47, 47, 0.65);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Layout base del popup. Usamos flex column para que el grid
+   crezca y los tabs queden anclados abajo.
+   Tamaño 800×550 = landscape (1.45:1) cerca del máx de Chrome popup.
+   ────────────────────────────────────────────────────────────── */
+body {
+    margin: 0;
+    padding: 0;
+    width: 800px;
+    height: 560px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 12px;          /* compresión global de tipografía */
+    color: var(--parchment);
+
+    /* Capas de fondo en una sola declaración:
+       1. Gradient oscuro semitransparente (tinte)  → equivale al "opacity 0.18"
+          que tenía la imagen, pero pintado por encima, sin necesitar pseudo.
+       2. La imagen corporate como textura.
+       background-color queda DEBAJO como fallback si la imagen no carga.
+       Esto elimina el problema del z-index: -1 que la dejaba invisible. */
+    background-color: var(--ink);
+    background-image:
+        linear-gradient(rgba(42, 31, 24, 0.82), rgba(42, 31, 24, 0.82)),
+        url("image/Gemini_Generated_Image_slmokjslmokjslmo.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Wrapper interior: padding alrededor de TODO el contenido para
+   que nada quede pegado a los bordes. Layout flex-column con gap
+   moderado entre header/menubar/main.
+   ────────────────────────────────────────────────────────────── */
+.popup-wrapper {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 14px;
+    gap: 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+    min-height: 0;            /* permite que flex children shrinken */
+}
+
+/* Header: logo a la izquierda + 3 estrellas de navegación centradas.
+   El padding-right libera espacio para el botón 🎨 fijo en la esquina. */
+.sheet-header {
+    flex: 0 0 80px;
+    display: flex;
+    align-items: center;
+    padding: 0 50px 0 4px;
+    position: relative;
+}
+
+/* Logo corporate (casco dwarven cuadrado). Drop-shadow dorado tenue
+   para que el logo se "encienda" sobre el papel quemado de fondo. */
+.header-logo {
+    width: auto;
+    height: 56px;
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 0 6px rgba(255, 196, 0, 0.25));
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+/* Navegación (3 estrellas) — centrada absolutamente en el header,
+   independiente del ancho real del logo o del botón 🎨. */
+.header-nav {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+/* Cada estrella es un <a> clickable de 60px. La imagen tiene mucha
+   transparencia alrededor del trazo, así que un tamaño generoso
+   compensa para que las puntas sean nítidas.
+
+   `position: relative` permite anclar el ::before (el disco de luz
+   ámbar que aparece detrás en hover). */
+.header-star {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 50%;
+    /* Halo dorado base — refuerza la sensación de "estrella encendida"
+       y conecta visualmente con el resto del glow del card. */
+    filter: drop-shadow(0 0 5px rgba(255, 196, 0, 0.45));
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+/* Disco de luz ámbar/oro DETRÁS de la estrella. Aparece en hover.
+   El radial-gradient pasa de oro denso en el centro → ámbar cálido
+   → transparente. Pseudo invisible por defecto (opacity 0 + scale
+   pequeño) → se expande e ilumina al pasar el mouse. */
+.header-star::before {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 200, 70, 0.60) 0%,
+        rgba(255, 165, 30, 0.35) 38%,
+        rgba(255, 140, 20, 0.12) 62%,
+        transparent 78%
+    );
+    opacity: 0;
+    transform: scale(0.55);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    /* Aseguramos que el disco queda DETRÁS de la <img> de la estrella.
+       En orden de pintado, ::before va antes que el contenido (la <img>)
+       sin necesitar z-index, así que la imagen siempre queda encima. */
+}
+
+.header-star img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    position: relative;       /* asegura que la imagen pinte sobre ::before */
+    pointer-events: none;     /* el click va al <a>, no a la <img> */
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.header-star:hover {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 11px rgba(255, 196, 0, 0.95));
+}
+
+/* En hover, el disco ámbar se enciende y se expande. */
+.header-star:hover::before {
+    opacity: 1;
+    transform: scale(0.55);
+}
+
+.header-star:active {
+    transform: scale(0.95);
+    filter: drop-shadow(0 0 4px rgba(255, 196, 0, 0.6));
+}
+.header-star:active::before {
+    opacity: 0.85;
+    transform: scale(0.95);
+}
+
+/* Foco accesible (Tab navigation). */
+.header-star:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 4px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STYLE TOGGLE — pill switch profesional
+   Track horizontal 44×22 + thumb circular que desliza.
+     aria-checked="false" → bolita izquierda (dwarven)
+     aria-checked="true"  → bolita derecha  (corporate, esta página)
+   La transición de 280ms se sincroniza con el setTimeout de
+   styleToggle.js para que la navegación ocurra al terminar el slide.
+   ══════════════════════════════════════════════════════════════ */
+.style-toggle-btn {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    z-index: 100;
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    background-color: var(--wood-deep);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 6px rgba(121, 86, 73, 0.4);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    overflow: visible;
+}
+
+.style-toggle-btn::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--parchment) 0%, var(--parchment-dim) 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 0 2px rgba(121, 86, 73, 0.3);
+    transition: left 0.28s cubic-bezier(0.4, 0.0, 0.2, 1),
+                background 0.28s ease,
+                box-shadow 0.28s ease;
+}
+
+.style-toggle-btn[aria-checked="true"] {
+    background-color: var(--wood);
+    border-color: var(--gold);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 10px rgba(255, 196, 0, 0.5);
+}
+.style-toggle-btn[aria-checked="true"]::before {
+    left: 24px;
+    background: linear-gradient(135deg, #ffd954 0%, #ffaa1f 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 196, 0, 0.85);
+}
+
+.style-toggle-btn:hover  { transform: scale(1.05); }
+.style-toggle-btn:active { transform: scale(0.96); }
+
+.style-toggle-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Menubar standalone — vive FUERA del .sheet-main para que sus
+   dropdowns puedan expandirse hacia abajo sobre la rejilla sin
+   ser clipados por el overflow:hidden del card principal.
+
+   z-index alto para que el dropdown (z=50) que vive dentro de
+   este stacking context aparezca encima del .sheet-main (z=auto).
+   ══════════════════════════════════════════════════════════════ */
+.sheet-menubar {
+    flex: 0 0 26px;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    padding: 0 4px;
+    position: relative;
+    z-index: 20;
+}
+
+.menu { position: relative; }
+
+.menu-trigger {
+    height: 100%;
+    padding: 0 10px;
+    background-color: transparent;
+    border: none;
+    color: var(--parchment);
+    font-family: inherit;
+    font-size: 11.5px;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.12s ease, color 0.12s ease;
+}
+.menu-trigger:hover  { background-color: rgba(244, 229, 195, 0.08); }
+.menu-trigger:focus  { outline: none; background-color: rgba(244, 229, 195, 0.08); }
+.menu.is-open .menu-trigger {
+    background-color: var(--wood-deep);
+    color: var(--gold);
+    text-shadow: 0 0 4px rgba(255, 196, 0, 0.3);
+}
+
+/* Dropdown: posicionado bajo el trigger, ancho generoso.
+   No fijamos `display`: dejamos que el atributo `hidden` (UA stylesheet)
+   gestione la visibilidad. Cuando no está hidden, el div es block por
+   defecto. Así evitamos el gotcha de especificidad. */
+.menu-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    padding: 4px 0;
+    background-color: var(--ink-soft);
+    border: 1.5px solid var(--border);
+    border-top: none;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 196, 0, 0.15);
+    z-index: 50;
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 16px;
+    text-align: left;
+    background-color: transparent;
+    border: none;
+    color: var(--parchment);
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+    white-space: nowrap;
+}
+.menu-item:hover:not(:disabled) {
+    background-color: rgba(255, 196, 0, 0.14);
+    color: var(--gold);
+}
+.menu-item:focus {
+    outline: none;
+    background-color: rgba(255, 196, 0, 0.14);
+    color: var(--gold);
+}
+.menu-item:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.menu-item-danger:hover:not(:disabled) {
+    background-color: rgba(138, 47, 47, 0.45);
+    color: #ffd7c2;
+}
+
+.menu-separator {
+    height: 1px;
+    margin: 4px 12px;
+    background-color: var(--border-soft);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Card principal: contiene controls + grid + tabs.
+   Border tan + glow dorado tenue → da la sensación de "panel".
+   overflow:hidden para que los bordes redondeados clipeen bien
+   la rejilla y los tabs.
+   ────────────────────────────────────────────────────────────── */
+.sheet-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: rgba(42, 31, 24, 0.6);
+    /* Luz de fuego que ilumina los bordes del card.
+       La box-shadow base la fija firelight @keyframes (abajo); aquí solo
+       definimos los valores iniciales como fallback si la animación falla. */
+    box-shadow:
+        inset 0 0 35px rgba(255, 150, 55, 0.10),
+        0 4px 14px rgba(0, 0, 0, 0.5),
+        0 0 24px rgba(255, 110, 30, 0.24),
+        0 0 50px rgba(255, 90, 25, 0.10);
+    animation: firelight 5.2s ease-in-out infinite;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   FIRELIGHT — variación lenta del halo cálido alrededor del card,
+   imita la respiración natural de una antorcha/fogata iluminando.
+
+   Por qué 3 stops (0% / 30% / 62%) y no 4 simétricos: los tiempos
+   irregulares dan sensación orgánica, no "máquina latiendo".
+
+   Variamos blur Y alpha simultáneamente: una llama real cambia
+   tamaño y brillo a la vez, no solo intensidad.
+   ────────────────────────────────────────────────────────────── */
+@keyframes firelight {
+    0%, 100% {
+        box-shadow:
+            inset 0 0 35px rgba(255, 150, 55, 0.10),
+            0 4px 14px rgba(0, 0, 0, 0.5),
+            0 0 24px rgba(255, 110, 30, 0.24),
+            0 0 50px rgba(255, 90, 25, 0.10);
+    }
+    30% {
+        box-shadow:
+            inset 0 0 42px rgba(255, 165, 60, 0.18),
+            0 4px 14px rgba(0, 0, 0, 0.5),
+            0 0 34px rgba(255, 115, 35, 0.34),
+            0 0 68px rgba(255, 95, 30, 0.16);
+    }
+    62% {
+        box-shadow:
+            inset 0 0 30px rgba(255, 140, 50, 0.08),
+            0 4px 14px rgba(0, 0, 0, 0.5),
+            0 0 22px rgba(255, 105, 25, 0.20),
+            0 0 44px rgba(255, 85, 20, 0.08);
+    }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Fila de controles: vault selector + search en la misma fila.
+   Comprimida verticalmente vs versión anterior.
+   ────────────────────────────────────────────────────────────── */
+.sheet-controls {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.toolbar-select {
+    flex: 0 0 200px;
+    padding: 4px 26px 4px 8px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--parchment);
+    background-color: var(--wood);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23f4e5c3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: calc(100% - 8px) center;
+    background-size: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.toolbar-select:hover { border-color: var(--parchment-dim); }
+.toolbar-select:focus { border-color: var(--gold); box-shadow: 0 0 6px rgba(255, 196, 0, 0.4); }
+
+.toolbar-select option {
+    background-color: var(--wood);
+    color: var(--parchment);
+}
+
+.toolbar-search {
+    flex: 1 1 auto;
+    max-width: 420px;
+    padding: 4px 8px 4px 26px;
+    font-family: inherit;
+    font-size: 11.5px;
+    color: var(--parchment);
+    background-color: rgba(121, 86, 73, 0.55);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    outline: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23f4e5c3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');
+    background-repeat: no-repeat;
+    background-position: 8px center;
+    background-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.toolbar-search::placeholder { color: var(--parchment-dim); opacity: 0.7; }
+.toolbar-search:focus { border-color: var(--gold); box-shadow: 0 0 6px rgba(255, 196, 0, 0.4); }
+
+/* ══════════════════════════════════════════════════════════════
+   GRID — rejilla tipo hoja de cálculo
+   ══════════════════════════════════════════════════════════════ */
+.sheet-grid-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    background-color: rgba(42, 31, 24, 0.45);
+    position: relative;
+}
+
+.sheet-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;     /* anchos predecibles, evita rebote en edit */
+    font-family: inherit;
+}
+
+/* Header row sticky para que persista al scrollear. */
+.sheet-grid thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    text-align: left;
+    padding: 6px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--parchment);
+    background-color: var(--wood-deep);
+    border-right: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    box-shadow: 0 1px 0 var(--gold), 0 2px 8px rgba(255, 196, 0, 0.18);
+    text-shadow: 0 0 4px rgba(255, 196, 0, 0.25);
+}
+.sheet-grid thead th:last-child { border-right: none; }
+
+/* Anchos de columna (table-layout: fixed).
+   col-index fijo a 36px — soporta 3 dígitos (999 entradas) sin rebotar. */
+.col-index   { width: 36px;  text-align: center !important; }
+.col-favicon { width: 52px;  text-align: center !important; }
+.col-text    { width: auto; }
+.col-url     { width: 36%; }
+
+/* Body cells. Padding comprimido y font-size más pequeño. */
+.sheet-grid tbody td {
+    padding: 4px 8px;
+    border-right: 1px solid var(--border-soft);
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--parchment);
+    font-size: 11.5px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: text;
+}
+.sheet-grid tbody td:last-child { border-right: none; }
+
+/* Filas zebra para legibilidad (rasgo clásico de spreadsheet). */
+.sheet-grid tbody tr:nth-child(odd)  td { background-color: rgba(244, 229, 195, 0.04); }
+.sheet-grid tbody tr:nth-child(even) td { background-color: rgba(244, 229, 195, 0.08); }
+
+/* Hover sobre fila CON DATOS: leve tinte dorado.
+   Las filas placeholder (.row-empty) se excluyen para no sugerir interacción. */
+.sheet-grid tbody tr:not(.row-empty):hover td {
+    background-color: rgba(255, 196, 0, 0.12);
+    box-shadow: inset 0 0 8px rgba(255, 196, 0, 0.10);
+}
+
+/* Brillo MUY suave sobre el contenido de filas con datos reales.
+   Sin sombra en placeholders (no compiten visualmente con datos). */
+.sheet-grid tbody tr:not(.row-empty) td {
+    text-shadow: 0 0 1px rgba(244, 229, 195, 0.35);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Filas placeholder: rellenan la rejilla hasta MIN_VISIBLE_ROWS
+   para que la vista siempre "se sienta" hoja de cálculo aunque
+   la hoja tenga pocas entradas. No son editables, no hacen hover.
+   ────────────────────────────────────────────────────────────── */
+.sheet-grid tbody tr.row-empty td {
+    cursor: default;
+}
+.sheet-grid tbody tr.row-empty td.cell-index {
+    color: rgba(212, 197, 163, 0.45);   /* número de fila atenuado */
+}
+.sheet-grid tbody tr.row-empty td.cell-empty {
+    /* Mantiene la celda dibujada pero sin contenido. */
+    height: 22px;
+}
+
+/* Columna # (índice) — no editable, estilo distinto. */
+.sheet-grid tbody td.cell-index {
+    text-align: center;
+    color: var(--parchment-dim);
+    font-variant-numeric: tabular-nums;
+    background-color: var(--wood-deep) !important;
+    border-right: 1px solid var(--border);
+    cursor: default;
+    user-select: none;
+}
+
+/* Favicon: ahora tiene su propia columna, centrado dentro de la celda. */
+.sheet-grid tbody td.cell-favicon {
+    text-align: center;
+    padding: 4px 6px;
+    cursor: default;
+}
+.cell-favicon-img {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    border-radius: 2px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 2px rgba(255, 196, 0, 0.25));   /* leve halo dorado */
+}
+
+/* Celda en estado "editando" — el input ocupa toda la celda. */
+.sheet-grid td.editing { padding: 0; overflow: visible; }
+.cell-editor {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    margin: 0;
+    border: 2px solid var(--gold);
+    background-color: rgba(42, 31, 24, 0.95);
+    color: var(--parchment);
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    border-radius: 0;
+    box-shadow: 0 0 8px rgba(255, 196, 0, 0.45);
+}
+
+/* Fila marcada por la búsqueda (no oculta, resalta). */
+.sheet-grid tbody tr.row-hidden { display: none; }
+
+/* Estado vacío centrado.
+   IMPORTANTE: el atributo `hidden` (display:none implícito) pierde por
+   especificidad contra `display:flex`. La regla [hidden] de abajo lo
+   garantiza explícitamente. */
+.sheet-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    text-align: center;
+    pointer-events: none;
+    background-color: rgba(42, 31, 24, 0.85);   /* tapa el grid por completo cuando se muestra */
+}
+.sheet-empty[hidden] { display: none; }
+.sheet-empty-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--parchment);
+    letter-spacing: 0.5px;
+}
+.sheet-empty-hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--parchment-dim);
+    max-width: 380px;
+    line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BOTTOM TABS — navegación entre hojas hijas (+ padre si aplica)
+   ══════════════════════════════════════════════════════════════ */
+.sheet-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    padding: 0 8px;
+    height: 28px;
+    background-color: rgba(42, 31, 24, 0.85);
+    border-top: 1.5px solid var(--border);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+.sheet-tabs::-webkit-scrollbar { height: 6px; }
+.sheet-tabs::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 3px; }
+
+/* Tab base (cada hoja es un <button>). */
+.sheet-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 10px;
+    height: 100%;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--parchment-dim);
+    background-color: transparent;
+    border: none;
+    border-top: 2px solid transparent;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    max-width: 180px;
+}
+.sheet-tab:hover {
+    color: var(--parchment);
+    background-color: rgba(121, 86, 73, 0.35);
+}
+
+/* Tab activa — recibe el acento dorado + glow tenue para reforzar la sensación
+   "esta hoja está iluminada" sin entrar en territorio neón. */
+.sheet-tab.active {
+    color: var(--parchment);
+    background-color: var(--wood);
+    border-top-color: var(--gold);
+    box-shadow: inset 0 -2px 0 var(--gold), 0 -2px 8px rgba(255, 196, 0, 0.18);
+    font-weight: 600;
+    text-shadow: 0 0 4px rgba(255, 196, 0, 0.25);
+}
+
+/* Tab del PADRE: marca visual sutil (estrella + tinte). */
+.sheet-tab.parent-tab .tab-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 2px;
+    background-color: var(--gold);
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+}
+
+.tab-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+/* Botón "+" para añadir child al final de la tira. */
+.sheet-tab-add {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 100%;
+    padding: 0;
+    margin-left: auto;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--parchment-dim);
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+.sheet-tab-add:hover {
+    color: var(--gold);
+    background-color: rgba(255, 196, 0, 0.15);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST — feedback discreto (save, error, etc.)
+   ══════════════════════════════════════════════════════════════ */
+.sheet-toast {
+    position: fixed;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    background-color: var(--wood-deep);
+    color: var(--parchment);
+    border: 1.5px solid var(--gold);
+    border-radius: 4px;
+    font-size: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 196, 0, 0.3);
+    z-index: 200;
+    animation: toastIn 0.2s ease-out;
+}
+.sheet-toast.toast-error {
+    border-color: var(--danger);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 10px rgba(138, 47, 47, 0.4);
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Scrollbar global del grid (consistencia visual)
+   ══════════════════════════════════════════════════════════════ */
+.sheet-grid-wrapper::-webkit-scrollbar { width: 10px; height: 10px; }
+.sheet-grid-wrapper::-webkit-scrollbar-track { background: var(--ink-soft); }
+.sheet-grid-wrapper::-webkit-scrollbar-thumb {
+    background: var(--wood);
+    border: 2px solid var(--ink-soft);
+    border-radius: 5px;
+}
+.sheet-grid-wrapper::-webkit-scrollbar-thumb:hover { background: var(--wood-hover); }
+
+/* ══════════════════════════════════════════════════════════════
+   EMBER PARTICLES — ascuas ambientales tipo "caverna profunda".
+   El JS (scripts/embers.js) inyecta los <span> con custom props
+   aleatorias; este CSS define la animación.
+
+   z-index: 1  → encima del fondo (-1), debajo del 🎨 (100) y el modal (1000).
+   pointer-events: none → nunca interfiere con clicks/dblclicks.
+   ══════════════════════════════════════════════════════════════ */
+.embers {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.ember {
+    /* Valores por defecto; el JS los sobreescribe por partícula. */
+    --ember-drift: 0px;
+    --ember-color: rgba(255, 196, 0, 0.85);
+
+    position: absolute;
+    bottom: -10px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background-color: var(--ember-color);
+    /* Doble halo: cercano nítido + lejano difuso → look de chispa real. */
+    box-shadow:
+        0 0 4px var(--ember-color),
+        0 0 10px var(--ember-color);
+    opacity: 0;
+    will-change: transform, opacity;
+
+    animation-name: emberFloat;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    /* animation-duration la inyecta el JS por partícula. */
+}
+
+@keyframes emberFloat {
+    0%   { transform: translate(0, 0);                                  opacity: 0; }
+    8%   {                                                              opacity: 0.4; }
+    50%  { transform: translate(calc(var(--ember-drift) * 0.5), -50vh); opacity: 0.30; }
+    92%  {                                                              opacity: 0.15; }
+    100% { transform: translate(var(--ember-drift),              -110vh); opacity: 0; }
+}
+
+/* (Eliminada la regla @media prefers-reduced-motion: el usuario pidió
+   las ascuas como feature visual y no queremos que el SO las oculte.) */
+
+/* ══════════════════════════════════════════════════════════════
+   EDIT MODAL — reciclado del REFORGE ENTRY de la versión dwarven.
+   Adaptado a la paleta corporate vía CSS variables. La <textarea>
+   preserva saltos de línea, espacios y tabulaciones del texto guardado.
+   ══════════════════════════════════════════════════════════════ */
+.edit-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.edit-modal {
+    font-family: inherit;
+    width: 92%;
+    max-width: 460px;
+    max-height: 88%;
+    background-color: var(--ink);
+    background-image: linear-gradient(135deg, rgba(121, 86, 73, 0.35), rgba(0, 0, 0, 0));
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 0 25px rgba(255, 196, 0, 0.30), inset 0 0 12px rgba(0, 0, 0, 0.5);
+    padding: 16px 18px;
+    color: var(--parchment);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.edit-modal-title {
+    margin: 0 0 2px;
+    font-family: inherit;
+    font-weight: 700;
+    text-align: center;
+    font-size: 13px;
+    color: var(--parchment);
+    text-shadow: 0 0 8px rgba(255, 196, 0, 0.35);
+    letter-spacing: 0.8px;
+}
+
+.edit-modal-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--parchment-dim);
+    letter-spacing: 0.6px;
+    margin-bottom: -4px;
+}
+
+.edit-modal-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 200px;
+    resize: vertical;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--parchment);
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    outline: none;
+    white-space: pre-wrap;     /* clave: preserva \n y espacios */
+    tab-size: 4;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.edit-modal-textarea:focus,
+.edit-modal-url:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(255, 196, 0, 0.45);
+}
+
+.edit-modal-url {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    color: var(--parchment);
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    outline: none;
+}
+
+.edit-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.edit-modal-actions button {
+    padding: 7px 18px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--parchment);
+    background-color: var(--wood);
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.edit-modal-actions .save-btn:hover {
+    background-color: var(--wood-hover);
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(255, 196, 0, 0.3);
+}
+.edit-modal-actions .cancel-btn {
+    border-color: var(--danger-soft);
+}
+.edit-modal-actions .cancel-btn:hover {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    box-shadow: 0 0 8px rgba(138, 47, 47, 0.4);
+}
