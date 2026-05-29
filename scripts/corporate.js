@@ -403,49 +403,436 @@
         });
     }
 
+    // ── Emoji picker (reutiliza emojis.json de la vista dwarven) ─
+    // Se carga una sola vez y se cachea. Si falla, el modal de nombre
+    // simplemente no muestra rejilla (no rompe el flujo de crear/renombrar).
+    let emojiCache = null;
+    async function loadEmojis() {
+        if (emojiCache) return emojiCache;
+        try {
+            const res  = await fetch(chrome.runtime.getURL('emojis.json'));
+            const list = await res.json();
+            // Dedup + quita vacíos (emojis.json trae repetidos y líneas en blanco).
+            emojiCache = [...new Set(list.filter(e => e && e.trim()))];
+        } catch (e) {
+            console.error('[Corporate] Could not load emojis:', e);
+            emojiCache = [];
+        }
+        return emojiCache;
+    }
+
+    // ── Name modal (crear parent / child / rename) ──────────────
+    // Ventana al estilo del REFORGE ENTRY: input de nombre + rejilla de
+    // emojis siempre visible. Al clickear un emoji se inserta en la
+    // posición del cursor del input (permite varios y en cualquier lugar).
+    //   onSubmit(name) → Promise. Si devuelve false la ventana NO se cierra
+    //   (validación fallida; el caller ya mostró el toast).
+    function openNameModal({ title, initialValue = '', confirmLabel = '💾 Save', onSubmit }) {
+        document.querySelector('.edit-modal-backdrop')?.remove();
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'edit-modal-backdrop';
+
+        const modal = document.createElement('div');
+        modal.className = 'edit-modal';
+
+        const titleEl = document.createElement('h3');
+        titleEl.className   = 'edit-modal-title';
+        titleEl.textContent = title;
+        modal.appendChild(titleEl);
+
+        const nameLabel = document.createElement('label');
+        nameLabel.className   = 'edit-modal-label';
+        nameLabel.textContent = 'Name';
+        modal.appendChild(nameLabel);
+
+        const nameInput = document.createElement('input');
+        nameInput.type      = 'text';
+        nameInput.className  = 'edit-modal-url';   // reutiliza el estilo del input URL
+        nameInput.value      = initialValue;
+        nameInput.spellcheck = false;
+        modal.appendChild(nameInput);
+
+        const emojiLabel = document.createElement('label');
+        emojiLabel.className   = 'edit-modal-label';
+        emojiLabel.textContent = 'Emoji';
+        modal.appendChild(emojiLabel);
+
+        const grid = document.createElement('div');
+        grid.className = 'name-modal-emojis';
+        modal.appendChild(grid);
+
+        // Recuerda dónde estaba el cursor: el input pierde el foco al
+        // clickear un emoji, así que guardamos la posición en cada cambio.
+        let caret = nameInput.value.length;
+        const trackCaret = () => { caret = nameInput.selectionStart ?? nameInput.value.length; };
+        nameInput.addEventListener('keyup', trackCaret);
+        nameInput.addEventListener('click', trackCaret);
+        nameInput.addEventListener('select', trackCaret);
+
+        loadEmojis().then(emojis => {
+            emojis.forEach(emoji => {
+                const span = document.createElement('button');
+                span.type        = 'button';
+                span.className   = 'name-modal-emoji';
+                span.textContent = emoji;
+                span.tabIndex    = -1;   // no rompe el tab-flow del input/botones
+                // mousedown (no click) evita el blur previo → caret se conserva.
+                span.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const v = nameInput.value;
+                    const pos = Math.min(caret, v.length);
+                    nameInput.value = v.slice(0, pos) + emoji + v.slice(pos);
+                    const next = pos + emoji.length;
+                    nameInput.focus();
+                    nameInput.setSelectionRange(next, next);
+                    caret = next;
+                });
+                grid.appendChild(span);
+            });
+        });
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'edit-modal-actions';
+
+        const saveBtn       = document.createElement('button');
+        saveBtn.textContent = confirmLabel;
+        saveBtn.className   = 'save-btn';
+
+        const cancelBtn       = document.createElement('button');
+        cancelBtn.textContent = '✖ Cancel';
+        cancelBtn.className   = 'cancel-btn';
+
+        btnRow.appendChild(saveBtn);
+        btnRow.appendChild(cancelBtn);
+        modal.appendChild(btnRow);
+
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+
+        nameInput.focus();
+        nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
+
+        const close = () => {
+            backdrop.remove();
+            document.removeEventListener('keydown', onKey);
+        };
+
+        const submit = async () => {
+            const name = nameInput.value.trim();
+            const result = await onSubmit(name);
+            if (result !== false) close();
+        };
+
+        const onKey = (e) => {
+            if (e.key === 'Escape') { e.preventDefault(); close(); }
+            else if (e.key === 'Enter') { e.preventDefault(); submit(); }
+        };
+        document.addEventListener('keydown', onKey);
+
+        backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+        cancelBtn.addEventListener('click', close);
+        saveBtn.addEventListener('click', submit);
+    }
+
+    // ── Options dialog (Quick Access — context menu bindings) ───
+    // Configuración GLOBAL (no por hoja): qué vault alimenta Favorites y
+    // Links del menú contextual del navegador, y si ambos se sincronizan.
+    // Se guarda en chrome.storage.local (mismas claves que la vista dwarven:
+    // activeFavoritesDb / activeLinksDb / quickAccessLinked) y al guardar se
+    // notifica a background.js con {action:'updateContextMenu'}.
+    //
+    // Cambios pendientes en memoria → se aplican TODOS al pulsar Save; Cancel
+    // descarta sin tocar storage. Sync mirror funciona en vivo dentro del modal.
+
+    // Llena un <select> con (None) + padres y sus hijos indentados.
+    function fillVaultOptions(select, activeValue) {
+        select.innerHTML = '';
+        const none = document.createElement('option');
+        none.value = '';
+        none.textContent = '(None)';
+        select.appendChild(none);
+
+        const parents = allDbs.filter(d => !d.parentDatabase);
+        parents.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = p.name;
+            select.appendChild(opt);
+            allDbs.filter(c => c.parentDatabase === p.name).forEach(c => {
+                const co = document.createElement('option');
+                co.value = c.name;
+                co.textContent = `  ↳ ${c.name}`;
+                select.appendChild(co);
+            });
+        });
+        select.value = activeValue || '';
+    }
+
+    function onContextMenu() {
+        chrome.storage.local.get(
+            ['activeFavoritesDb', 'activeLinksDb', 'quickAccessLinked'],
+            (s) => openContextMenuModal(s.activeFavoritesDb, s.activeLinksDb, !!s.quickAccessLinked)
+        );
+    }
+
+    function openContextMenuModal(favVal, linksVal, linked) {
+        document.querySelector('.edit-modal-backdrop')?.remove();
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'edit-modal-backdrop';
+        const modal = document.createElement('div');
+        modal.className = 'edit-modal';
+
+        const title = document.createElement('h3');
+        title.className   = 'edit-modal-title';
+        title.textContent = '🗂 Context Menu';
+        modal.appendChild(title);
+
+        const section = document.createElement('p');
+        section.className   = 'options-section-title';
+        section.textContent = 'Context menu';
+        modal.appendChild(section);
+
+        // ── ⭐ Favorites | 🔗 Links en dos columnas (mismo layout que el
+        //    "QUICK ACCESS" de la vista vieja: selects lado a lado). ──
+        const grid = document.createElement('div');
+        grid.className = 'qa-grid';
+
+        const favCol = document.createElement('div');
+        favCol.className = 'qa-col';
+        const favLabel = document.createElement('label');
+        favLabel.className   = 'edit-modal-label';
+        favLabel.textContent = '⭐ FAVORITES';
+        const favSelect = document.createElement('select');
+        favSelect.className = 'toolbar-select options-select';
+        fillVaultOptions(favSelect, favVal);
+        favCol.appendChild(favLabel);
+        favCol.appendChild(favSelect);
+
+        const linksCol = document.createElement('div');
+        linksCol.className = 'qa-col';
+        const linksLabel = document.createElement('label');
+        linksLabel.className   = 'edit-modal-label';
+        linksLabel.textContent = '🔗 LINKS';
+        const linksSelect = document.createElement('select');
+        linksSelect.className = 'toolbar-select options-select';
+        fillVaultOptions(linksSelect, linksVal);
+        linksCol.appendChild(linksLabel);
+        linksCol.appendChild(linksSelect);
+
+        grid.appendChild(favCol);
+        grid.appendChild(linksCol);
+        modal.appendChild(grid);
+
+        // ── Botón Sync full-width debajo (estilo viejo: verde al enlazar). ──
+        // Toggle pendiente: se aplica al pulsar Save junto con los selects.
+        let linkedState = linked;
+        const syncBtn = document.createElement('button');
+        syncBtn.type     = 'button';
+        syncBtn.className = 'dwarf-btn qa-sync';
+        const paintSync = (on) => {
+            syncBtn.classList.toggle('link-btn-active', on);
+            syncBtn.textContent = on
+                ? '⛓️ LINKED ✓ — Favorites & Links in sync'
+                : '⛓️ LINK — Sync Favorites & Links';
+        };
+        paintSync(linkedState);
+        modal.appendChild(syncBtn);
+
+        // Mirror en vivo dentro del modal (igual que la vista dwarven).
+        favSelect.addEventListener('change', () => {
+            if (linkedState) linksSelect.value = favSelect.value;
+        });
+        linksSelect.addEventListener('change', () => {
+            if (linkedState) favSelect.value = linksSelect.value;
+        });
+        syncBtn.addEventListener('click', () => {
+            linkedState = !linkedState;
+            paintSync(linkedState);
+            if (linkedState) linksSelect.value = favSelect.value; // al enlazar: Links ← Favorites
+        });
+
+        // ── 🔒 Native Click (toggle por-pestaña, aplica al instante) ──
+        // Delegado en contextUnlock.js: lee/pinta/escucha el click solo.
+        // No depende del botón Save (es un estado de la pestaña activa).
+        const pageTitle = document.createElement('p');
+        pageTitle.className   = 'options-section-title';
+        pageTitle.textContent = 'Active page';
+        modal.appendChild(pageTitle);
+
+        const nativeBtn = document.createElement('button');
+        nativeBtn.type      = 'button';
+        nativeBtn.className  = 'dwarf-btn ctx-toggle';
+        nativeBtn.textContent = '🔒 NATIVE CLICK — OFF';
+        modal.appendChild(nativeBtn);
+        if (window.DwarfContextUnlock) {
+            DwarfContextUnlock.init(nativeBtn);
+        } else {
+            nativeBtn.disabled = true;
+            nativeBtn.title    = 'Native click module not loaded.';
+        }
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'edit-modal-actions';
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = '💾 Save';
+        saveBtn.className   = 'save-btn';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = '✖ Cancel';
+        cancelBtn.className   = 'cancel-btn';
+        btnRow.appendChild(saveBtn);
+        btnRow.appendChild(cancelBtn);
+        modal.appendChild(btnRow);
+
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+
+        const close = () => {
+            backdrop.remove();
+            document.removeEventListener('keydown', onKey);
+        };
+        const onKey = (e) => {
+            if (e.key === 'Escape') { e.preventDefault(); close(); }
+            else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveBtn.click(); }
+        };
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+        cancelBtn.addEventListener('click', close);
+
+        saveBtn.addEventListener('click', () => {
+            chrome.storage.local.set({
+                activeFavoritesDb: favSelect.value || null,
+                activeLinksDb:     linksSelect.value || null,
+                quickAccessLinked: linkedState
+            }, () => {
+                notifyBackground();
+                close();
+                showToast('Options saved');
+            });
+        });
+    }
+
+    // ── Settings dialog (preferencias generales) ────────────────
+    // Por ahora solo el toggle de Notifications (🔔/🔕). Es un toggle vivo
+    // (aplica al instante vía DwarfNotify), por eso la ventana solo necesita
+    // un botón "Close", no Save/Cancel.
+    function onSettings() {
+        document.querySelector('.edit-modal-backdrop')?.remove();
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'edit-modal-backdrop';
+        const modal = document.createElement('div');
+        modal.className = 'edit-modal';
+
+        const title = document.createElement('h3');
+        title.className   = 'edit-modal-title';
+        title.textContent = '⚙ Settings';
+        modal.appendChild(title);
+
+        const section = document.createElement('p');
+        section.className   = 'options-section-title';
+        section.textContent = 'General';
+        modal.appendChild(section);
+
+        const notifBtn = document.createElement('button');
+        notifBtn.type     = 'button';
+        notifBtn.className = 'dwarf-btn';
+        modal.appendChild(notifBtn);
+
+        const paintNotif = (enabled) => {
+            notifBtn.classList.toggle('notif-btn-off', !enabled);
+            notifBtn.textContent = enabled ? '🔔 NOTIFICATIONS — ON' : '🔕 NOTIFICATIONS — OFF';
+        };
+        if (window.DwarfNotify) {
+            DwarfNotify.isEnabled().then(paintNotif);
+            notifBtn.addEventListener('click', async () => {
+                const current = await DwarfNotify.isEnabled();
+                await DwarfNotify.setEnabled(!current);
+                paintNotif(!current);
+            });
+        } else {
+            paintNotif(true);
+            notifBtn.disabled = true;
+            notifBtn.title    = 'Notifications module not loaded.';
+        }
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'edit-modal-actions';
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✖ Close';
+        closeBtn.className   = 'cancel-btn';
+        btnRow.appendChild(closeBtn);
+        modal.appendChild(btnRow);
+
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+
+        const close = () => {
+            backdrop.remove();
+            document.removeEventListener('keydown', onKey);
+        };
+        const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
+        document.addEventListener('keydown', onKey);
+        backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+        closeBtn.addEventListener('click', close);
+    }
+
     // ── CRUD ────────────────────────────────────────────────────
-    async function onCreateParent() {
-        const raw = prompt('New parent vault name:');
-        if (raw == null) return;
-        const name = raw.trim();
-        if (!name)                  { showToast('Name cannot be empty', true); return; }
-        if (getRecord(name))        { showToast('A vault with that name already exists', true); return; }
-        try {
-            await putRecord({ name, parentDatabase: null, entries: [] });
-            notifyBackground();
-            await refresh({ selectParent: name, selectSheet: name });
-            showToast(`Vault "${name}" created`);
-        } catch (e) {
-            console.error('[Corporate] Create parent failed:', e);
-            showToast('Could not create vault', true);
-        }
+    function onCreateParent() {
+        openNameModal({
+            title: '⛏️ New Parent Vault',
+            onSubmit: async (name) => {
+                if (!name)           { showToast('Name cannot be empty', true); return false; }
+                if (getRecord(name)) { showToast('A vault with that name already exists', true); return false; }
+                try {
+                    await putRecord({ name, parentDatabase: null, entries: [] });
+                    notifyBackground();
+                    await refresh({ selectParent: name, selectSheet: name });
+                    showToast(`Vault "${name}" created`);
+                } catch (e) {
+                    console.error('[Corporate] Create parent failed:', e);
+                    showToast('Could not create vault', true);
+                    return false;
+                }
+            }
+        });
     }
 
-    async function onCreateChild() {
+    function onCreateChild() {
         if (!currentParent) { showToast('Pick a parent vault first', true); return; }
-        const raw = prompt(`New child sheet inside "${currentParent}":`);
-        if (raw == null) return;
-        const name = raw.trim();
-        if (!name)           { showToast('Name cannot be empty', true); return; }
-        if (getRecord(name)) { showToast('A vault with that name already exists', true); return; }
-        try {
-            await putRecord({ name, parentDatabase: currentParent, entries: [] });
-            notifyBackground();
-            await refresh({ selectParent: currentParent, selectSheet: name });
-            showToast(`Sheet "${name}" created`);
-        } catch (e) {
-            console.error('[Corporate] Create child failed:', e);
-            showToast('Could not create sheet', true);
-        }
+        openNameModal({
+            title: `🔨 New Child inside "${currentParent}"`,
+            onSubmit: async (name) => {
+                if (!name)           { showToast('Name cannot be empty', true); return false; }
+                if (getRecord(name)) { showToast('A vault with that name already exists', true); return false; }
+                try {
+                    await putRecord({ name, parentDatabase: currentParent, entries: [] });
+                    notifyBackground();
+                    await refresh({ selectParent: currentParent, selectSheet: name });
+                    showToast(`Sheet "${name}" created`);
+                } catch (e) {
+                    console.error('[Corporate] Create child failed:', e);
+                    showToast('Could not create sheet', true);
+                    return false;
+                }
+            }
+        });
     }
 
-    async function onRename() {
+    function onRename() {
         if (!currentSheet) return;
-        const raw = prompt(`Rename "${currentSheet}" to:`, currentSheet);
-        if (raw == null) return;
-        const newName = raw.trim();
-        if (!newName || newName === currentSheet) return;
-        if (getRecord(newName)) { showToast('A vault with that name already exists', true); return; }
+        openNameModal({
+            title: `✎ Rename "${currentSheet}"`,
+            initialValue: currentSheet,
+            onSubmit: (newName) => doRename(newName)
+        });
+    }
+
+    async function doRename(newName) {
+        if (!newName)                  { showToast('Name cannot be empty', true); return false; }
+        if (newName === currentSheet)  return; // sin cambios → cierra silenciosamente
+        if (getRecord(newName))        { showToast('A vault with that name already exists', true); return false; }
 
         try {
             const record         = getRecord(currentSheet);
@@ -735,6 +1122,18 @@
         const items    = document.querySelectorAll('.menu-item');
 
         triggers.forEach(trigger => {
+            // Triggers de diálogo directo (Context Menu / Settings): un clic
+            // abre la ventana al instante, sin desplegable intermedio.
+            if (trigger.dataset.dialog) {
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeMenu();
+                    if (trigger.dataset.dialog === 'context')  onContextMenu();
+                    else if (trigger.dataset.dialog === 'settings') onSettings();
+                });
+                return;
+            }
+
             trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const menuEl = trigger.closest('.menu');

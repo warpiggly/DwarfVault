@@ -955,3 +955,155 @@ body {
     border-color: var(--danger);
     box-shadow: 0 0 8px rgba(138, 47, 47, 0.4);
 }
+
+/* ──────────────────────────────────────────────────────────────
+   Rejilla de emojis del modal de nombre (crear/renombrar).
+   Siempre visible bajo el input; scroll propio si hay muchos para
+   que la ventana no crezca de más. Cada emoji es un botón clickable.
+   ────────────────────────────────────────────────────────────── */
+.name-modal-emojis {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+    gap: 4px;
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+}
+
+.name-modal-emoji {
+    font-size: 18px;
+    line-height: 1;
+    padding: 5px 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.name-modal-emoji:hover {
+    background-color: var(--wood);
+    border-color: var(--gold);
+    transform: scale(1.15);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Options dialog (Quick Access / context menu bindings).
+   Reutiliza .edit-modal; aquí solo los detalles propios.
+   ────────────────────────────────────────────────────────────── */
+.options-section-title {
+    margin: 4px 0 0;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 3px;
+}
+
+/* El select del diálogo ocupa todo el ancho (a diferencia del toolbar). */
+.options-select {
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Quick Access: ⭐ Favorites | 🔗 Links en dos columnas (layout viejo). */
+.qa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.qa-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;            /* deja que el select encoja dentro de la columna */
+}
+/* El título de cada columna va SOBRE su select, con aire. Anula el
+   `margin-bottom: -4px` global de .edit-modal-label (que lo apretaba
+   contra el select y lo hacía caer debajo del recuadro). */
+.qa-col .edit-modal-label {
+    display: block;
+    margin: 0 0 5px;
+    order: -1;               /* refuerza: el título siempre primero */
+}
+.qa-sync {
+    margin-top: 8px;         /* botón sync centrado debajo, igual que la vista vieja */
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Botón toggle estilo "dwarven clásico" (Notifications / Native Click).
+   Replica el look de los botones de la vista vieja —madera, borde tan,
+   doble sombra con #a67c52— pero con la fuente del Excel (Segoe UI) para
+   que integre con el resto de la vista corporate. Ancho completo en el
+   diálogo. Estados off/on con los mismos colores de styles.css.
+   ────────────────────────────────────────────────────────────── */
+.dwarf-btn {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 2px;
+    padding: 10px 20px;
+    font-family: inherit;          /* Segoe UI heredado del body corporate */
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--parchment);
+    background-color: var(--wood);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    text-shadow: 1px 1px 0 #a67c52;
+    box-shadow: 2px 2px 0 #a67c52;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.dwarf-btn:hover:not(:disabled) {
+    background-color: var(--wood-hover);
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+}
+.dwarf-btn:active:not(:disabled) {
+    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+.dwarf-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* 🔕 Notifications OFF — gris apagado (mismos tonos que styles.css). */
+.dwarf-btn.notif-btn-off {
+    background-color: #4a3f36;
+    border-color: #7a6a5a;
+    color: #b8a896;
+    text-shadow: none;
+    box-shadow: 2px 2px 0 #2f2823;
+}
+.dwarf-btn.notif-btn-off:hover:not(:disabled) {
+    background-color: #5a4d42;
+}
+
+/* 🔓 Native Click ON — verde-azulado "desbloqueado". */
+.dwarf-btn.ctx-btn-on {
+    background-color: #2f6a82;
+    border-color: #4ea0bf;
+    color: #e6f4fb;
+    text-shadow: none;
+    box-shadow: 2px 2px 0 #1d4252;
+}
+.dwarf-btn.ctx-btn-on:hover:not(:disabled) {
+    background-color: #387a96;
+}
+
+/* ⛓️ LINK activo — verde "vinculado" (mismos tonos que styles.css). */
+.dwarf-btn.link-btn-active {
+    background-color: #2f6b47;
+    border-color: #5aad77;
+    color: #d4fce6;
+    text-shadow: none;
+    box-shadow: 2px 2px 0 #1d4530;
+}
+.dwarf-btn.link-btn-active:hover:not(:disabled) {
+    background-color: #3a824f;
+}

@@ -86,6 +86,12 @@
                 </div>
             </div>
 
+            <!-- Triggers de apertura directa (1 clic abre el diálogo, sin dropdown).
+                 'Context Menu' = bindings de Favorites/Links + Native Click.
+                 'Settings'     = preferencias generales (por ahora Notifications). -->
+            <button type="button" class="menu-trigger" data-dialog="context"  title="Context menu bindings">Context Menu</button>
+            <button type="button" class="menu-trigger" data-dialog="settings" title="General settings">Settings</button>
+
         </nav>
 
         <!-- ══════════════════════════════════════════════════════════
@@ -146,6 +152,8 @@
          por último los embers ambientales (puramente visuales, no bloquean). -->
     <script src="scripts/security.js"></script>
     <script src="scripts/db.js"></script>
+    <script src="scripts/notifications.js"></script>
+    <script src="scripts/contextUnlock.js"></script>
     <script src="scripts/corporate.js"></script>
     <script src="scripts/styleToggle.js"></script>
     <script src="scripts/embers.js"></script>
