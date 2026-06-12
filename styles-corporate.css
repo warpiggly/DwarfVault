@@ -566,6 +566,17 @@ body {
     height: 22px;
 }
 
+/* Celda Text de una fila vacía: invita a escribir una entrada nueva.
+   Cursor de texto + leve realce dorado en hover (como una celda de Excel
+   lista para recibir input). */
+.sheet-grid tbody tr.row-empty td.cell-addable {
+    cursor: text;
+}
+.sheet-grid tbody tr.row-empty td.cell-addable:hover {
+    background-color: rgba(255, 196, 0, 0.10);
+    box-shadow: inset 0 0 0 1px rgba(255, 196, 0, 0.35);
+}
+
 /* Columna # (índice) — no editable, estilo distinto. */
 .sheet-grid tbody td.cell-index {
     text-align: center;
@@ -575,6 +586,18 @@ body {
     border-right: 1px solid var(--border);
     cursor: default;
     user-select: none;
+}
+
+/* Celdas copiables (Text/URL con datos): un clic copia al portapapeles,
+   doble clic edita. El cursor pointer y el hover lo señalan. */
+.sheet-grid tbody td.cell-copyable,
+.sheet-grid tbody td.cell-openable {
+    cursor: pointer;
+}
+.sheet-grid tbody td.cell-copyable:hover,
+.sheet-grid tbody td.cell-openable:hover {
+    background-color: var(--wood-deep);
+    box-shadow: inset 0 0 0 1px var(--border);
 }
 
 /* Favicon: ahora tiene su propia columna, centrado dentro de la celda. */
@@ -590,6 +613,16 @@ body {
     border-radius: 2px;
     object-fit: contain;
     filter: drop-shadow(0 0 2px rgba(255, 196, 0, 0.25));   /* leve halo dorado */
+}
+
+/* Marcador "sin link": atenuado, en cursiva, para que se lea como estado
+   (no como una URL real). El ⛓ conecta con la metáfora de "cadena = link"
+   que ya usa el menú contextual (LINK / LINKED). */
+.sheet-grid tbody td.cell-url-unchained {
+    color: var(--parchment-dim);
+    font-style: italic;
+    opacity: 0.6;
+    letter-spacing: 0.3px;
 }
 
 /* Celda en estado "editando" — el input ocupa toda la celda. */

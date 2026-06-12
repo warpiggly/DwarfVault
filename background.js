@@ -111,7 +111,10 @@ function buildEntryTitle(entry, idx) {
     const source   = hostname ? `[${hostname}] ` : '';
     const snippet  = entry.text.substring(0, 30);
     const ellipsis = entry.text.length > 30 ? '...' : '';
-    return `📜 ${idx + 1}: ${source}${snippet}${ellipsis}`;
+    // Sin link → marcador "⛓ Unchained" (mismo que la vista corporate),
+    // para que se reconozca de inmediato que a esa entrada le falta un link.
+    const tail = hostname ? '' : '  ⛓ Unchained';
+    return `📜 ${idx + 1}: ${source}${snippet}${ellipsis}${tail}`;
 }
 
 /**
@@ -247,10 +250,12 @@ async function buildContextMenu(db) {
             const hostname = getHostname(entry.url);
             // Usar el texto guardado como etiqueta; si no hay texto, usar el hostname
             const label = (entry.text.split('\n')[0] || hostname || `Link ${i + 1}`).substring(0, 40);
+            // Sin link → mismo marcador que la vista corporate.
+            const tail = hostname ? '' : '  ⛓ Unchained';
             chrome.contextMenus.create({
                 id:       `link::${linkDb.name}::${i}`,
                 parentId: 'linksRoot',
-                title:    `${i + 1}: ${label}`,
+                title:    `${i + 1}: ${label}${tail}`,
                 contexts: ['page']
             });
         }

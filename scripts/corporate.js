@@ -31,6 +31,7 @@
     const sheetTabs   = document.getElementById('sheetTabs');
     const searchInput = document.getElementById('searchInput');
     const importInput = document.getElementById('importInput');
+    const importFullInput = document.getElementById('importFullInput');
     const toastEl     = document.getElementById('sheetToast');
 
     // ── IndexedDB helpers (Promise wrappers sobre db.js) ────────
@@ -100,6 +101,84 @@
         toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2200);
     }
 
+    // ── Copia al portapapeles ───────────────────────────────────
+    // Gesto central de la app ("Copy Text" en dwarven). Copia el valor,
+    // avisa con un toast y, si las notificaciones están activas, lanza
+    // también una notificación nativa.
+    async function copyToClipboard(text, label) {
+        const value = (text == null ? '' : String(text));
+        if (!value.trim()) { showToast('Nothing to copy', true); return; }
+        try {
+            await navigator.clipboard.writeText(value);
+            showToast((label || 'Copied') + ' ✓');
+            window.DwarfNotify?.send({
+                type: 'basic',
+                iconUrl: 'image/Logo-Corporate.png',
+                title: 'DwarfVault',
+                message: 'Copied to clipboard',
+            });
+        } catch (e) {
+            console.error('[Corporate] Copy failed:', e);
+            showToast('Copy failed', true);
+        }
+    }
+
+    // Un clic copia, doble clic edita. Un timer corto evita que el doble
+    // clic dispare también la copia.
+    function attachCopyOrEdit(td, getValue, label, onEdit) {
+        let clickTimer = null;
+        td.classList.add('cell-copyable');
+        td.addEventListener('click', () => {
+            if (clickTimer) return;
+            clickTimer = setTimeout(() => {
+                clickTimer = null;
+                copyToClipboard(getValue(), label);
+            }, 220);
+        });
+        td.addEventListener('dblclick', () => {
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+            onEdit();
+        });
+    }
+
+    // ── Abrir link en pestaña nueva ─────────────────────────────
+    function openLink(rawUrl) {
+        let url = (rawUrl || '').trim();
+        if (!url) { showToast('No link to open', true); return; }
+        // Normaliza dominios "pelados" (foo.com) a https:// para abrir bien.
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        if (window.DwarfSecurity && !DwarfSecurity.isSafeUrl(url)) {
+            showToast('Unsafe link blocked', true);
+            return;
+        }
+        try {
+            if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+                chrome.tabs.create({ url });
+            } else {
+                window.open(url, '_blank', 'noopener');
+            }
+        } catch (e) {
+            console.error('[Corporate] Open link failed:', e);
+            showToast('Could not open link', true);
+        }
+    }
+
+    // Un clic abre el link; doble clic edita. Mismo timer anti-doble-clic.
+    function attachOpenOrEdit(td, getUrl, onEdit) {
+        let clickTimer = null;
+        td.addEventListener('click', () => {
+            if (clickTimer) return;
+            clickTimer = setTimeout(() => {
+                clickTimer = null;
+                openLink(getUrl());
+            }, 220);
+        });
+        td.addEventListener('dblclick', () => {
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+            onEdit();
+        });
+    }
+
     // ── Render: vault dropdown ──────────────────────────────────
     function renderVaultDropdown() {
         const list = parents();
@@ -129,17 +208,13 @@
         sheetTabs.innerHTML = '';
         if (!currentParent) { sheetTabs.hidden = true; return; }
 
-        const kids      = children(currentParent);
-        const parentHas = parentHasData(currentParent);
+        const kids = children(currentParent);
 
-        // Solo un sheet (padre sin hijos) → no mostramos navegación.
-        if (kids.length === 0) {
-            sheetTabs.hidden = true;
-            return;
-        }
         sheetTabs.hidden = false;
 
-        if (parentHas) sheetTabs.appendChild(buildTab(currentParent, true));
+        // El tab del parent se muestra SIEMPRE: aunque no tenga entradas y ya
+        // existan child sheets, debe seguir accesible para poder añadirle datos.
+        sheetTabs.appendChild(buildTab(currentParent, true));
         kids.forEach(c => sheetTabs.appendChild(buildTab(c.name, false)));
 
         // "+" para crear nueva child sheet rápidamente.
@@ -227,16 +302,29 @@
         tdText.className     = 'cell-text';
         tdText.dataset.field = 'text';
         renderTextCell(tdText, entry);
-        tdText.addEventListener('dblclick', () => openEditModal(entry, idx, 'text'));
+        attachCopyOrEdit(tdText, () => entry.text || '', 'Text copied',
+                         () => openEditModal(entry, idx, 'text'));
         tr.appendChild(tdText);
 
         // URL — doble-click abre el mismo modal, enfocando el input URL.
         const tdUrl = document.createElement('td');
         tdUrl.className     = 'cell-url';
         tdUrl.dataset.field = 'url';
-        tdUrl.textContent   = entry.url || '';
-        tdUrl.title         = entry.url || '';
-        tdUrl.addEventListener('dblclick', () => openEditModal(entry, idx, 'url'));
+        if (entry.url) {
+            tdUrl.textContent = entry.url;
+            tdUrl.title       = entry.url;
+        } else {
+            // Sin link: marcador on-theme (los links son "cadenas" en esta app).
+            // Avisa que falta un link e invita a agregarlo.
+            tdUrl.classList.add('cell-url-unchained');
+            tdUrl.textContent = '⛓ Unchained';
+            tdUrl.title       = 'No link — double-click to forge one';
+        }
+        // Clic abre el link en una pestaña nueva (error si no hay); doble
+        // clic edita la entrada.
+        tdUrl.classList.add('cell-openable');
+        attachOpenOrEdit(tdUrl, () => entry.url || '',
+                         () => openEditModal(entry, idx, 'url'));
         tr.appendChild(tdUrl);
 
         return tr;
@@ -255,15 +343,158 @@
         tdFav.className = 'cell-favicon cell-empty';
         tr.appendChild(tdFav);
 
+        // Celda Text de una fila vacía: clickeable para escribir una entrada
+        // nueva inline (texto o link, autodetectado al guardar). Solo si hay
+        // una hoja activa donde guardar.
         const tdText = document.createElement('td');
         tdText.className = 'cell-text cell-empty';
+        if (currentSheet) {
+            tdText.classList.add('cell-addable');
+            tdText.title = 'Click to add an entry';
+            tdText.addEventListener('click', () => startInlineNewEntry(tdText));
+        }
         tr.appendChild(tdText);
 
+        // Celda URL de una fila vacía: clickeable para agregar un LINK.
+        // A diferencia de la celda Text, aquí el valor DEBE ser una URL
+        // válida — si no, se rechaza con error (no se crea la entrada).
         const tdUrl = document.createElement('td');
         tdUrl.className = 'cell-url cell-empty';
+        if (currentSheet) {
+            tdUrl.classList.add('cell-addable');
+            tdUrl.title = 'Click to add a link';
+            tdUrl.addEventListener('click', () => startInlineNewUrl(tdUrl));
+        }
         tr.appendChild(tdUrl);
 
         return tr;
+    }
+
+    // ── Inline new-entry (escribir directo en una fila vacía) ───
+    // Detecta si el valor es un link o texto plano:
+    //   · "http(s)://…"  o  "dominio.com[/…]"  → link (favicon de Google,
+    //     y el texto mostrado = la propia URL, opción A).
+    //   · cualquier otra cosa                  → texto plano, sin favicon.
+    function toUrl(raw) {
+        const s = (raw || '').trim();
+        if (!s) return null;
+        if (/^https?:\/\//i.test(s)) {
+            return (window.DwarfSecurity && DwarfSecurity.isSafeUrl(s)) ? s : null;
+        }
+        // Dominio "pelado" sin espacios: foo.com, sub.foo.co/path
+        if (!/\s/.test(s) && /^[\w-]+(\.[\w-]+)+(\/.*)?$/.test(s)) {
+            const candidate = 'https://' + s;
+            return (window.DwarfSecurity && DwarfSecurity.isSafeUrl(candidate)) ? candidate : null;
+        }
+        return null;
+    }
+
+    function faviconFor(url) {
+        try {
+            const host = new URL(url).hostname;
+            return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`;
+        } catch { return ''; }
+    }
+
+    // Reemplaza la celda vacía por un <input>; Enter/blur guarda, Esc cancela.
+    function startInlineNewEntry(td) {
+        if (!currentSheet) { showToast('Pick or create a sheet first', true); return; }
+        if (td.querySelector('input')) return;
+
+        const input = document.createElement('input');
+        input.type        = 'text';
+        input.className   = 'cell-editor';
+        input.placeholder = 'Type text or paste a link…';
+        td.classList.add('editing');
+        td.textContent = '';
+        td.appendChild(input);
+        input.focus();
+
+        let done = false;
+        const finish = async (save) => {
+            if (done) return;
+            done = true;
+            input.removeEventListener('blur', onBlur);
+            const val = input.value.trim();
+            if (!save || !val) { renderGrid(); return; }
+            await addEntryFromInput(val);
+        };
+        const onBlur = () => finish(true);
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter')       { e.preventDefault(); finish(true); }
+            else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+        });
+        input.addEventListener('blur', onBlur);
+    }
+
+    async function addEntryFromInput(val) {
+        const url = toUrl(val);
+        const entry = url
+            ? { text: url, url, favicon: faviconFor(url), date: new Date().toISOString() }
+            : { text: val, url: '', favicon: '',          date: new Date().toISOString() };
+        await pushEntry(entry, url ? 'Link added' : 'Text added');
+    }
+
+    // Editor de la celda URL (fila vacía): SOLO acepta links válidos.
+    // Enter con un valor que no es URL → error y sigue editando (no agrega).
+    // Esc o salir del campo → descarta sin error.
+    function startInlineNewUrl(td) {
+        if (!currentSheet) { showToast('Pick or create a sheet first', true); return; }
+        if (td.querySelector('input')) return;
+
+        const input = document.createElement('input');
+        input.type        = 'text';
+        input.className   = 'cell-editor';
+        input.placeholder = 'Paste a URL (https://…)';
+        td.classList.add('editing');
+        td.textContent = '';
+        td.appendChild(input);
+        input.focus();
+
+        let done = false;
+        const cleanup = () => input.removeEventListener('blur', abandon);
+        const abandon = () => { if (done) return; done = true; cleanup(); renderGrid(); };
+        const commit  = async () => {
+            if (done) return;
+            const val = input.value.trim();
+            if (!val) { abandon(); return; }
+            const url = toUrl(val);
+            if (!url) {
+                showToast('That doesn’t look like a valid URL', true);
+                input.select();
+                return;   // no marca done: el usuario sigue editando
+            }
+            done = true;
+            cleanup();
+            await pushEntry(
+                { text: url, url, favicon: faviconFor(url), date: new Date().toISOString() },
+                'Link added'
+            );
+        };
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter')       { e.preventDefault(); commit(); }
+            else if (e.key === 'Escape') { e.preventDefault(); abandon(); }
+        });
+        input.addEventListener('blur', abandon);
+    }
+
+    // Helper compartido: añade una entrada al final de la hoja activa y refresca.
+    async function pushEntry(entry, okMsg) {
+        const record = getRecord(currentSheet);
+        if (!record) { showToast('Pick or create a sheet first', true); return; }
+        try {
+            record.entries = record.entries || [];
+            record.entries.push(entry);
+            await putRecord(record);
+            notifyBackground();
+            await refresh({ selectParent: currentParent, selectSheet: currentSheet });
+            showToast(okMsg);
+        } catch (e) {
+            console.error('[Corporate] Inline add failed:', e);
+            showToast('Could not add entry', true);
+        }
     }
 
     function renderFaviconCell(td, entry) {
@@ -757,6 +988,22 @@
             notifBtn.title    = 'Notifications module not loaded.';
         }
 
+        // Native Click: restaura el menú contextual nativo del navegador en
+        // la pestaña activa. DwarfContextUnlock.init() lee el estado, pinta el
+        // botón y registra el toggle por sí mismo.
+        const ctxBtn = document.createElement('button');
+        ctxBtn.type     = 'button';
+        ctxBtn.className = 'dwarf-btn';
+        ctxBtn.title     = 'Restaura el menú contextual nativo del navegador en la pestaña activa.';
+        modal.appendChild(ctxBtn);
+        if (window.DwarfContextUnlock) {
+            DwarfContextUnlock.init(ctxBtn);
+        } else {
+            ctxBtn.textContent = '🔒 NATIVE CLICK — OFF';
+            ctxBtn.disabled    = true;
+            ctxBtn.title       = 'Context-unlock module not loaded.';
+        }
+
         const btnRow = document.createElement('div');
         btnRow.className = 'edit-modal-actions';
         const closeBtn = document.createElement('button');
@@ -1024,6 +1271,82 @@
         }
     }
 
+    // ── Full Vault export / import (JSON: padre + hijas) ─────────
+    // Mismo formato que la versión dwarven (popup.js): así un backup hecho
+    // en cualquiera de las dos vistas es importable en la otra.
+    function onExportFull() {
+        if (!currentParent) { showToast('Pick a parent vault first', true); return; }
+        const parent = getRecord(currentParent);
+        if (!parent) { showToast('Vault not found', true); return; }
+
+        const childDbs = children(currentParent);
+        const data = {
+            version:        '1.0',
+            exportDate:     new Date().toISOString(),
+            parentDatabase: parent,
+            childDatabases: childDbs,
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `${currentParent}_complete.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        const total = (parent.entries || []).length +
+            childDbs.reduce((s, c) => s + (c.entries || []).length, 0);
+        showToast(`Exported vault: ${childDbs.length} child(ren), ${total} entries`);
+    }
+
+    async function onImportFull(event) {
+        const file = event.target.files && event.target.files[0];
+        event.target.value = '';
+        if (!file) return;
+
+        try {
+            const data = JSON.parse(await file.text());
+            const parent = data && data.parentDatabase;
+            if (!parent || !parent.name || parent.parentDatabase) {
+                showToast('Invalid vault file', true);
+                return;
+            }
+            const childDbs = Array.isArray(data.childDatabases) ? data.childDatabases : [];
+
+            // Colisión de nombre: si el padre ya existe, importamos con sufijo
+            // "_imported" y reapuntamos las hijas para no pisar lo existente.
+            let name = parent.name;
+            if (allDbs.some(d => d.name === name)) {
+                name = `${parent.name}_imported`;
+                const ok = confirm(
+                    `"${parent.name}" already exists.\n\n` +
+                    `OK = Import as "${name}"\nCancel = Abort import`
+                );
+                if (!ok) return;
+            }
+            const oldName = parent.name;
+
+            await putRecord({ ...parent, name, parentDatabase: null });
+            for (const c of childDbs) {
+                if (!c || !c.name) continue;
+                await putRecord({
+                    ...c,
+                    parentDatabase: c.parentDatabase === oldName ? name : (c.parentDatabase || name),
+                });
+            }
+
+            notifyBackground();
+            await refresh({ selectParent: name });
+            showToast(`Imported vault "${name}": ${childDbs.length} child(ren)`);
+        } catch (e) {
+            console.error('[Corporate] Full import failed:', e);
+            showToast('Import failed: invalid JSON', true);
+        }
+    }
+
     // ── Orchestration ───────────────────────────────────────────
     async function refresh(target) {
         target = target || {};
@@ -1113,8 +1436,10 @@
         'new-child':  onCreateChild,
         'rename':     onRename,
         'delete':     onDelete,
-        'import':     () => importInput.click(),
-        'export':     onExport
+        'import':      () => importInput.click(),
+        'export':      onExport,
+        'import-full': () => importFullInput.click(),
+        'export-full': onExportFull
     };
 
     function setupMenuBar() {
@@ -1181,6 +1506,7 @@
         setupMenuBar();
 
         importInput.addEventListener('change', onImport);
+        importFullInput.addEventListener('change', onImportFull);
         searchInput.addEventListener('input', applySearchFilter);
     }
 

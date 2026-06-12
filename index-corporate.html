@@ -83,6 +83,9 @@
                 <div id="menu-data" class="menu-dropdown" role="menu" hidden>
                     <button type="button" class="menu-item" role="menuitem" data-action="import">⇩ Import CSV</button>
                     <button type="button" class="menu-item" role="menuitem" data-action="export">⇧ Export CSV</button>
+                    <div class="menu-separator" role="separator"></div>
+                    <button type="button" class="menu-item" role="menuitem" data-action="import-full">🗃️ Import Full Vault</button>
+                    <button type="button" class="menu-item" role="menuitem" data-action="export-full">📦 Export Full Vault</button>
                 </div>
             </div>
 
@@ -142,6 +145,9 @@
 
         <!-- File input oculto: lo dispara el menú Data → Import CSV. -->
         <input type="file" id="importInput" accept=".csv" hidden>
+
+        <!-- File input oculto: lo dispara el menú Data → Import Full Vault (JSON). -->
+        <input type="file" id="importFullInput" accept=".json,application/json" hidden>
 
     </div>
 
