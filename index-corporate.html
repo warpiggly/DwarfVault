@@ -32,8 +32,17 @@
              ══════════════════════════════════════════════════════════ -->
         <header class="sheet-header" id="sheetHeader">
 
-            <!-- Logo corporate (casco dwarven), pegado a la izquierda. -->
-            <img class="header-logo" src="image/Logo-Corporate.png" alt="DwarfVault">
+            <!-- Marca corporate: la cabeza dwarven (siempre visible) + el
+                 wordmark "DWARF VAULT" que se revela suavemente al pasar el
+                 mouse, desplegándose hacia la derecha desde la cabeza. El
+                 wordmark va dentro de un <span> con overflow:hidden para que
+                 el efecto sea un "barrido" limpio de izquierda a derecha. -->
+            <div class="header-brand">
+                <img class="header-logo" src="image/Logo-Corporate.png" alt="DwarfVault">
+                <span class="header-wordmark" aria-hidden="true">
+                    <img src="image/Wordmark-Corporate.png" alt="">
+                </span>
+            </div>
 
             <!-- Navegación entre vistas. Equivalente al hamburger menu
                  de la versión dwarven (HOME / TABLES / TUTORIAL).

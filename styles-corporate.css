@@ -87,8 +87,22 @@ body {
     position: relative;
 }
 
+/* Contenedor de la marca: cabeza + wordmark, alineados verticalmente.
+   `position: relative` + z-index lo mantiene por encima del fondo; el
+   wordmark se despliega hacia la derecha sin empujar el layout porque
+   parte de max-width:0. */
+.header-brand {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    cursor: default;
+}
+
 /* Logo corporate (casco dwarven cuadrado). Drop-shadow dorado tenue
-   para que el logo se "encienda" sobre el papel quemado de fondo. */
+   para que el logo se "encienda" sobre el papel quemado de fondo.
+   En hover de la marca, la cabeza se "enciende" un poco más y crece
+   sutilmente, anclando el origen del despliegue del nombre. */
 .header-logo {
     width: auto;
     height: 56px;
@@ -97,6 +111,66 @@ body {
     filter: drop-shadow(0 0 6px rgba(255, 196, 0, 0.25));
     user-select: none;
     -webkit-user-drag: none;
+    transform-origin: center;
+    transition: transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+                filter 0.42s ease;
+}
+
+.header-brand:hover .header-logo {
+    transform: scale(1.06);
+    filter: drop-shadow(0 0 10px rgba(255, 196, 0, 0.55));
+}
+
+/* Wordmark "DWARF VAULT". <span> con overflow:hidden que arranca en
+   max-width:0 (oculto, sin ocupar espacio) y se expande en hover →
+   barrido limpio de izquierda a derecha. La curva cubic-bezier da una
+   sensación elegante: ni brusca ni demasiado lenta (~0.45s). */
+.header-wordmark {
+    display: inline-block;
+    overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    vertical-align: middle;
+    transition: max-width 0.48s cubic-bezier(0.22, 0.61, 0.36, 1),
+                opacity 0.34s ease;
+}
+
+.header-wordmark img {
+    height: 58px;
+    width: auto;
+    display: block;
+    /* El padding-left hace de separación cabeza↔nombre; al estar dentro
+       del contenedor clipado, también se revela durante el barrido. */
+    padding-left: 12px;
+    object-fit: contain;
+    transform: translateX(-6px);
+    transition: transform 0.48s cubic-bezier(0.22, 0.61, 0.36, 1);
+    user-select: none;
+    -webkit-user-drag: none;
+    filter: drop-shadow(0 0 5px rgba(255, 196, 0, 0.18));
+}
+
+.header-brand:hover .header-wordmark {
+    max-width: 160px;
+    opacity: 1;
+}
+
+.header-brand:hover .header-wordmark img {
+    transform: translateX(0);
+}
+
+/* Respeto a usuarios con preferencia de movimiento reducido: el nombre
+   sigue apareciendo pero sin desplazamientos/escalados. */
+@media (prefers-reduced-motion: reduce) {
+    .header-logo,
+    .header-wordmark,
+    .header-wordmark img {
+        transition-duration: 0.01ms;
+    }
+    .header-brand:hover .header-logo {
+        transform: none;
+    }
 }
 
 /* Navegación (3 estrellas) — centrada absolutamente en el header,
@@ -108,7 +182,7 @@ body {
     transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
-    gap: 40px;
+    gap: 80px;
 }
 
 /* Cada estrella es un <a> clickable de 60px. La imagen tiene mucha
