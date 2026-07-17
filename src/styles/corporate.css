@@ -114,6 +114,36 @@ body {
     transform-origin: center;
     transition: transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
                 filter 0.42s ease;
+    /* Animación de ENTRADA al cargar la página (se dispara en cada
+       navegación entre vistas: home / schema / tutorial). Usa fill-mode
+       `none` a propósito → al terminar, el logo vuelve a su estado base
+       y el hover (scale 1.06) sigue funcionando sin quedar "congelado". */
+    animation: logoIntro 0.9s cubic-bezier(0.16, 0.8, 0.24, 1);
+}
+
+/* Revelado del logo: entra desde la izquierda, sobre-escala con un
+   destello dorado y asienta. Moderno y elegante, ~0.9s. */
+@keyframes logoIntro {
+    0% {
+        opacity: 0;
+        transform: translateX(-22px) scale(0.55) rotate(-12deg);
+        filter: blur(8px) drop-shadow(0 0 0 rgba(255, 196, 0, 0));
+    }
+    45% {
+        opacity: 1;
+        filter: blur(0) drop-shadow(0 0 16px rgba(255, 196, 0, 0.9));
+    }
+    62% {
+        transform: translateX(0) scale(1.14) rotate(4deg);
+    }
+    80% {
+        transform: scale(0.97) rotate(-1.5deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1) rotate(0deg);
+        filter: blur(0) drop-shadow(0 0 6px rgba(255, 196, 0, 0.25));
+    }
 }
 
 .header-brand:hover .header-logo {
@@ -170,6 +200,9 @@ body {
     }
     .header-brand:hover .header-logo {
         transform: none;
+    }
+    .header-logo {
+        animation: none;
     }
 }
 
@@ -279,18 +312,19 @@ body {
    ══════════════════════════════════════════════════════════════ */
 .style-toggle-btn {
     position: fixed;
-    top: 14px;
-    right: 14px;
-    width: 44px;
-    height: 22px;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 17px;
+    box-sizing: border-box;
     padding: 0;
     margin: 0;
     cursor: pointer;
     z-index: 100;
-    border: 1.5px solid var(--border);
-    border-radius: 11px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
     background-color: var(--wood-deep);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 6px rgba(121, 86, 73, 0.4);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
     transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
     overflow: visible;
 }
@@ -300,11 +334,11 @@ body {
     position: absolute;
     top: 2px;
     left: 2px;
-    width: 15px;
-    height: 15px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--parchment) 0%, var(--parchment-dim) 100%);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 0 2px rgba(121, 86, 73, 0.3);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
     transition: left 0.28s cubic-bezier(0.4, 0.0, 0.2, 1),
                 background 0.28s ease,
                 box-shadow 0.28s ease;
@@ -313,15 +347,15 @@ body {
 .style-toggle-btn[aria-checked="true"] {
     background-color: var(--wood);
     border-color: var(--gold);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 10px rgba(255, 196, 0, 0.5);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 4px rgba(255, 196, 0, 0.35);
 }
 .style-toggle-btn[aria-checked="true"]::before {
-    left: 24px;
+    left: 19px;
     background: linear-gradient(135deg, #ffd954 0%, #ffaa1f 100%);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 196, 0, 0.85);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 3px rgba(255, 196, 0, 0.6);
 }
 
-.style-toggle-btn:hover  { transform: scale(1.05); }
+.style-toggle-btn:hover  { transform: scale(1.04); }
 .style-toggle-btn:active { transform: scale(0.96); }
 
 .style-toggle-btn:focus-visible {

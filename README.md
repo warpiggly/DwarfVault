@@ -211,17 +211,20 @@ DwarfVault/
 │   ├── pages/                 HTML entry points (all navigate to each other)
 │   │   ├── index.html         Main popup UI (dwarven theme)
 │   │   ├── corporate.html     Alternate popup UI (corporate theme)
+│   │   ├── schema.html        Parent → child relations map (corporate style)
 │   │   ├── tables.html        Table view of all databases
 │   │   └── tutorial.html      Tutorial / help page
 │   ├── styles/                One stylesheet per page
 │   │   ├── index.css          Main popup styles
 │   │   ├── corporate.css      Corporate theme styles
+│   │   ├── schema.css         Schema view styles (extends corporate.css)
 │   │   ├── tables.css         Table view styles
 │   │   └── tutorial.css       Tutorial styles
 │   ├── scripts/               Page logic + shared modules
 │   │   ├── popup.js           Popup logic and database CRUD
 │   │   ├── tables.js          Table view rendering
 │   │   ├── corporate.js       Corporate view logic
+│   │   ├── schema.js          Schema diagram builder (SVG connectors)
 │   │   ├── db.js              IndexedDB interface
 │   │   ├── security.js        XSS prevention and input validation
 │   │   ├── notifications.js   System notification module

@@ -1,0 +1,302 @@
+/* ═══════════════════════════════════════════════════════════════
+   DwarfVault — Schema view
+
+   Hereda TODO de corporate.css (paleta, header, estrellas, toggle,
+   toast, embers). Aquí sólo:
+     1. Cambiamos el fondo (dragón sobre el tesoro → metáfora de bóveda).
+     2. Añadimos el lienzo del diagrama, los nodos y los conectores SVG.
+   Debe cargarse DESPUÉS de corporate.css.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Fondo propio del schema (distinto al corporate) ──────────────
+   Imagen B: dragón enroscado sobre oro. Tinte oscuro un poco más
+   profundo que el de corporate para que los nodos resalten. */
+body {
+    /* Tinte más suave y cálido que antes: deja ver el dragón/oro y evita
+       la sensación de "cueva sin luz". */
+    background-image:
+        radial-gradient(circle at 50% 42%, rgba(82, 58, 32, 0.30) 0%, rgba(28, 20, 12, 0.78) 88%),
+        url("../../assets/images/Gemini_Generated_Image_7o08rs7o08rs7o08.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Propiedades registradas para poder ANIMAR la posición de la luz cálida
+   del lienzo de forma suave (sin @property las custom props no interpolan). */
+@property --fx { syntax: '<percentage>'; inherits: false; initial-value: 30%; }
+@property --fy { syntax: '<percentage>'; inherits: false; initial-value: 22%; }
+
+/* ── Main: toolbar + lienzo, apilados y ocupando el resto ─────────── */
+.schema-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+}
+
+/* ── Toolbar: título a la izquierda, leyenda a la derecha ─────────── */
+.schema-toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px;
+}
+
+.schema-title {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: var(--parchment);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), 0 0 10px rgba(255, 196, 0, 0.25);
+}
+.schema-sub {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--parchment-dim);
+    letter-spacing: 0.5px;
+}
+
+.schema-legend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 10.5px;
+    color: var(--parchment-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+.legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+}
+.dot-root   { background: linear-gradient(135deg, #ffd954, #ffaa1f); }
+.dot-parent { background: var(--wood); border-color: var(--gold); }
+.dot-child  { background: var(--ink-soft); border-color: var(--border-soft); }
+
+/* ── Lienzo (card con scroll) ─────────────────────────────────────
+   Mismo lenguaje visual que .sheet-main de corporate: borde tan,
+   fondo semitransparente y glow dorado tenue. */
+.schema-canvas {
+    flex: 1 1 auto;
+    position: relative;
+    overflow: auto;
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    min-height: 0;
+
+    /* Luz cálida ambiental que se DESPLAZA (var --fx/--fy animadas), como
+       una fogata iluminando la bóveda desde detrás del diagrama. Va como
+       `background` del contenedor → con background-attachment:scroll (por
+       defecto) queda anclada al card y NO se desplaza al hacer scroll de
+       los nodos. Debajo, un velo cálido semitransparente suaviza el fondo. */
+    --fx: 30%;
+    --fy: 22%;
+    background-color: rgba(30, 22, 14, 0.28);
+    background-image:
+        radial-gradient(62% 58% at var(--fx) var(--fy),
+            rgba(255, 176, 84, 0.26) 0%,
+            rgba(255, 122, 46, 0.12) 42%,
+            transparent 72%),
+        linear-gradient(160deg, rgba(44, 32, 20, 0.28) 0%, rgba(24, 17, 11, 0.50) 100%);
+    background-repeat: no-repeat;
+
+    /* Halo de fuego alrededor del card (respira) — mismo recurso que
+       .sheet-main en corporate. La animación lo hace latir y, a la vez,
+       mueve la luz cálida interior. */
+    box-shadow:
+        inset 0 0 34px rgba(0, 0, 0, 0.40),
+        inset 0 0 44px rgba(255, 150, 55, 0.12),
+        0 0 26px rgba(255, 110, 30, 0.22),
+        0 0 54px rgba(255, 90, 25, 0.10);
+    animation: schemaFire 7.5s ease-in-out infinite;
+}
+
+/* SCHEMAFIRE — mueve la luz cálida (--fx/--fy) y hace respirar el halo.
+   Tiempos irregulares (0/34/66) → sensación orgánica de llama viva. */
+@keyframes schemaFire {
+    0%, 100% {
+        --fx: 26%;
+        --fy: 20%;
+        box-shadow:
+            inset 0 0 34px rgba(0, 0, 0, 0.40),
+            inset 0 0 44px rgba(255, 150, 55, 0.12),
+            0 0 26px rgba(255, 110, 30, 0.22),
+            0 0 54px rgba(255, 90, 25, 0.10);
+    }
+    34% {
+        --fx: 64%;
+        --fy: 34%;
+        box-shadow:
+            inset 0 0 30px rgba(0, 0, 0, 0.36),
+            inset 0 0 58px rgba(255, 168, 64, 0.22),
+            0 0 38px rgba(255, 118, 36, 0.36),
+            0 0 76px rgba(255, 98, 30, 0.18);
+    }
+    66% {
+        --fx: 44%;
+        --fy: 12%;
+        box-shadow:
+            inset 0 0 36px rgba(0, 0, 0, 0.42),
+            inset 0 0 36px rgba(255, 140, 50, 0.10),
+            0 0 22px rgba(255, 105, 25, 0.20),
+            0 0 46px rgba(255, 85, 20, 0.09);
+    }
+}
+/* Scrollbar temático y discreto. */
+.schema-canvas::-webkit-scrollbar { width: 9px; height: 9px; }
+.schema-canvas::-webkit-scrollbar-track { background: transparent; }
+.schema-canvas::-webkit-scrollbar-thumb {
+    background: var(--border-soft);
+    border-radius: 6px;
+}
+.schema-canvas::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+/* Superficie interior de tamaño calculado por JS → habilita el scroll. */
+.schema-stage {
+    position: relative;
+    min-width: 100%;
+    min-height: 100%;
+}
+
+/* SVG de conectores: capa de fondo, no intercepta el ratón. */
+.schema-links {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    pointer-events: none;
+    animation: linksFade 0.9s ease 0.15s both;
+}
+@keyframes linksFade { from { opacity: 0; } to { opacity: 1; } }
+
+.schema-link {
+    fill: none;
+    stroke: var(--border-soft);
+    stroke-width: 2;
+    transition: stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
+}
+.schema-link.link-root { stroke: rgba(255, 196, 0, 0.45); }
+.schema-link.is-active {
+    stroke: var(--gold);
+    stroke-width: 2.6;
+    filter: drop-shadow(0 0 4px rgba(255, 196, 0, 0.85));
+}
+
+/* ── Nodos ─────────────────────────────────────────────────────── */
+.schema-node {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 12px;
+    border-radius: 9px;
+    border: 1px solid var(--border-soft);
+    background: var(--ink-soft);
+    color: var(--parchment);
+    overflow: hidden;
+    cursor: default;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    animation: nodeIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes nodeIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.92); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.node-title {
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.node-meta {
+    font-size: 10px;
+    color: var(--parchment-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Nodo raíz: el "servidor" / la BD. Oro sólido, texto oscuro. */
+.node-root {
+    background: linear-gradient(135deg, #ffd954 0%, #ffaa1f 100%);
+    border-color: #ffcf5a;
+    color: var(--ink);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.55), 0 0 16px rgba(255, 196, 0, 0.45);
+}
+.node-root .node-meta { color: rgba(42, 31, 24, 0.75); }
+
+/* Nodo padre (Vault): madera + borde/acento dorado. */
+.node-parent {
+    background: linear-gradient(150deg, var(--wood) 0%, var(--wood-deep) 100%);
+    border-color: var(--gold);
+    border-left-width: 3px;
+}
+
+/* Nodo hijo (Chest): más tenue, "papel quemado". */
+.node-child {
+    background: linear-gradient(150deg, var(--ink-soft) 0%, #2f231b 100%);
+    border-left: 3px solid var(--border);
+}
+
+/* Hover: el nodo se eleva y se enciende. */
+.schema-node:hover {
+    transform: translateY(-2px) scale(1.03);
+    border-color: var(--gold);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 196, 0, 0.5);
+    z-index: 5;
+}
+
+/* Cuando se resalta un nodo, los NO relacionados se atenúan para que
+   la relación padre↔hijo destaque (clase la pone schema.js). */
+.schema-stage.dimmed .schema-node:not(.is-active) { opacity: 0.32; }
+.schema-stage.dimmed .schema-link:not(.is-active)  { opacity: 0.15; }
+.schema-node, .schema-link { transition-property: transform, box-shadow, border-color, opacity, stroke, stroke-width, filter; }
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+/* IMPORTANTE: un estilo de autor con `display:flex` le gana a la regla
+   del navegador `[hidden]{display:none}`, así que hay que ocultar el
+   estado vacío explícitamente cuando lleva el atributo `hidden`. */
+.schema-empty[hidden] { display: none; }
+
+.schema-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    gap: 6px;
+}
+.schema-empty-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(255, 196, 0, 0.4);
+}
+.schema-empty-hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--parchment-dim);
+    max-width: 340px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .schema-node, .schema-links, .schema-canvas { animation: none; }
+}

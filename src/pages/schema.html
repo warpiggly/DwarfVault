@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DwarfVault — Schema</title>
+    <!-- Hereda paleta, header, estrellas, toggle, toast y embers de la vista
+         corporate; schema.css sólo AÑADE/override lo propio del diagrama y
+         cambia el fondo. Debe cargarse DESPUÉS de corporate.css. -->
+    <link rel="stylesheet" href="../styles/corporate.css">
+    <link rel="stylesheet" href="../styles/schema.css">
+</head>
+<body data-style="corporate">
+
+    <!-- Toggle dwarven ↔ corporate (misma pieza que corporate.html). -->
+    <button type="button"
+            class="style-toggle-btn"
+            id="styleToggleBtn"
+            role="switch"
+            aria-checked="true"
+            title="Change Style"
+            aria-label="Change Style"></button>
+
+    <div class="popup-wrapper">
+
+        <!-- ══════════════════════════════════════════════════════════
+             HEADER — idéntico a corporate: marca (logo + wordmark) a la
+             izquierda y 3 estrellas de navegación centradas.
+             La estrella central regresa a la rejilla corporate (grid).
+             ══════════════════════════════════════════════════════════ -->
+        <header class="sheet-header" id="sheetHeader">
+
+            <div class="header-brand">
+                <img class="header-logo" src="../../assets/images/Logo-Corporate.png" alt="DwarfVault">
+                <span class="header-wordmark" aria-hidden="true">
+                    <img src="../../assets/images/Wordmark-Corporate.png" alt="">
+                </span>
+            </div>
+
+            <nav class="header-nav" aria-label="Page navigation">
+                <a class="header-star" href="corporate.html" title="Home"     aria-label="Home — corporate grid view">
+                    <img src="../../assets/images/Estrellas-cambiopagina.png" alt="">
+                </a>
+                <a class="header-star" href="schema.html"    title="Schema"   aria-label="Schema — parent/child relationships map">
+                    <img src="../../assets/images/Estrellas-cambiopagina.png" alt="">
+                </a>
+                <a class="header-star" href="tutorial.html"  title="Tutorial" aria-label="Tutorial — how to use">
+                    <img src="../../assets/images/Estrellas-cambiopagina.png" alt="">
+                </a>
+            </nav>
+
+        </header>
+
+        <!-- ══════════════════════════════════════════════════════════
+             MAIN — toolbar (título + leyenda) sobre el lienzo del esquema.
+             ══════════════════════════════════════════════════════════ -->
+        <div class="schema-main">
+
+            <div class="schema-toolbar">
+                <h2 class="schema-title">VAULT SCHEMA <span class="schema-sub">— relations map</span></h2>
+                <div class="schema-legend" aria-hidden="true">
+                    <span class="legend-item"><i class="legend-dot dot-root"></i>Root</span>
+                    <span class="legend-item"><i class="legend-dot dot-parent"></i>Vault</span>
+                    <span class="legend-item"><i class="legend-dot dot-child"></i>Chest</span>
+                </div>
+            </div>
+
+            <!-- Lienzo con scroll. schema.js inyecta el <svg> de conectores
+                 y los nodos absolutos dentro de .schema-stage. -->
+            <div class="schema-canvas" id="schemaCanvas">
+                <div class="schema-stage" id="schemaStage">
+                    <svg class="schema-links" id="schemaLinks" xmlns="http://www.w3.org/2000/svg"></svg>
+                    <!-- nodos inyectados por schema.js -->
+                </div>
+
+                <div class="schema-empty" id="schemaEmpty" hidden>
+                    <p class="schema-empty-title">No vaults yet</p>
+                    <p class="schema-empty-hint">Create a vault in the grid view and its parent → child map will appear here.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Toast reutilizado (position:fixed, fuera del wrapper). -->
+    <div class="sheet-toast" id="sheetToast" role="status" aria-live="polite" hidden></div>
+
+    <!-- Scripts: utilidades y BD compartidas, luego el toggle, los embers
+         ambientales y por último la lógica del esquema. -->
+    <script src="../scripts/security.js"></script>
+    <script src="../scripts/db.js"></script>
+    <script src="../scripts/styleToggle.js"></script>
+    <script src="../scripts/embers.js"></script>
+    <script src="../scripts/schema.js"></script>
+</body>
+</html>
