@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dott-y - Tables</title>
+    
+    <link rel="stylesheet" href="../styles/tables.css">
+</head>
+<body>
+    <!-- Hamburger menu icon (arriba a la izquierda) -->
+    <div class="hamburger-menu" id="hamburger">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+
+    <!-- Style toggle: pill switch profesional. -->
+    <button type="button"
+            class="style-toggle-btn"
+            id="styleToggleBtn"
+            role="switch"
+            aria-checked="false"
+            title="Change Style"
+            aria-label="Change Style"></button>
+
+    <!-- Hidden navigation menu (lado izquierdo) -->
+    <div class="nav-menu" id="navMenu">
+        <ul>
+            <li><a href="index.html">🗃️ HOME</a></li>
+            <li><a href="tables.html">📜 TABLES</a></li>
+            <li><a href="tutorial.html">📖 TUTORIAL</a></li>
+        </ul>
+    </div>
+
+    <div class="header">
+        <h1 class="title">DATABASE TABLES</h1>
+        <img src="../../assets/icons/Final Gif.gif" alt="Dott-y logo" class="logo" id="enanoGif">
+        <h3 class="subtitle">View All 🏔️ Databases</h3>
+    </div>
+
+    <div style="padding: 10px;">
+        <div id="tablesContainer">
+            <!-- Aquí se cargarán todas las tablas de las bases de datos -->
+            <p style="color: #f4e5c3; font-family: 'Righteous-Regular', sans-serif; text-align: center;">Loading databases...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../scripts/security.js"></script>
+    <script src="../scripts/notifications.js"></script>
+    <script src="../scripts/db.js"></script>
+    <script src="../scripts/tables.js"></script>
+    <script src="../scripts/menu.js"></script>
+    <script src="../scripts/buttons.js"></script>
+    <script src="../scripts/styleToggle.js"></script>
+</body>
+</html>

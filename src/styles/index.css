@@ -1,0 +1,1087 @@
+@font-face {
+    font-family: 'SofadiOne-Regular';
+    src: url('../../assets/fonts/SofadiOne-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Righteous-Regular';
+    src: url('../../assets/fonts/Righteous/Righteous-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+@font-face {
+    font-family: 'Pixeled';
+    src: url('../../assets/fonts/Pixeled.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    width: 500px; /* Cambia a 100% para ocupar todo el ancho de la ventana */
+    height: 700px; /* Cambia a 100vh para ocupar toda la altura de la ventana */
+    background-color: #272727; /* Fondo gris claro */
+    overflow: auto; /* Permite el desplazamiento */
+    position: relative; /* Necesario para el pseudo-elemento */
+}
+
+body::before {
+    content: "";
+    position: fixed; /* Cambia a fixed para que la imagen de fondo no se mueva al hacer scroll */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; 
+    background-image: url("../../assets/images/back.png");
+    background-size: cover; /* Esto asegura que la imagen cubra toda */
+    background-position: center; /* Centra la imagen en la ventana */
+    opacity: 0.3; /* Ajusta el valor entre 0 y 1 para cambiar la transparencia */
+    z-index: -1; /* Coloca el pseudo-elemento detrás del contenido del body */
+}
+
+
+
+/* Encabezado */
+/* Encabezado */
+.header {
+    font-family: 'Pixeled';
+    color: antiquewhite; /* Texto oscuro */
+    padding: 90px 0 5px; /* Ajusta el padding superior para dar espacio al logo */
+    text-align: center;
+    position: relative; /* Permite posicionar los elementos hijos de manera absoluta */
+    margin-bottom: 0px;
+    border-bottom: 0px solid rgba(46, 64, 87, 0.2);
+    background-image: url("../../assets/images/Heder2.png");
+    background-size: cover; /* Asegura que la imagen de fondo cubra todo el encabezado */
+    background-position: center; /* Centra la imagen de fondo */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra del encabezado */
+}
+
+/* Estilo específico para la imagen */
+.logo {
+    max-width: 175px; /* Ajusta el tamaño según sea necesario */
+    height: auto; /* Mantiene la proporción */
+    position: absolute; /* Mantiene la imagen en la posición especificada */
+    top: 83px; /* Mueve la imagen hacia abajo */
+    left: 50%; /* Centra horizontalmente */
+    transform: translate(-50%, -50%); /* Compensa el desplazamiento del 50% tanto horizontal como vertical */
+    z-index: 0; /* Envía la imagen detrás de los textos */
+    transition: transform 0.5s; /* Efecto de transición suave */
+}
+
+
+/* Títulos */
+.title {
+    position: relative; /* Mantiene el posicionamiento relativo */
+    top: 12px; /* Sin desplazamiento hacia abajo */
+    left: 0px; /* Sin desplazamiento hacia la derecha */
+    z-index: 1; /* Asegura que el título esté por encima del logo */
+    font-size: 2em; /* Ajusta el tamaño según sea necesario */
+}
+
+.subtitle {
+    text-align: center; /* Cambiar a 'left' o 'right' para mover a izquierda o derecha */
+    font-size: 0.5em; /* Ajusta el tamaño según sea necesario */
+    z-index: 1; /* Asegura que el subtítulo esté por encima del logo */
+}
+
+
+
+
+
+/* Estilo de la lista */
+#textList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#textList li {
+    background-color: rgba(104, 121, 143, 0.2); /* Fondo azul grisáceo transparente */
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#textList li:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada al hacer hover */
+}
+
+.item-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.item-label {
+    font-weight: bold;
+    color: #ffffff; /* Color oscuro para el texto */
+}
+
+.item-detail span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 150px;
+    vertical-align: middle;
+}
+
+/* Botones */
+button {
+    padding: 10px 20px;
+    background-color: #795649; /* A dark wood-like brown */
+    color: #f4e5c3; /* A parchment-like off-white */
+    border: 2px solid #c0a080; /* A lighter brown border */
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 13px;
+    text-shadow: 1px 1px 0px #a67c52; /* Gives a bit of depth to the text */
+    box-shadow: 2px 2px 0px #a67c52; /* Simulates an inset look */
+    border-radius: 4px; /* Slightly rounded corners */
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background-color: #8a6e2f; /* A lighter, worn wood color for hover */
+    box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.3); /* A more pronounced shadow for hover */
+}
+
+button:active{
+    box-shadow: inset 1px 1px 2px 0px rgba(0, 0, 0, 0.5); /* An inset shadow for a pressed effect */
+    transform: translateY(2px); /* Moves the button down to simulate a press */
+}
+
+.copy-btn {
+    background-color: #5d737e; /* Botón gris-azulado suave */
+    margin-left: 10px;
+    padding: 5px;
+    font-size: 12px;
+}
+
+input, select {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    background-color: rgb(255, 255, 255); /* Fondo blanco con transparencia */
+    color: #2e4057; /* Texto oscuro */
+    transition: border 0.2s ease;
+}
+
+input:focus, select:focus {
+    border: 1px solid #5d737e; /* Cambio de color al enfocar */
+}
+
+/* Checkbox */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.checkbox-container label {
+    margin-left: 5px;
+    color: #ffffff; /* Texto oscuro */
+}
+
+.favorite {
+    color: #4caf50; /* Verde vivo para destacar */
+    font-weight: bold;
+}
+
+.accordion-button {
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    padding: 10px;
+    background-color: rgb(104, 121, 143); /* Botón gris azulado transparente */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    text-align: left;
+    width: 100%;
+    transition: background-color 0.2s ease;
+}
+
+.accordion-button:hover {
+    background-color: #68798f; /* Fondo más oscuro al hacer hover */
+}
+
+.accordion-content {
+    display: none;
+    padding: 10px;
+    border: 1px solid rgba(46, 64, 87, 0.1); /* Borde tenue */
+    border-radius: 5px;
+    background-color: rgba(248, 248, 248, 0.6); /* Fondo gris claro con transparencia */
+}
+
+/* .action-btn hereda todos los estilos de `button` (mismo elemento HTML).
+   Solo sobreescribimos lo que difiere: el tamaño de fuente. */
+.action-btn { font-size: 12px; }
+
+/* .delete-btn igual que .action-btn, pero con hover en rojo. */
+.delete-btn { font-size: 12px; }
+.delete-btn:hover { background-color: #8a2f2f; }
+
+.entries-list {
+    font-family: 'Righteous-Regular';
+    background-color: #ffffff00;
+    text-align: center;
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.entries-list li {
+    background-color: rgba(121, 86, 73, 0.362);
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    font-size: 18px;
+}
+
+.entries-list li:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.entries-list img {
+    display: block;
+    margin: 10px auto;
+    max-width: 150px;
+    height: auto;
+    border-radius: 5px;
+}
+
+/* Contenedor de cada entrada en la lista RELICS */
+.entry-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+}
+
+.entry-favicon {
+    flex-shrink: 0;
+    border-radius: 2px;
+}
+
+.secundarios {
+    font-family: 'Righteous-Regular';
+    color: antiquewhite;
+}
+
+/* Estilos para el select */
+.secundarios2 {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 45px 12px 15px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 16px;
+    color: #f4e5c3;
+    background-color: rgba(121, 86, 73, 0.7);
+    border: 2px solid #c0a080;
+    border-radius: 25px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23f4e5c3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: calc(100% - 15px) center;
+    background-size: 20px;
+}
+
+.secundarios2:hover {
+    background-color: rgba(121, 86, 73, 0.8);
+}
+
+.secundarios2:focus {
+    background-color: rgba(121, 86, 73, 0.9);
+    border-color: #ffc400;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(255, 196, 0, 0.5);
+}
+
+/* Estilos para las opciones del select */
+.secundarios2 option {
+    background-color: #795649;
+    color: #f4e5c3;
+    padding: 12px;
+}
+
+/* Para navegadores basados en WebKit (Chrome, Safari) */
+.secundarios2::-webkit-scrollbar {
+    width: 10px;
+}
+
+.secundarios2::-webkit-scrollbar-track {
+    background: #5d4037;
+}
+
+.secundarios2::-webkit-scrollbar-thumb {
+    background-color: #8d6e63;
+    border-radius: 20px;
+    border: 3px solid #5d4037;
+}
+
+
+
+h2 {
+    font-family: 'SofadiOne-Regular';
+    color: antiquewhite;
+    text-align: center;
+    font-size: 1.5em;
+    margin-top: 2.0em; /* Aumentar espacio superior */
+    margin-bottom: 2.0em; /* Aumentar espacio inferior */
+    font-weight: bold;
+}
+
+.copy{
+    font-family: 'Righteous-Regular';
+    text-align: center;
+    font-size: 15px;
+    margin: 20px auto;
+    color: #e0e0e0;
+}
+
+/* Preserva saltos de línea, espacios y tabulaciones del texto guardado.
+   Sin esta regla el navegador colapsa los \n a espacios simples. */
+#entryText {
+    width: 90%;
+    box-sizing: border-box;
+    white-space: pre-wrap;   /* renderiza \n como salto visual             */
+    word-break: break-word;  /* evita desbordamiento en textos sin espacios */
+    text-align: left;
+}
+
+.action-btn2 {
+    font-family: 'Righteous-Regular';
+    display: block;           /* Cambiar a block para poder aplicar márgenes */
+    margin: 0 auto;          /* Aplicar márgenes automáticos */
+    /* Opcional: ajustar el ancho del botón */
+    width: 200px;            /* Establecer un ancho fijo, si es necesario */
+}
+
+.container {
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center;
+    flex-direction: column; /* Alinea los elementos uno debajo del otro */
+    width: 100%; /* Asegura que ocupe el ancho completo */
+}
+
+/* Estilos para ocultar el contenido de inicio */
+.toggle-content {
+    display: none;
+    width: 93%;
+    box-sizing: border-box;
+    padding: 48px 6px;
+    background-color: rgba(0, 0, 0, 0); /* Fondo semitransparente para resaltar el contenido */
+    position: relative; /* Permite posicionar elementos dentro libremente */
+    color: white; /* Cambia el color del texto */
+}
+
+/* Mostrar el contenido cuando el checkbox está marcado */
+.toggle:checked + .toggle-label + .toggle-content {
+    display: block;
+}
+
+/* Ocultar el checkbox */
+.toggle {
+    display: none;
+}
+
+/* Imagen de fondo personalizada para cada sección */
+#toggleForja + .toggle-label {
+    background-image: url('../../assets/images/Boton 3.png'); /* Imagen de fondo para FORJA */
+    background-size: cover; /* Asegura que la imagen cubra todo el área */
+    background-position: center; /* Centra la imagen */
+    display: flex; /* Permite mover el texto dentro */
+    align-items: center; /* Centra verticalmente el texto */
+    justify-content: center; /* Centra horizontalmente el texto */
+    position: relative; /* Para permitir que el texto se posicione sobre la imagen */
+    width: 50%; /* Asegura que ocupe todo el ancho */
+    height: 50px; /* Ajusta la altura según sea necesario */
+    cursor: pointer; /* Cambia el cursor para indicar que se puede hacer clic */
+    margin: 30px auto; /* Agrega un margen alrededor del contenedor y centra horizontalmente */
+}
+
+#toggleReliquias + .toggle-label {
+    background-image: url('../../assets/images/Boton 3.png'); /* Imagen de fondo para RELIQUIAS */
+    background-size: cover; /* Asegura que la imagen cubra todo el área */
+    background-position: center; /* Centra la imagen */
+    display: flex; /* Permite mover el texto dentro */
+    align-items: center; /* Centra verticalmente el texto */
+    justify-content: center; /* Centra horizontalmente el texto */
+    position: relative; /* Para permitir que el texto se posicione sobre la imagen */
+    width: 50%; /* Asegura que ocupe todo el ancho */
+    height: 50px; /* Ajusta la altura según sea necesario */
+    cursor: pointer; /* Cambia el cursor para indicar que se puede hacer clic */
+    margin-top: 20px ; /* Agrega un margen alrededor del contenedor y centra horizontalmente */
+    margin-bottom: 35px ;
+}
+
+/* Para mover el texto libremente */
+.toggle-label {
+    font-family: 'SofadiOne-Regular';
+    position: absolute;
+    top: 20px;   /* corregido: faltaba la unidad px */
+    left: 10px;  /* corregido: faltaba la unidad px */
+    font-size: 20px;
+    color: rgb(44, 44, 44);
+    text-align: center;
+    font-weight: bold;
+}
+/* Permitir que el contenido dentro del área se mueva libremente */
+.toggle-content * {
+    position: relative; /* Los elementos pueden ser movidos libremente */
+    margin:  2px 0; /* Ajuste de margen para los elementos internos */
+}
+
+
+
+
+ /* Contenedor que asegura que la imagen y el texto se mantengan juntos */
+ .container2 {
+    position: relative;
+    width: 200%;
+    max-width: 300px; /* Ajusta este tamaño según lo que necesites */
+    margin: 20px auto; /* Agrega un margen alrededor del contenedor y centra horizontalmente */
+    padding: 20px; /* Espacio interno entre la imagen y el borde del contenedor */
+    box-sizing: border-box; /* Hace que el padding se incluya en el tamaño total */
+}
+
+/* Imagen de fondo que se ajusta al contenedor */
+.background-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Texto que es absolutamente movible y ajustable sobre la imagen */
+.texto-movible {
+    position: absolute; /* Permite que el texto se posicione sobre la imagen */
+    top: 45%; /* Mueve el texto a una posición específica dentro del contenedor */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centra el texto dentro del contenedor */
+    text-align: center;
+}
+
+/* Estilo del texto */
+.texto-movible h2 {
+    font-size: 20px; /* Ajusta el tamaño del texto */
+    color: rgb(44, 44, 44); /* Color del texto */
+}
+
+
+/* Estilos generales para todos los enlaces */
+a {
+    color: #f4e5c3; /* Color similar al texto de los botones */
+    text-decoration: none; /* Quita el subrayado */
+    transition: color 0.3s ease; /* Transición suave para el cambio de color */
+}
+
+/* Estilo para enlaces al pasar el mouse */
+a:hover {
+    color: #ffc400; /* Color dorado al pasar el mouse */
+    text-decoration: underline; /* Subrayado al pasar el mouse */
+}
+
+/* Estilo para enlaces visitados */
+a:visited {
+    color: #d4c5a3; /* Un tono más oscuro del color original */
+}
+
+/* Estilo para enlaces activos (cuando se hace clic) */
+a:active {
+    color: #8a6e2f; /* Color similar al hover de los botones */
+}
+
+
+
+/* Estilos para la barra de búsqueda */
+#searchBar {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 45px 12px 15px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 16px;
+    color: #f4e5c3;
+    background-color: rgba(121, 86, 73, 0.7);
+    border: 2px solid #c0a080;
+    border-radius: 25px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    outline: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23f4e5c3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>');
+    background-repeat: no-repeat;
+    background-position: calc(100% - 15px) center;
+    background-size: 20px;
+    margin-bottom: 35px;
+}
+
+#searchBar::placeholder {
+    color: #d4c5a3;
+    opacity: 0.7;
+}
+
+#searchBar:focus {
+    background-color: rgba(121, 86, 73, 0.9);
+    border-color: #ffc400;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(255, 196, 0, 0.5);
+}
+
+
+
+/* Hamburger menu icon */
+.hamburger-menu {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    z-index: 10;
+    background-color: #795649;
+    border: 2px solid #c0a080;
+    border-radius: 10%;
+    box-shadow: 0 0 10px #795649, inset 0 0 5px rgba(218, 165, 32, 0.5);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.hamburger-menu::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,215,0,0.2) 0%, rgba(255,215,0,0) 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hamburger-menu:active::before {
+    opacity: 1;
+}
+
+.hamburger-menu .bar {
+    width: 60%;
+    height: 2px;
+    background-color: #f4e5c3;
+    margin: 3px 0;
+    transition: 0.4s;
+}
+
+.hamburger-menu:hover {
+    transform: scale(1.1);
+}
+
+.hamburger-menu:active {
+    transform: scale(0.95);
+}
+
+/* Hidden navigation menu */
+.nav-menu {
+    font-family: 'SofadiOne-Regular';
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 150px;
+    height: 100%;
+    background-color: #795649e9;
+    padding: 80px 20px 20px;
+    transition: left 0.3s ease-in-out;
+    z-index: 9;
+    border-right: 3px solid #c0a080;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="%23DAA520" opacity="0.1" width="100" height="100"/><path d="M0 0L50 50L100 0M50 50L100 100M0 100L50 50" stroke="%23DAA520" stroke-width="1" fill="none" opacity="0.2"/></svg>');
+    background-size: 50px 50px;
+}
+
+.nav-menu ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.nav-menu ul li {
+    margin: 30px 0;
+}
+
+.nav-menu ul li a {
+    color: #f4e5c3;
+    text-decoration: none;
+    font-size: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+}
+
+.nav-menu ul li a::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    bottom: -5px;
+    left: 0;
+    background-color: #DAA520;
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.nav-menu ul li a:hover::after {
+    transform: scaleX(1);
+}
+
+.nav-menu ul li a:hover {
+    color: #FFD700;
+}
+
+/* Show menu when active */
+.show-menu {
+    left: 0;
+}
+
+/* Scrollbar styling */
+.nav-menu::-webkit-scrollbar {
+    width: 10px;
+}
+
+.nav-menu::-webkit-scrollbar-track {
+    background: #2C1E0F;
+}
+
+.nav-menu::-webkit-scrollbar-thumb {
+    background: #DAA520;
+    border-radius: 5px;
+}
+
+.nav-menu::-webkit-scrollbar-thumb:hover {
+    background: #FFD700;
+}
+
+.emoji-selector{
+    font-family:'Righteous-Regular', sans-serif ;
+}
+
+/* Glyph Vault va pegado a DWARF CHAMBER (mismo grupo lógico de "selección"),
+   así que suprimimos el separador superior heredado de .forge-section. */
+#emojiSelector.forge-section {
+    border-top: none;
+    padding-top: 0;
+}
+
+/* Grid de emojis: ocupa todo el ancho, emojis grandes y bien distribuidos */
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Cada emoji individual */
+.emoji-item {
+    font-size: 28px;
+    text-align: center;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: rgba(121, 86, 73, 0.3);
+}
+
+.emoji-item:hover {
+    background-color: rgba(121, 86, 73, 0.7);
+    transform: scale(1.15);
+    box-shadow: 0 0 8px rgba(255, 196, 0, 0.3);
+}
+
+/* Quick Access: dos columnas lado a lado */
+.quick-access-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* Columna de Quick Access */
+.quick-access-col {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Label compacto dentro de Quick Access */
+.quick-access-label {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+/* Override: selects dentro de Quick Access mas compactos */
+.quick-access-col .secundarios2 {
+    width: 100%;
+    padding: 8px 30px 8px 10px;
+    font-size: 13px;
+    background-position: calc(100% - 8px) center;
+    background-size: 16px;
+}
+
+/* === FORGE interior: secciones con separador e iluminacion sutil === */
+.forge-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid rgba(192, 160, 128, 0.3);
+}
+
+/* Titulo de cada seccion dentro de FORGE */
+.forge-section-title {
+    color: antiquewhite;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 12px;
+    margin: 5px 0 10px;
+    text-shadow: 0 0 6px rgba(255, 196, 0, 0.3); /* iluminacion dorada sutil */
+}
+
+/* Grid 2x2 para los botones de management */
+.forge-btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+/* Fila horizontal para pares import/export */
+.forge-btn-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+/* Boton dentro del grid/row: compacto en vertical */
+.forge-btn {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+    padding: 6px 8px;
+    font-size: 11px;
+    line-height: 1.2;
+    box-shadow: 2px 2px 0px #a67c52, 0 0 8px rgba(255, 196, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+/* Hover con resplandor dorado mas visible */
+.forge-btn:hover {
+    box-shadow: 1px 1px 5px rgba(0,0,0,0.3), 0 0 12px rgba(255, 196, 0, 0.25);
+}
+
+/* Estado activo del botón ⛓ LINK en Quick Access.
+   Reemplaza el marrón base por un verde oscuro para indicar que está vinculado. */
+.link-btn-active {
+    background-color: #2f6b47;
+    border-color: #5aad77;
+    color: #d4fce6;
+}
+.link-btn-active:hover {
+    background-color: #3a824f;
+}
+
+/* Estado desactivado del botón 🔔/🔕 NOTIFICATIONS.
+   Tono apagado/grisáceo para indicar "silenciado" sin gritar como un error rojo. */
+.notif-btn-off {
+    background-color: #4a3f36;
+    border-color: #7a6a5a;
+    color: #b8a896;
+    opacity: 0.85;
+}
+.notif-btn-off:hover {
+    background-color: #5a4d42;
+    opacity: 1;
+}
+
+/* Estado activo del botón 🔓 NATIVE CLICK.
+   Tono verde-azulado para señalar "desbloqueado": el menú contextual
+   modificado de la página está suprimido y vuelve el menú nativo. */
+#toggleContextUnlock:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+.ctx-btn-on {
+    background-color: #2f6a82;
+    border-color: #4ea0bf;
+    color: #e6f4fb;
+}
+.ctx-btn-on:hover {
+    background-color: #387a96;
+}
+
+/* Entrada con poco texto: centrar favicon + texto dentro del li. */
+.entry-content-centered {
+    justify-content: center !important;
+    text-align: center !important;
+}
+.entry-content-centered span {
+    text-align: center !important;
+}
+
+/* === RELICS: botones de acción por entrada (Edit + Delete) ================ */
+.entry-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    justify-content: center;
+}
+
+.entry-actions .action-btn,
+.entry-actions .delete-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* === Modal de edición de entrada ========================================== */
+.edit-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.edit-modal {
+    font-family: 'Righteous-Regular', sans-serif;
+    width: 92%;
+    max-width: 450px;
+    max-height: 88%;
+    background-color: #2a1f18;
+    background-image: linear-gradient(135deg, rgba(121, 86, 73, 0.4), rgba(0, 0, 0, 0));
+    border: 2px solid #c0a080;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(255, 196, 0, 0.35), inset 0 0 12px rgba(0, 0, 0, 0.5);
+    padding: 18px;
+    color: #f4e5c3;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+.edit-modal-title {
+    margin: 0 0 4px;
+    font-family: 'SofadiOne-Regular', sans-serif;
+    text-align: center;
+    color: antiquewhite;
+    text-shadow: 0 0 8px rgba(255, 196, 0, 0.4);
+    letter-spacing: 1px;
+}
+
+.edit-modal-label {
+    font-size: 12px;
+    color: #d4c5a3;
+    letter-spacing: 0.5px;
+    margin-bottom: -4px;
+}
+
+.edit-modal-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 220px;
+    resize: vertical;
+    padding: 10px;
+    font-family: 'Righteous-Regular', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #f4e5c3;
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 2px solid #c0a080;
+    border-radius: 6px;
+    outline: none;
+    white-space: pre-wrap;
+    tab-size: 4;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edit-modal-textarea:focus,
+.edit-modal-url:focus {
+    border-color: #ffc400;
+    box-shadow: 0 0 8px rgba(255, 196, 0, 0.45);
+}
+
+.edit-modal-url {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 13px;
+    color: #f4e5c3;
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 2px solid #c0a080;
+    border-radius: 6px;
+    outline: none;
+}
+
+.edit-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.edit-modal-actions .action-btn,
+.edit-modal-actions .delete-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+/* === Modal de confirmación de borrado ====================================== */
+/* Reutiliza .edit-modal-backdrop / .edit-modal. Solo añadimos lo específico:
+   tamaño más compacto, aviso destacado y bloque de preview con scroll. */
+.delete-confirm-modal {
+    max-width: 420px;
+}
+
+.delete-confirm-warning {
+    margin: 0;
+    text-align: center;
+    color: #ffb88a;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+}
+
+.delete-confirm-preview {
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 2px solid #c0a080;
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.delete-confirm-header {
+    margin: 0;
+    font-size: 12px;
+    color: #d4c5a3;
+    letter-spacing: 0.4px;
+}
+
+.delete-confirm-url {
+    margin: 0;
+    font-size: 11px;
+    color: #a8c4d8;
+    word-break: break-all;
+}
+
+.delete-confirm-text {
+    margin: 0;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 8px;
+    font-family: 'Righteous-Regular', monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #f4e5c3;
+    background-color: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(192, 160, 128, 0.4);
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* === Style toggle button — espejo del hamburger en la esquina superior derecha === */
+/* ─────────────────────────────────────────────────────────────
+   STYLE TOGGLE — pill switch profesional
+   Track horizontal 44×22 + thumb redondo de 15px que desliza.
+   aria-checked controla el estado:
+     false (left)  → vista dwarven (esta página)
+     true  (right) → vista corporate
+   La animación dura 280ms (sincronizada con styleToggle.js).
+   ───────────────────────────────────────────────────────────── */
+.style-toggle-btn {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    z-index: 10;
+    border: 1.5px solid #c0a080;
+    border-radius: 11px;
+    background-color: #5a3f34;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 6px rgba(121, 86, 73, 0.4);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    /* overflow visible: la bolita debe poder mostrar su sombra fuera del track */
+    overflow: visible;
+}
+
+/* Thumb (la bolita). Posición default = izquierda (estado OFF / dwarven). */
+.style-toggle-btn::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f4e5c3 0%, #d4c5a3 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 0 2px rgba(121, 86, 73, 0.3);
+    transition: left 0.28s cubic-bezier(0.4, 0.0, 0.2, 1),
+                background 0.28s ease,
+                box-shadow 0.28s ease;
+}
+
+/* Estado ON (corporate): track encendido en dorado, bolita a la derecha. */
+.style-toggle-btn[aria-checked="true"] {
+    background-color: #795649;
+    border-color: #ffc400;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 10px rgba(255, 196, 0, 0.5);
+}
+.style-toggle-btn[aria-checked="true"]::before {
+    left: 24px;
+    background: linear-gradient(135deg, #ffd954 0%, #ffaa1f 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 196, 0, 0.85);
+}
+
+.style-toggle-btn:hover  { transform: scale(1.05); }
+.style-toggle-btn:active { transform: scale(0.96); }
+
+.style-toggle-btn:focus-visible {
+    outline: 2px solid #ffc400;
+    outline-offset: 3px;
+}
+

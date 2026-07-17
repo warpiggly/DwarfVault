@@ -1,0 +1,6 @@
+# Backups / archivos empaquetados — no versionar en el repo
+*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db

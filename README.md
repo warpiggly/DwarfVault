@@ -3,7 +3,7 @@
 > **Save. Organize. Discover.** A private, offline Chrome extension for managing text databases with AI-powered semantic search coming in v1.3
 
 <div align="center">
-  <img src="icons/Final%20Gif.gif" alt="Dott-y" width="250">
+  <img src="assets/icons/Final%20Gif.gif" alt="Dott-y" width="250">
 </div>
 
 ---
@@ -21,7 +21,7 @@ DwarfVault is a **lightning-fast, privacy-first browser extension** that lets yo
 **Designed for:** researchers, data scientists, developers, writers, and anyone who needs a reliable personal knowledge base inside the browser.
 
 <div align="center">
-  <img src="image/1.jpg" alt="The Vault Keeper at work" width="420">
+  <img src="assets/images/1.jpg" alt="The Vault Keeper at work" width="420">
 </div>
 
 ---
@@ -202,28 +202,43 @@ First search takes 2–10 seconds for model initialization; subsequent searches 
 
 ```
 DwarfVault/
-├── manifest.json              Extension config and permissions
-├── index.html                 Main popup UI
-├── popup.js                   Popup logic and database CRUD
-├── background.js              Service worker, context menus
-├── View Board.html            Table view of all databases
-├── History.html               Tutorial page
-├── scripts/
-│   ├── db.js                  IndexedDB interface
-│   ├── security.js            XSS prevention and input validation
-│   ├── notifications.js       System notification module
-│   ├── contextUnlock.js       Native Click — context menu unlock
-│   ├── ml.js                  AI wrapper (Phase 1)
-│   ├── ml-worker.js           AI computation in a Web Worker
-│   ├── Butons.js              Button interaction handlers
-│   └── Menu.js                Navigation menu logic
-├── icons/                     Extension icons (16 / 48 / 128 px)
-├── fonts/                     Custom typefaces
-├── image/                     UI and artwork assets
-├── styles.css                 Main stylesheet
-├── styles Board.css           Table view styles
-├── styles History.css         Tutorial styles
-└── emojis.json                Glyph Vault character database
+├── manifest.json              Extension config and permissions (must stay at root)
+├── README.md
+├── .gitignore
+│
+├── src/                       All extension source code
+│   ├── background.js          Service worker, context menus
+│   ├── pages/                 HTML entry points (all navigate to each other)
+│   │   ├── index.html         Main popup UI (dwarven theme)
+│   │   ├── corporate.html     Alternate popup UI (corporate theme)
+│   │   ├── tables.html        Table view of all databases
+│   │   └── tutorial.html      Tutorial / help page
+│   ├── styles/                One stylesheet per page
+│   │   ├── index.css          Main popup styles
+│   │   ├── corporate.css      Corporate theme styles
+│   │   ├── tables.css         Table view styles
+│   │   └── tutorial.css       Tutorial styles
+│   ├── scripts/               Page logic + shared modules
+│   │   ├── popup.js           Popup logic and database CRUD
+│   │   ├── tables.js          Table view rendering
+│   │   ├── corporate.js       Corporate view logic
+│   │   ├── db.js              IndexedDB interface
+│   │   ├── security.js        XSS prevention and input validation
+│   │   ├── notifications.js   System notification module
+│   │   ├── contextUnlock.js   Native Click — context menu unlock
+│   │   ├── styleToggle.js     Dwarven ↔ corporate theme switch
+│   │   ├── embers.js          Ambient visual effect (corporate)
+│   │   ├── buttons.js         Button / logo interaction handlers
+│   │   └── menu.js            Navigation menu logic
+│   └── data/
+│       └── emojis.json        Glyph Vault character database
+│
+├── assets/                    Static assets
+│   ├── icons/                 Extension icons (16 / 48 / 128 px) + logo GIFs
+│   ├── fonts/                 Custom typefaces
+│   └── images/                UI and artwork assets
+│
+└── docs/                      Project documentation (roadmap, phases, reviews)
 ```
 
 ---
@@ -231,7 +246,7 @@ DwarfVault/
 ## Security and Privacy
 
 <div align="center">
-  <img src="image/5.jpg" alt="The Vault" width="380">
+  <img src="assets/images/5.jpg" alt="The Vault" width="380">
 </div>
 
 ### Your Data is Always Yours
@@ -254,7 +269,7 @@ DwarfVault/
 ## Technical Details
 
 <div align="center">
-  <img src="image/3.jpg" alt="The Engineer" width="380">
+  <img src="assets/images/3.jpg" alt="The Engineer" width="380">
 </div>
 
 | Component | Technology |
@@ -353,21 +368,16 @@ When building the extension ZIP for the Chrome Web Store, exclude development fi
 
 ```
 Exclude:
-  ROADMAP_*.md
-  PHASE_*.md
-  README_*.md
+  docs/
   .git/
   .gitignore
+  *.zip
   *.jsonl
 
 Include:
   manifest.json
-  index.html, View Board.html, History.html
-  background.js, popup.js, Viewboard.js
-  scripts/
-  styles*.css
-  icons/, fonts/, image/
-  emojis.json
+  src/        (background.js, pages/, styles/, scripts/, data/)
+  assets/     (icons/, fonts/, images/)
 ```
 
 Target size: approximately 500 KB zipped.
