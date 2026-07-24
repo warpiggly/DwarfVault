@@ -659,6 +659,35 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────────
+   ROW HIGHLIGHT — fila señalada al abrir el popup desde el menú
+   contextual ("ver entrada"). Late con un glow dorado hasta que el
+   usuario pasa el mouse o hace clic (corporate.js quita la clase).
+   La animación gana en prioridad a las reglas de zebra/hover mientras
+   está activa, así que la fila resalta sobre cualquier otro estado.
+   ────────────────────────────────────────────────────────────── */
+.sheet-grid tbody tr.row-highlight td {
+    animation: rowGlow 1.5s ease-in-out infinite;
+}
+@keyframes rowGlow {
+    0%, 100% {
+        background-color: rgba(255, 196, 0, 0.12);
+        box-shadow: inset 0 0 6px rgba(255, 196, 0, 0.25);
+    }
+    50% {
+        background-color: rgba(255, 196, 0, 0.34);
+        box-shadow: inset 0 0 16px rgba(255, 196, 0, 0.60);
+    }
+}
+/* Movimiento reducido: highlight estático (sin latido) pero bien visible. */
+@media (prefers-reduced-motion: reduce) {
+    .sheet-grid tbody tr.row-highlight td {
+        animation: none;
+        background-color: rgba(255, 196, 0, 0.26);
+        box-shadow: inset 0 0 10px rgba(255, 196, 0, 0.5);
+    }
+}
+
+/* ──────────────────────────────────────────────────────────────
    Filas placeholder: rellenan la rejilla hasta MIN_VISIBLE_ROWS
    para que la vista siempre "se sienta" hoja de cálculo aunque
    la hoja tenga pocas entradas. No son editables, no hacen hover.
@@ -1095,6 +1124,18 @@ body {
     background-color: var(--danger);
     border-color: var(--danger);
     box-shadow: 0 0 8px rgba(138, 47, 47, 0.4);
+}
+
+/* 🗑 Delete de entrada — destructivo, un punto más marcado que Cancel para
+   distinguirlos a simple vista dentro del modal REFORGE ENTRY. */
+.edit-modal-actions .delete-entry-btn {
+    border-color: var(--danger-soft);
+    color: #ffd7c2;
+}
+.edit-modal-actions .delete-entry-btn:hover {
+    background-color: var(--danger);
+    border-color: var(--danger);
+    box-shadow: 0 0 8px rgba(138, 47, 47, 0.5);
 }
 
 /* ──────────────────────────────────────────────────────────────

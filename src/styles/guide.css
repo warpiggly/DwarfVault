@@ -1,0 +1,446 @@
+/* ═══════════════════════════════════════════════════════════════
+   DwarfVault — Guide / Tutorial view (corporate family)
+
+   Hereda TODO de corporate.css (paleta, header, estrellas, toggle,
+   embers, animación del logo). Aquí sólo:
+     1. Cambiamos el fondo (consejo enano alrededor del mapa → metáfora
+        de "aprender a leer la bóveda").
+     2. Añadimos el lienzo scrolleable del tutorial: héroe, conceptos,
+        pasos numerados y secciones plegables — todo con animaciones
+        profesionales y temática enana (fuego, oro, madera quemada).
+   Debe cargarse DESPUÉS de corporate.css.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Fondo propio de la guía ───────────────────────────────────────
+   Imagen: enanos + figura corporativa estudiando un mapa a la luz de
+   una lámpara cálida. El velo oscuro (radial + linear) baja el contraste
+   de la ilustración para que el texto del tutorial se lea sin esfuerzo,
+   dejando el centro un poco más iluminado (donde vive el contenido). */
+body {
+    background-image:
+        radial-gradient(circle at 50% 38%, rgba(74, 52, 28, 0.34) 0%, rgba(26, 18, 11, 0.84) 90%),
+        url("../../assets/images/Gemini_Generated_Image_3gyvi13gyvi13gyv.png");
+    background-size: cover;
+    background-position: center 28%;
+    background-repeat: no-repeat;
+}
+
+/* Propiedades registradas: permiten ANIMAR la posición de la luz cálida
+   del lienzo con interpolación suave (sin @property no interpolan). */
+@property --gx { syntax: '<percentage>'; inherits: false; initial-value: 28%; }
+@property --gy { syntax: '<percentage>'; inherits: false; initial-value: 18%; }
+
+/* ── Main: cabecera del tutorial + lienzo scrolleable ─────────────── */
+.guide-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+}
+
+/* ── Cabecera: título + subtítulo, alineados a la izquierda ───────── */
+.guide-toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 2px;
+}
+.guide-title {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--parchment);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), 0 0 10px rgba(255, 196, 0, 0.25);
+}
+.guide-sub {
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--parchment-dim);
+    letter-spacing: 0.5px;
+}
+
+/* ── Lienzo scrolleable (card) ────────────────────────────────────
+   Mismo lenguaje que .sheet-main / .schema-canvas: borde tan, fondo
+   semitransparente y un halo de fuego que respira. Añadimos una luz
+   cálida interior que se DESPLAZA (--gx/--gy) como una antorcha viva. */
+.guide-scroll {
+    flex: 1 1 auto;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    min-height: 0;
+
+    --gx: 28%;
+    --gy: 18%;
+    background-color: rgba(30, 22, 14, 0.34);
+    background-image:
+        radial-gradient(60% 55% at var(--gx) var(--gy),
+            rgba(255, 176, 84, 0.22) 0%,
+            rgba(255, 122, 46, 0.10) 44%,
+            transparent 74%),
+        linear-gradient(160deg, rgba(44, 32, 20, 0.30) 0%, rgba(22, 16, 10, 0.52) 100%);
+    background-repeat: no-repeat;
+    background-attachment: local, local;
+
+    box-shadow:
+        inset 0 0 34px rgba(0, 0, 0, 0.42),
+        inset 0 0 44px rgba(255, 150, 55, 0.10),
+        0 0 24px rgba(255, 110, 30, 0.20),
+        0 0 50px rgba(255, 90, 25, 0.09);
+    animation: guideFire 7.5s ease-in-out infinite;
+}
+
+/* GUIDEFIRE — desplaza la luz cálida y hace respirar el halo. Tiempos
+   irregulares (0/34/66) → llama viva, no "máquina latiendo". */
+@keyframes guideFire {
+    0%, 100% {
+        --gx: 26%;
+        --gy: 16%;
+        box-shadow:
+            inset 0 0 34px rgba(0, 0, 0, 0.42),
+            inset 0 0 44px rgba(255, 150, 55, 0.10),
+            0 0 24px rgba(255, 110, 30, 0.20),
+            0 0 50px rgba(255, 90, 25, 0.09);
+    }
+    34% {
+        --gx: 60%;
+        --gy: 30%;
+        box-shadow:
+            inset 0 0 30px rgba(0, 0, 0, 0.38),
+            inset 0 0 58px rgba(255, 168, 64, 0.20),
+            0 0 36px rgba(255, 118, 36, 0.34),
+            0 0 72px rgba(255, 98, 30, 0.16);
+    }
+    66% {
+        --gx: 42%;
+        --gy: 10%;
+        box-shadow:
+            inset 0 0 36px rgba(0, 0, 0, 0.44),
+            inset 0 0 36px rgba(255, 140, 50, 0.09),
+            0 0 20px rgba(255, 105, 25, 0.18),
+            0 0 44px rgba(255, 85, 20, 0.08);
+    }
+}
+
+/* Scrollbar temático y discreto (igual que schema/grid). */
+.guide-scroll::-webkit-scrollbar { width: 9px; }
+.guide-scroll::-webkit-scrollbar-track { background: transparent; }
+.guide-scroll::-webkit-scrollbar-thumb {
+    background: var(--border-soft);
+    border-radius: 6px;
+}
+.guide-scroll::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+/* Contenedor del contenido: ancho cómodo, centrado, con aire. */
+.guide-content {
+    padding: 18px 22px 26px;
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── Entrada escalonada de los bloques ────────────────────────────
+   Cada hijo directo del contenido asciende y aparece; el nth-child
+   escalona el delay para una entrada elegante en cascada al cargar. */
+.guide-content > * {
+    animation: guideRise 0.62s cubic-bezier(0.16, 0.8, 0.24, 1) both;
+}
+.guide-content > *:nth-child(1) { animation-delay: 0.05s; }
+.guide-content > *:nth-child(2) { animation-delay: 0.13s; }
+.guide-content > *:nth-child(3) { animation-delay: 0.21s; }
+.guide-content > *:nth-child(4) { animation-delay: 0.29s; }
+.guide-content > *:nth-child(5) { animation-delay: 0.37s; }
+.guide-content > *:nth-child(6) { animation-delay: 0.45s; }
+.guide-content > *:nth-child(7) { animation-delay: 0.53s; }
+.guide-content > *:nth-child(8) { animation-delay: 0.61s; }
+.guide-content > *:nth-child(9)  { animation-delay: 0.69s; }
+.guide-content > *:nth-child(10) { animation-delay: 0.77s; }
+
+@keyframes guideRise {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HÉROE — presentación breve del tutorial
+   ══════════════════════════════════════════════════════════════ */
+.guide-hero {
+    text-align: center;
+    padding: 6px 6px 12px;
+    position: relative;
+}
+.guide-hero h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--parchment);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 196, 0, 0.30);
+}
+/* Acento dorado del título — "encendido" cálido. */
+.guide-hero h1 .flame {
+    color: var(--gold);
+    text-shadow: 0 0 14px rgba(255, 196, 0, 0.75);
+}
+.guide-hero p {
+    margin: 0 auto;
+    max-width: 460px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--parchment-dim);
+}
+/* Filete dorado que "respira" bajo el héroe. */
+.guide-rule {
+    height: 2px;
+    border: none;
+    margin: 4px auto 0;
+    width: 72%;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255, 196, 0, 0.15) 20%,
+        var(--gold) 50%,
+        rgba(255, 196, 0, 0.15) 80%,
+        transparent 100%);
+    box-shadow: 0 0 8px rgba(255, 196, 0, 0.35);
+    animation: ruleGlow 3.4s ease-in-out infinite;
+}
+@keyframes ruleGlow {
+    0%, 100% { opacity: 0.55; box-shadow: 0 0 6px rgba(255, 196, 0, 0.25); }
+    50%      { opacity: 1;    box-shadow: 0 0 16px rgba(255, 196, 0, 0.6); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONCEPTOS — tres piezas base (Vault / Chest / Entry)
+   ══════════════════════════════════════════════════════════════ */
+.concept-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.concept-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+    padding: 12px 10px;
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    background: linear-gradient(150deg, var(--ink-soft) 0%, #2f231b 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.concept-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--gold);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55), 0 0 14px rgba(255, 196, 0, 0.4);
+}
+.concept-ico {
+    font-size: 26px;
+    line-height: 1;
+    filter: drop-shadow(0 0 6px rgba(255, 196, 0, 0.35));
+}
+.concept-card h3 {
+    margin: 2px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--gold);
+}
+.concept-card p {
+    margin: 0;
+    font-size: 10.5px;
+    line-height: 1.45;
+    color: var(--parchment-dim);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PASOS — flujo numerado "medallón de la fragua"
+   ══════════════════════════════════════════════════════════════ */
+.guide-block-title {
+    margin: 4px 0 -2px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(255, 196, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.guide-block-title::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border-soft), transparent);
+}
+
+.step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.guide-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--gold);
+    border-radius: 9px;
+    background-color: rgba(42, 31, 24, 0.55);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.guide-step:hover {
+    transform: translateX(3px);
+    background-color: rgba(58, 44, 34, 0.7);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55), 0 0 14px rgba(255, 196, 0, 0.35);
+}
+/* Medallón numerado: oro sólido con texto oscuro, como el nodo raíz. */
+.step-num {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--ink);
+    background: linear-gradient(135deg, #ffd954 0%, #ffaa1f 100%);
+    border: 1px solid #ffcf5a;
+    box-shadow: 0 0 12px rgba(255, 196, 0, 0.5), inset 0 -2px 4px rgba(140, 90, 10, 0.4);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.step-body { min-width: 0; }
+.step-body h4 {
+    margin: 1px 0 3px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--parchment);
+}
+.step-body p {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--parchment-dim);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SECCIONES PLEGABLES — detalle bajo demanda (mantiene el tutorial
+   simple: se abre sólo lo que interesa). Chevron animado + glow.
+   ══════════════════════════════════════════════════════════════ */
+.guide-section {
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    background-color: rgba(42, 31, 24, 0.45);
+    overflow: hidden;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.guide-section[open] {
+    border-color: rgba(255, 196, 0, 0.55);
+    box-shadow: 0 0 16px rgba(255, 196, 0, 0.18);
+}
+.guide-section summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--parchment);
+    outline: none;
+    position: relative;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+.guide-section summary::-webkit-details-marker { display: none; }
+.guide-section summary:hover { color: var(--gold); background-color: rgba(255, 196, 0, 0.06); }
+.guide-section summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.summary-ico { font-size: 16px; filter: drop-shadow(0 0 5px rgba(255, 196, 0, 0.35)); }
+/* Chevron a la derecha que gira al abrir. */
+.guide-section summary::after {
+    content: '▸';
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--parchment-dim);
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+.guide-section[open] summary::after {
+    transform: rotate(90deg);
+    color: var(--gold);
+}
+
+/* Cuerpo de la sección: aparece con un ligero descenso al abrir. */
+.section-body {
+    padding: 0 16px 14px 38px;
+    animation: sectionOpen 0.35s ease both;
+}
+@keyframes sectionOpen {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.section-body p {
+    margin: 6px 0;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--parchment-dim);
+}
+.section-body p strong { color: var(--parchment); }
+
+/* Chip que resalta un nombre de menú / botón real de la UI corporate. */
+.ui {
+    display: inline-block;
+    padding: 1px 7px;
+    margin: 0 1px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--parchment);
+    background-color: var(--wood-deep);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    white-space: nowrap;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Nota final discreta (privacidad / respaldo). */
+.guide-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--parchment-dim);
+    border: 1px dashed var(--border-soft);
+    border-radius: 9px;
+    background-color: rgba(0, 0, 0, 0.25);
+}
+.guide-note .concept-ico { font-size: 18px; }
+
+/* ── Accesibilidad: movimiento reducido ───────────────────────────
+   (Las ascuas se mantienen por decisión de producto, como en corporate.) */
+@media (prefers-reduced-motion: reduce) {
+    .guide-scroll,
+    .guide-content > *,
+    .guide-rule,
+    .section-body {
+        animation: none;
+    }
+    .guide-step:hover,
+    .concept-card:hover { transform: none; }
+}

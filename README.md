@@ -209,15 +209,17 @@ DwarfVault/
 ├── src/                       All extension source code
 │   ├── background.js          Service worker, context menus
 │   ├── pages/                 HTML entry points (all navigate to each other)
-│   │   ├── index.html         Main popup UI (dwarven theme)
-│   │   ├── corporate.html     Alternate popup UI (corporate theme)
+│   │   ├── index.html         Popup UI (dwarven theme — alternate, via toggle)
+│   │   ├── corporate.html     Default popup UI (corporate theme)
 │   │   ├── schema.html        Parent → child relations map (corporate style)
+│   │   ├── guide.html         Tutorial / help page (corporate style)
 │   │   ├── tables.html        Table view of all databases
-│   │   └── tutorial.html      Tutorial / help page
+│   │   └── tutorial.html      Tutorial / help page (dwarven style)
 │   ├── styles/                One stylesheet per page
 │   │   ├── index.css          Main popup styles
 │   │   ├── corporate.css      Corporate theme styles
 │   │   ├── schema.css         Schema view styles (extends corporate.css)
+│   │   ├── guide.css          Guide/tutorial styles (extends corporate.css)
 │   │   ├── tables.css         Table view styles
 │   │   └── tutorial.css       Tutorial styles
 │   ├── scripts/               Page logic + shared modules

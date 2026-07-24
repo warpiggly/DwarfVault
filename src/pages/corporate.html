@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DwarfVault — Sheet</title>
+
+    <!-- Redirección temprana: si el usuario fijó la vista dwarven como
+         preferida (localStorage), salta a index.html ANTES de pintar, para
+         que el default_popup respete su elección sin parpadeo. Debe ir
+         primero y ser un archivo externo (la CSP prohíbe scripts inline). -->
+    <script src="../scripts/styleRedirect.js"></script>
+
     <link rel="stylesheet" href="../styles/corporate.css">
 </head>
 <body data-style="corporate">
@@ -55,7 +62,7 @@
                 <a class="header-star" href="schema.html"    title="Schema"   aria-label="Schema — parent/child relationships map">
                     <img src="../../assets/images/Estrellas-cambiopagina.png" alt="">
                 </a>
-                <a class="header-star" href="tutorial.html"  title="Tutorial" aria-label="Tutorial — how to use">
+                <a class="header-star" href="guide.html"     title="Tutorial" aria-label="Tutorial — how to use">
                     <img src="../../assets/images/Estrellas-cambiopagina.png" alt="">
                 </a>
             </nav>

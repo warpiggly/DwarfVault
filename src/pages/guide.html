@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DwarfVault — Guide</title>
+    <!-- Hereda paleta, header, estrellas, toggle y embers de la vista
+         corporate; guide.css sólo AÑADE el fondo y el lienzo del tutorial.
+         Debe cargarse DESPUÉS de corporate.css. -->
+    <link rel="stylesheet" href="../styles/corporate.css">
+    <link rel="stylesheet" href="../styles/guide.css">
+</head>
+<body data-style="corporate">
+
+    <!-- Toggle dwarven ↔ corporate (misma pieza que corporate.html). -->
+    <button type="button"
+            class="style-toggle-btn"
+            id="styleToggleBtn"
+            role="switch"
+            aria-checked="true"
+            title="Change Style"
+            aria-label="Change Style"></button>
+
+    <div class="popup-wrapper">
+
+        <!-- ══════════════════════════════════════════════════════════
+             HEADER — idéntico a corporate/schema: marca (logo + wordmark)
+             a la izquierda y 3 estrellas de navegación centradas.
+             La 3ª estrella (Tutorial) es la vista actual.
+             ══════════════════════════════════════════════════════════ -->
+        <header class="sheet-header" id="sheetHeader">
+
+            <div class="header-brand">
+                <img class="header-logo" src="../../assets/images/Logo-Corporate.png" alt="DwarfVault">
+                <span class="header-wordmark" aria-hidden="true">
+                    <img src="../../assets/images/Wordmark-Corporate.png" alt="">
+                </span>
+            </div>
+
+            <nav class="header-nav" aria-label="Page navigation">
+                <a class="header-star" href="corporate.html" title="Home"     aria-label="Home — corporate grid view">
+                    <img src="../../assets/images/Estrellas-cambiopagina.png" alt="">
+                </a>
+                <a class="header-star" href="schema.html"    title="Schema"   aria-label="Schema — parent/child relationships map">
+                    <img src="../../assets/images/Estrellas-cambiopagina.png" alt="">
+                </a>
+                <a class="header-star" href="guide.html"     title="Tutorial" aria-label="Tutorial — how to use" aria-current="page">
+                    <img src="../../assets/images/Estrellas-cambiopagina.png" alt="">
+                </a>
+            </nav>
+
+        </header>
+
+        <!-- ══════════════════════════════════════════════════════════
+             MAIN — cabecera del tutorial + lienzo scrolleable.
+             ══════════════════════════════════════════════════════════ -->
+        <div class="guide-main">
+
+            <div class="guide-toolbar">
+                <h2 class="guide-title">TUTORIAL <span class="guide-sub">— the corporate hall</span></h2>
+            </div>
+
+            <div class="guide-scroll">
+                <div class="guide-content">
+
+                    <!-- ───────────────────────── HÉROE ───────────────────────── -->
+                    <section class="guide-hero">
+                        <h1>Welcome to the <span class="flame">Vault</span> ⛏️</h1>
+                        <p>DwarfVault keeps your notes, links and snippets safe in a dwarven stronghold. This is the <strong>corporate hall</strong> — a clean, spreadsheet-style view of everything you forge. Follow the steps below and you'll be mining data like a seasoned dwarf. 🏔️</p>
+                        <hr class="guide-rule">
+                    </section>
+
+                    <!-- ──────────────────── CONCEPTOS BASE ─────────────────── -->
+                    <div class="concept-strip">
+                        <div class="concept-card">
+                            <span class="concept-ico">🏛️</span>
+                            <h3>Vault</h3>
+                            <p>A main database — your top-level folder (e.g. <em>Work</em>).</p>
+                        </div>
+                        <div class="concept-card">
+                            <span class="concept-ico">📦</span>
+                            <h3>Chest</h3>
+                            <p>A sub-sheet inside a Vault, shown as a bottom tab.</p>
+                        </div>
+                        <div class="concept-card">
+                            <span class="concept-ico">📜</span>
+                            <h3>Entry</h3>
+                            <p>One saved row: text + URL + the page's favicon.</p>
+                        </div>
+                    </div>
+
+                    <!-- ─────────────────── PASOS RÁPIDOS ────────────────────── -->
+                    <h3 class="guide-block-title">Quick start</h3>
+                    <div class="step-list">
+                        <div class="guide-step">
+                            <span class="step-num">1</span>
+                            <div class="step-body">
+                                <h4>Forge a Vault 🔨</h4>
+                                <p>Open the <span class="ui">Vault</span> menu → <span class="ui">＋ New Parent</span>, give it a name, and your first Vault appears in the picker on the left.</p>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <span class="step-num">2</span>
+                            <div class="step-body">
+                                <h4>Add a Chest 📦</h4>
+                                <p>Use <span class="ui">Vault</span> → <span class="ui">＋ New Child</span> (or the <span class="ui">+</span> tab at the bottom) to split a Vault into topic sheets. Switch between them with the bottom tabs.</p>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <span class="step-num">3</span>
+                            <div class="step-body">
+                                <h4>Fill the grid ✍️</h4>
+                                <p><strong>Double-click</strong> any cell to edit — or delete — the entry. A <strong>single click</strong> on a Text cell copies it, and on a URL cell opens the link in a new tab.</p>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <span class="step-num">4</span>
+                            <div class="step-body">
+                                <h4>Find your treasure 🔎</h4>
+                                <p>Type in the <span class="ui">Search</span> box to filter the current sheet instantly, and hop between Vaults with the picker beside it.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ─────────────── SECCIONES PLEGABLES ──────────────────── -->
+                    <h3 class="guide-block-title">Explore the hall</h3>
+
+                    <details class="guide-section" open>
+                        <summary><span class="summary-ico">🧭</span> Navigating — the three stars &amp; the switch</summary>
+                        <div class="section-body">
+                            <p>The <strong>three golden stars</strong> at the top move you between the corporate views:</p>
+                            <p>⭐ <strong>Home</strong> — this spreadsheet grid, where you edit entries.<br>
+                               ⭐ <strong>Schema</strong> — a map of how your Vaults and Chests connect (parent → child).<br>
+                               ⭐ <strong>Tutorial</strong> — this page. 📖</p>
+                            <p>The little <strong>switch</strong> in the top-right corner flips between the classic <strong>dwarven</strong> look and this <strong>corporate</strong> hall. Same data, two moods. 🎭</p>
+                        </div>
+                    </details>
+
+                    <details class="guide-section">
+                        <summary><span class="summary-ico">🗂️</span> The menu bar — Vault &amp; Data</summary>
+                        <div class="section-body">
+                            <p><strong>Vault menu</strong> — manage databases:</p>
+                            <p><span class="ui">＋ New Parent</span> new Vault · <span class="ui">＋ New Child</span> new Chest · <span class="ui">✎ Rename</span> rename the selected one · <span class="ui">× Delete</span> remove it forever ⚠️</p>
+                            <p><strong>Data menu</strong> — move things in and out:</p>
+                            <p><span class="ui">⇩ Import CSV</span> / <span class="ui">⇧ Export CSV</span> back up a single sheet as a spreadsheet file.<br>
+                               <span class="ui">🗃️ Import Full Vault</span> / <span class="ui">📦 Export Full Vault</span> back up a Vault <strong>with all its Chests</strong> in one JSON file.</p>
+                        </div>
+                    </details>
+
+                    <details class="guide-section">
+                        <summary><span class="summary-ico">🖱️</span> Save from any web page</summary>
+                        <div class="section-body">
+                            <p>Select text on any page → <strong>right-click</strong> → <span class="ui">📥 Save to Vault</span> → pick a Vault. The text, its URL and the site favicon are stored together as a new Entry. 🏰</p>
+                            <p>The <span class="ui">Context Menu</span> and <span class="ui">Settings</span> buttons in the menu bar let you bind favorites/links to the right-click menu and adjust general options like notifications. ⚙️</p>
+                        </div>
+                    </details>
+
+                    <details class="guide-section">
+                        <summary><span class="summary-ico">📊</span> Reading the grid</summary>
+                        <div class="section-body">
+                            <p>Each row is one Entry with four columns:</p>
+                            <p><strong>#</strong> the row number · <strong>Icon</strong> the source favicon · <strong>Text</strong> what you saved · <strong>URL</strong> where it came from.</p>
+                            <p>Zebra striping keeps rows easy to follow, and hovering a row lights it with a soft golden glow. Empty rows invite you to start typing a new Entry. ✨</p>
+                        </div>
+                    </details>
+
+                    <!-- ─────────────────────── NOTA ─────────────────────────── -->
+                    <div class="guide-note">
+                        <span class="concept-ico">🔒</span>
+                        <span>Everything is stored <strong>locally</strong> in your browser — nothing leaves your machine. Use <strong>Export</strong> now and then to keep a backup of your hoard.</span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Scripts: utilidad compartida, el toggle de estilo y las ascuas
+         ambientales. No necesita db/corporate/schema porque esta vista
+         es puramente informativa (sin acceso a la base de datos). -->
+    <script src="../scripts/security.js"></script>
+    <script src="../scripts/styleToggle.js"></script>
+    <script src="../scripts/embers.js"></script>
+</body>
+</html>

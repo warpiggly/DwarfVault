@@ -35,6 +35,13 @@
             if (navigating) return;
             navigating = true;
 
+            // Recordar la elección del usuario para futuras aperturas del popup.
+            // Estando en corporate el switch lleva a dwarven (y viceversa); lo
+            // guardamos en localStorage para que styleRedirect.js lo respete.
+            try {
+                localStorage.setItem('dwarfvault.style', isCorporate ? 'dwarven' : 'corporate');
+            } catch (_e) { /* almacenamiento no disponible */ }
+
             // Flip visual del aria-checked → CSS dispara la transición.
             btn.setAttribute('aria-checked', isCorporate ? 'false' : 'true');
 

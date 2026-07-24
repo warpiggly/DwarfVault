@@ -567,6 +567,12 @@
         const btnRow = document.createElement('div');
         btnRow.className = 'edit-modal-actions';
 
+        // 🗑 Delete — borra ESTA entrada (con confirmación). Réplica del botón
+        // por-entrada de la vista dwarven, que faltaba en la vista corporate.
+        const deleteBtn       = document.createElement('button');
+        deleteBtn.textContent = '🗑 Delete';
+        deleteBtn.className    = 'delete-entry-btn';
+
         const saveBtn       = document.createElement('button');
         saveBtn.textContent = '💾 Save';
         saveBtn.className   = 'save-btn';
@@ -575,6 +581,7 @@
         cancelBtn.textContent = '✖ Cancel';
         cancelBtn.className   = 'cancel-btn';
 
+        btnRow.appendChild(deleteBtn);
         btnRow.appendChild(saveBtn);
         btnRow.appendChild(cancelBtn);
         modal.appendChild(btnRow);
@@ -630,6 +637,26 @@
             } catch (err) {
                 console.error('[Corporate] Save (modal) failed:', err);
                 showToast('Save failed', true);
+            }
+        });
+
+        // Borrado de la entrada actual. Confirma, quita el elemento del array
+        // de la hoja, persiste, sincroniza el menú contextual y refresca.
+        deleteBtn.addEventListener('click', async () => {
+            if (!confirm(`Delete entry #${idx + 1}? This cannot be undone.`)) return;
+            try {
+                const record = getRecord(currentSheet);
+                if (record && Array.isArray(record.entries) && record.entries[idx]) {
+                    record.entries.splice(idx, 1);
+                    await putRecord(record);
+                    notifyBackground();
+                }
+                close();
+                await refresh({ selectParent: currentParent, selectSheet: currentSheet });
+                showToast('Entry deleted');
+            } catch (err) {
+                console.error('[Corporate] Delete entry failed:', err);
+                showToast('Delete failed', true);
             }
         });
     }
@@ -1358,6 +1385,18 @@
             allDbs = [];
         }
 
+        // Petición "ver entrada" desde el menú contextual: resolvemos la hoja
+        // (y su padre) a partir del nombre del registro que guardó background.
+        // Si el registro es hijo → padre = su parentDatabase; si es padre →
+        // padre = él mismo. En ambos casos la hoja activa es el propio registro.
+        if (target.viewTarget) {
+            const rec = getRecord(target.viewTarget.dbName);
+            if (rec) {
+                target.selectParent = rec.parentDatabase || rec.name;
+                target.selectSheet  = rec.name;
+            }
+        }
+
         const parentList = parents();
 
         // Decide qué padre mostrar.
@@ -1388,6 +1427,33 @@
         renderTabs();
         renderGrid();
         updateToolbarState();
+
+        // Tras render, resaltamos la fila de la entrada solicitada (una vez).
+        if (target.viewTarget) highlightEntryRow(target.viewTarget.entryIndex);
+    }
+
+    // ── Resaltado de "ver entrada" ──────────────────────────────
+    // Ilumina la fila indicada con un glow dorado que late (CSS: .row-highlight)
+    // hasta que el usuario pasa el mouse por encima o hace clic/edita — lo que
+    // ocurra primero. Solo se dispara al abrir el popup desde el menú contextual.
+    function highlightEntryRow(idx) {
+        if (idx == null || Number.isNaN(idx)) return;
+        const tr = gridBody.querySelector(`tr[data-idx="${idx}"]`);
+        if (!tr) return;
+
+        tr.classList.add('row-highlight');
+        try { tr.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        catch (_e) { tr.scrollIntoView(); }
+
+        // Quitar el brillo con hover O clic (incluye el doble-clic de editar,
+        // que también emite un 'click'). Listener de una sola vez.
+        const clear = () => {
+            tr.classList.remove('row-highlight');
+            tr.removeEventListener('mouseenter', clear);
+            tr.removeEventListener('click', clear);
+        };
+        tr.addEventListener('mouseenter', clear);
+        tr.addEventListener('click', clear);
     }
 
     function updateToolbarState() {
@@ -1512,7 +1578,25 @@
 
     function init() {
         bind();
-        refresh({});
+
+        // Si el popup se abrió desde el menú contextual para VER una entrada,
+        // background.js dejó en storage.local {dbName, entryIndex, viewEntryAt}.
+        // Abrimos en esa hoja y resaltamos su fila. La marca de tiempo (ventana
+        // de 8s) evita resaltar entradas viejas en aperturas normales del icono.
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.get(['viewEntryAt', 'dbName', 'entryIndex'], (s) => {
+                const fresh = s.viewEntryAt && (Date.now() - s.viewEntryAt < 8000);
+                if (fresh && s.dbName) {
+                    // Consumimos la marca para que no vuelva a dispararse.
+                    chrome.storage.local.remove('viewEntryAt');
+                    refresh({ viewTarget: { dbName: s.dbName, entryIndex: Number(s.entryIndex) } });
+                } else {
+                    refresh({});
+                }
+            });
+        } else {
+            refresh({});
+        }
     }
 
     if (document.readyState === 'loading') {

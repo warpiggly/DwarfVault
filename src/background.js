@@ -591,7 +591,12 @@ function openPopupWithEntry(dbItem, entryIndex) {
         selectedText: entry.text,
         selectedURL:  entry.url,
         dbName:       dbItem.name,
-        favicon:      entry.favicon
+        favicon:      entry.favicon,
+        // Marca de tiempo de la petición "ver entrada". La vista corporate la
+        // usa para resaltar la fila SOLO cuando la apertura viene del menú
+        // contextual (y no en aperturas normales del icono). La dwarven la
+        // ignora, así que este campo no afecta su flujo.
+        viewEntryAt:  Date.now()
     }, () => {
         // openPopup puede rechazar si ya hay popup abierto o si no hay
         // gesto reciente del usuario. Loguear en debug y seguir.
