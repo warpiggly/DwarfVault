@@ -540,6 +540,28 @@
         title.textContent = '✏️ REFORGE ENTRY';
         modal.appendChild(title);
 
+        // 🗑 Delete sutil — papelera anclada arriba a la derecha del modal.
+        // En reposo es discreta (gris tenue); al pasar el mouse se enciende en
+        // rojo y despliega la etiqueta "Delete" (mismo barrido que el wordmark
+        // del header). Separada de Save/Cancel para evitar clics accidentales.
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type      = 'button';
+        deleteBtn.className  = 'entry-delete';
+        deleteBtn.title      = 'Delete entry';
+        deleteBtn.setAttribute('aria-label', 'Delete entry');
+
+        const delLabel = document.createElement('span');
+        delLabel.className   = 'entry-delete-label';
+        delLabel.textContent = 'Delete';
+
+        const delIcon = document.createElement('span');
+        delIcon.className   = 'entry-delete-icon';
+        delIcon.textContent = '🗑';
+
+        deleteBtn.appendChild(delLabel);
+        deleteBtn.appendChild(delIcon);
+        modal.appendChild(deleteBtn);
+
         // Textarea: white-space:pre-wrap garantiza que se vean los saltos
         // de línea exactamente como están guardados.
         const textLabel = document.createElement('label');
@@ -567,12 +589,6 @@
         const btnRow = document.createElement('div');
         btnRow.className = 'edit-modal-actions';
 
-        // 🗑 Delete — borra ESTA entrada (con confirmación). Réplica del botón
-        // por-entrada de la vista dwarven, que faltaba en la vista corporate.
-        const deleteBtn       = document.createElement('button');
-        deleteBtn.textContent = '🗑 Delete';
-        deleteBtn.className    = 'delete-entry-btn';
-
         const saveBtn       = document.createElement('button');
         saveBtn.textContent = '💾 Save';
         saveBtn.className   = 'save-btn';
@@ -581,7 +597,6 @@
         cancelBtn.textContent = '✖ Cancel';
         cancelBtn.className   = 'cancel-btn';
 
-        btnRow.appendChild(deleteBtn);
         btnRow.appendChild(saveBtn);
         btnRow.appendChild(cancelBtn);
         modal.appendChild(btnRow);

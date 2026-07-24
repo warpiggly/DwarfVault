@@ -1126,16 +1126,84 @@ body {
     box-shadow: 0 0 8px rgba(138, 47, 47, 0.4);
 }
 
-/* 🗑 Delete de entrada — destructivo, un punto más marcado que Cancel para
-   distinguirlos a simple vista dentro del modal REFORGE ENTRY. */
-.edit-modal-actions .delete-entry-btn {
-    border-color: var(--danger-soft);
-    color: #ffd7c2;
+/* ──────────────────────────────────────────────────────────────
+   🗑 DELETE DE ENTRADA — papelera sutil (arriba a la derecha del modal)
+   Reposo: discreta y apagada (no compite con Save/Cancel).
+   Hover/foco: se enciende en rojo y despliega la etiqueta "Delete" con
+   un barrido de izquierda a derecha, igual que el wordmark del header.
+   Anclada absoluta → el modal necesita position: relative.
+   ────────────────────────────────────────────────────────────── */
+.edit-modal { position: relative; }
+
+.entry-delete {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    height: 26px;
+    padding: 0 6px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--parchment-dim);
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.2s ease, background-color 0.2s ease,
+                border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
-.edit-modal-actions .delete-entry-btn:hover {
-    background-color: var(--danger);
+
+.entry-delete-icon {
+    font-size: 15px;
+    line-height: 1;
+    filter: grayscale(0.45);
+    transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+/* Etiqueta: arranca colapsada (max-width:0) y se despliega en hover. */
+.entry-delete-label {
+    box-sizing: border-box;
+    max-width: 0;
+    padding-right: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: max-width 0.32s cubic-bezier(0.22, 0.61, 0.36, 1),
+                padding-right 0.32s cubic-bezier(0.22, 0.61, 0.36, 1),
+                opacity 0.24s ease;
+}
+
+.entry-delete:hover,
+.entry-delete:focus-visible {
+    opacity: 1;
+    color: #ffd7c2;
+    background-color: rgba(138, 47, 47, 0.28);
     border-color: var(--danger);
-    box-shadow: 0 0 8px rgba(138, 47, 47, 0.5);
+    box-shadow: 0 0 10px rgba(138, 47, 47, 0.45);
+    outline: none;
+}
+.entry-delete:hover .entry-delete-label,
+.entry-delete:focus-visible .entry-delete-label {
+    max-width: 80px;
+    padding-right: 6px;
+    opacity: 1;
+}
+.entry-delete:hover .entry-delete-icon,
+.entry-delete:focus-visible .entry-delete-icon {
+    filter: grayscale(0) drop-shadow(0 0 4px rgba(255, 120, 90, 0.6));
+    transform: scale(1.05);
+}
+.entry-delete:active { transform: scale(0.96); }
+
+@media (prefers-reduced-motion: reduce) {
+    .entry-delete,
+    .entry-delete-label,
+    .entry-delete-icon { transition: none; }
 }
 
 /* ──────────────────────────────────────────────────────────────
