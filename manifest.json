@@ -22,6 +22,7 @@
     "notifications",
     "tabs",
     "clipboardWrite",
+    "offscreen",
     "activeTab"
   ],
   "background": {

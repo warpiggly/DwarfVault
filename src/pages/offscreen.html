@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DwarfVault — Clipboard Worker</title>
+</head>
+<body>
+    <!--
+      Documento offscreen invisible. Su única razón de existir es escribir en
+      el portapapeles desde el service worker (MV3 no tiene acceso al DOM y
+      la inyección en la página falla cuando el documento no está enfocado,
+      que es exactamente lo que pasa tras un clic en el menú contextual).
+
+      El textarea es el destino de la selección que copia execCommand('copy').
+    -->
+    <textarea id="clipboardSink" aria-hidden="true"></textarea>
+    <script src="../scripts/offscreen.js"></script>
+</body>
+</html>

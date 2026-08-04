@@ -372,6 +372,130 @@ async function buildContextMenu(db) {
     });
 }
 
+// ── Portapapeles ──────────────────────────────────────────────────────────────
+
+const OFFSCREEN_DOCUMENT_PATH = 'src/pages/offscreen.html';
+
+/** Promesa en vuelo de creación del documento offscreen (evita carreras). */
+let offscreenCreating = null;
+
+/**
+ * Garantiza que el documento offscreen exista.
+ *
+ * Solo puede haber UNO por extensión, así que primero se comprueba con
+ * chrome.runtime.getContexts y las creaciones concurrentes comparten la
+ * misma promesa.
+ *
+ * @returns {Promise<boolean>} true si el documento está disponible.
+ */
+async function ensureOffscreenDocument() {
+    // chrome.offscreen existe desde Chrome 109. En versiones previas se usa
+    // el fallback de inyección en la pestaña.
+    if (!chrome.offscreen) return false;
+
+    try {
+        const contexts = await chrome.runtime.getContexts({
+            contextTypes: ['OFFSCREEN_DOCUMENT'],
+            documentUrls: [chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)]
+        });
+        if (contexts.length > 0) return true;
+    } catch {
+        // getContexts no disponible → intentar crear y tolerar el error de
+        // "ya existe" más abajo.
+    }
+
+    if (!offscreenCreating) {
+        offscreenCreating = chrome.offscreen
+            .createDocument({
+                url:           OFFSCREEN_DOCUMENT_PATH,
+                reasons:       ['CLIPBOARD'],
+                justification: 'Write a saved Vault entry to the clipboard.'
+            })
+            .catch((error) => {
+                // Si ya existía, el documento sirve igual; cualquier otro
+                // error sí es fatal para esta vía.
+                if (!/single offscreen/i.test(error?.message || '')) throw error;
+            })
+            .finally(() => { offscreenCreating = null; });
+    }
+
+    try {
+        await offscreenCreating;
+        return true;
+    } catch (error) {
+        console.warn('[DwarfVault] No se pudo crear el documento offscreen:', error?.message);
+        return false;
+    }
+}
+
+/**
+ * Copia texto al portapapeles.
+ *
+ * ORDEN DE INTENTOS:
+ *  1. Documento offscreen → execCommand('copy') sobre un textarea propio.
+ *     Fiable: la página de la extensión sí puede enfocar su textarea, y
+ *     funciona incluso en pestañas donde no se puede inyectar script
+ *     (chrome://, Chrome Web Store, PDFs, about:blank).
+ *  2. Inyección en la pestaña activa. Solo como respaldo para Chrome < 109;
+ *     falla si el documento de la página no está enfocado, que es lo habitual
+ *     tras un clic en el menú contextual.
+ *
+ * @param {string} text
+ * @param {number} [tabId]
+ * @returns {Promise<boolean>} true solo si el texto llegó al portapapeles.
+ */
+async function copyTextToClipboard(text, tabId) {
+    if (typeof text !== 'string' || text.length === 0) return false;
+
+    if (await ensureOffscreenDocument()) {
+        try {
+            const response = await chrome.runtime.sendMessage({
+                target: 'dwarf-offscreen',
+                action: 'copyToClipboard',
+                text
+            });
+            if (response?.ok) return true;
+        } catch (error) {
+            console.warn('[DwarfVault] Copia vía offscreen falló:', error?.message);
+        }
+    }
+
+    if (typeof tabId === 'number') {
+        try {
+            const [injection] = await chrome.scripting.executeScript({
+                target: { tabId },
+                func: (value) => {
+                    // Enfocar la ventana antes de copiar: execCommand exige un
+                    // documento enfocado y el menú contextual se lo quitó.
+                    try { window.focus(); } catch { /* iframes restringidos */ }
+
+                    const el = document.createElement('textarea');
+                    el.value = value;
+                    el.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+                    document.body.appendChild(el);
+                    el.focus();
+                    el.select();
+
+                    let ok = false;
+                    try {
+                        ok = document.execCommand('copy'); // eslint-disable-line
+                    } catch {
+                        ok = false;
+                    }
+                    el.remove();
+                    return ok;
+                },
+                args: [text]
+            });
+            if (injection?.result === true) return true;
+        } catch {
+            // La pestaña no acepta scripts (chrome://, extensiones, PDFs, etc.)
+        }
+    }
+
+    return false;
+}
+
 // ── Manejador de clics del menú contextual ────────────────────────────────────
 
 /**
@@ -421,8 +545,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 
     // ── ⭐ Favorites — copia el texto directamente al portapapeles ────────────
-    // No abre el popup. El texto se copia en la pestaña activa mediante
-    // executeScript, que hereda el gesto de usuario del clic de menú contextual.
+    // No abre el popup. La copia la hace copyTextToClipboard() a través del
+    // documento offscreen (ver arriba), porque tras el clic en el menú
+    // contextual la página no está enfocada y no puede copiar.
     if (menuItemId.startsWith('fav::')) {
         const withoutPrefix = menuItemId.slice('fav::'.length);
         const lastSep       = withoutPrefix.lastIndexOf('::');
@@ -439,53 +564,20 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         if (!dbItem || entryIndex < 0 || entryIndex >= dbItem.entries.length) return;
 
         const textToCopy = dbItem.entries[entryIndex].text;
-
-        try {
-            // Inyectar la copia en la pestaña activa.
-            //
-            // MÉTODO PRIMARIO: document.execCommand('copy')
-            //   - Síncrono, no requiere permisos de clipboard en la página.
-            //   - Funciona siempre que el tab sea el activo (lo es: el usuario
-            //     acaba de hacer clic derecho en él).
-            //
-            // MÉTODO SECUNDARIO: navigator.clipboard.writeText()
-            //   - Solo se intenta si execCommand devuelve false.
-            //   - Requiere HTTPS + clipboard-write en la página → intermitente.
-            //   - Se dispara sin await para no bloquear si falla silenciosamente.
-            await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: (text) => {
-                    // Crear un textarea invisible, seleccionar el texto y copiar
-                    const el = document.createElement('textarea');
-                    el.value = text;
-                    el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none';
-                    document.body.appendChild(el);
-                    el.focus();
-                    el.select();
-                    const ok = document.execCommand('copy'); // eslint-disable-line
-                    document.body.removeChild(el);
-
-                    // Si execCommand falló (algunos iframes restringidos), intentar
-                    // clipboard API sin bloquear — la promesa corre en segundo plano.
-                    if (!ok && navigator.clipboard) {
-                        navigator.clipboard.writeText(text).catch(() => {});
-                    }
-                    return ok;
-                },
-                args: [textToCopy]
-            });
-        } catch {
-            // La pestaña no acepta scripts (chrome://, extensiones, PDFs, etc.)
-        }
+        const copied     = await copyTextToClipboard(textToCopy, tab?.id);
 
         // Notificación de confirmación visible al usuario (respeta el toggle
         // 🔔/🔕 del popup — si está OFF, no se muestra nada).
+        // Solo se anuncia "Copied" cuando la copia se confirmó de verdad; si
+        // falló, se avisa en vez de mentir.
         const preview = textToCopy.split('\n')[0].substring(0, 60);
         DwarfNotify.send({
             type:    'basic',
             iconUrl: chrome.runtime.getURL('assets/icons/icon48.png'),
-            title:   '⭐ Copied to clipboard',
-            message: preview + (textToCopy.length > 60 ? '...' : '')
+            title:   copied ? '⭐ Copied to clipboard' : '⚠️ Could not copy',
+            message: copied
+                ? preview + (textToCopy.length > 60 ? '...' : '')
+                : 'The clipboard is not available right now. Open the Vault and copy from there.'
         });
         return;
     }
