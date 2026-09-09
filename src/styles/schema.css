@@ -12,10 +12,12 @@
    Imagen B: dragón enroscado sobre oro. Tinte oscuro un poco más
    profundo que el de corporate para que los nodos resalten. */
 body {
-    /* Tinte más suave y cálido que antes: deja ver el dragón/oro y evita
-       la sensación de "cueva sin luz". */
+    /* El dragón es una ilustración MUY luminosa: con un velo débil la página
+       entera se lavaba en naranja y el diagrama dejaba de leerse. Este velo
+       (mismo nivel que guide.css) lo baja a textura de fondo — se sigue
+       intuyendo el dragón, pero el protagonista es el esquema. */
     background-image:
-        radial-gradient(circle at 50% 42%, rgba(82, 58, 32, 0.30) 0%, rgba(28, 20, 12, 0.78) 88%),
+        radial-gradient(circle at 50% 42%, rgba(58, 40, 22, 0.48) 0%, rgba(20, 14, 9, 0.88) 88%),
         url("../../assets/images/Gemini_Generated_Image_7o08rs7o08rs7o08.png");
     background-size: cover;
     background-position: center;
@@ -78,8 +80,8 @@ body {
     border: 1px solid rgba(0, 0, 0, 0.4);
 }
 .dot-root   { background: linear-gradient(135deg, #ffd954, #ffaa1f); }
-.dot-parent { background: var(--wood); border-color: var(--gold); }
-.dot-child  { background: var(--ink-soft); border-color: var(--border-soft); }
+.dot-parent { background: linear-gradient(135deg, var(--wood), var(--wood-deep)); border-color: var(--gold); }
+.dot-child  { background: #4a382c; border-color: var(--border); }
 
 /* ── Lienzo (card con scroll) ─────────────────────────────────────
    Mismo lenguaje visual que .sheet-main de corporate: borde tan,
@@ -88,7 +90,7 @@ body {
     flex: 1 1 auto;
     position: relative;
     overflow: auto;
-    border: 1px solid var(--border-soft);
+    border: 1.5px solid var(--border);
     border-radius: 10px;
     min-height: 0;
 
@@ -99,7 +101,7 @@ body {
        los nodos. Debajo, un velo cálido semitransparente suaviza el fondo. */
     --fx: 30%;
     --fy: 22%;
-    background-color: rgba(30, 22, 14, 0.28);
+    background-color: rgba(26, 19, 12, 0.58);
     background-image:
         radial-gradient(62% 58% at var(--fx) var(--fy),
             rgba(255, 176, 84, 0.26) 0%,
@@ -206,7 +208,8 @@ body {
     overflow: hidden;
     cursor: default;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: translate 0.18s ease, scale 0.18s ease,
+                box-shadow 0.2s ease, border-color 0.2s ease;
     animation: nodeIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 @keyframes nodeIn {
@@ -252,9 +255,27 @@ body {
     border-left: 3px solid var(--border);
 }
 
+/* Nodos que son enlaces (Vault/Chest): sin subrayado, color heredado del
+   nodo y cursor de mano para que se lea como "esto se puede abrir". */
+a.schema-node {
+    text-decoration: none;
+    color: var(--parchment);
+    cursor: pointer;
+}
+
+/* Foco de teclado: mismo lenguaje que el hover + un anillo dorado nítido,
+   porque el hover solo no le sirve a quien navega con Tab. */
+a.schema-node:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-color: var(--gold);
+    z-index: 6;
+}
+
 /* Hover: el nodo se eleva y se enciende. */
 .schema-node:hover {
-    transform: translateY(-2px) scale(1.03);
+    translate: 0 -2px;
+    scale: 1.03;
     border-color: var(--gold);
     box-shadow: 0 5px 16px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 196, 0, 0.5);
     z-index: 5;
@@ -264,7 +285,7 @@ body {
    la relación padre↔hijo destaque (clase la pone schema.js). */
 .schema-stage.dimmed .schema-node:not(.is-active) { opacity: 0.32; }
 .schema-stage.dimmed .schema-link:not(.is-active)  { opacity: 0.15; }
-.schema-node, .schema-link { transition-property: transform, box-shadow, border-color, opacity, stroke, stroke-width, filter; }
+.schema-node, .schema-link { transition-property: translate, scale, box-shadow, border-color, opacity, stroke, stroke-width, filter; }
 
 /* ── Empty state ─────────────────────────────────────────────────── */
 /* IMPORTANTE: un estilo de autor con `display:flex` le gana a la regla

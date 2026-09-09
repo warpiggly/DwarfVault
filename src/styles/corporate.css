@@ -659,6 +659,116 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────────
+   CELDA TEXT EXPANDIBLE — leer un dato multilínea sin salir de la rejilla
+
+   Por defecto la celda es nowrap + ellipsis (una sola línea), así que de un
+   dato con saltos de línea solo se veía la primera. Ahora la celda lleva las
+   dos vistas montadas y `tr.row-expanded` conmuta entre ellas:
+     · .cell-text-line → primera línea, comportamiento clásico de spreadsheet
+     · .cell-text-full → texto completo con pre-wrap (respeta 
+ y sangrías)
+   ────────────────────────────────────────────────────────────── */
+
+/* La celda ancla el badge, que va absoluto para que una primera línea larga
+   no lo empuje fuera del área visible al recortarse con el ellipsis. */
+.sheet-grid td.cell-text { position: relative; }
+
+/* Hueco a la derecha para el badge, solo en las celdas que lo llevan. */
+.sheet-grid td.cell-text.has-more .cell-text-line { padding-right: 34px; }
+
+/* Badge "⏎ N" / "⋯": discreto en reposo para no ensuciar la rejilla, y se
+   enciende en oro al pasar por encima. Es el único aviso de que la celda
+   esconde contenido, así que tiene que verse sin gritar. */
+.cell-expand {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    z-index: 2;
+    min-width: 26px;
+    height: 17px;
+    padding: 0 5px;
+    font-family: inherit;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.3px;
+    color: var(--parchment-dim);
+    background-color: rgba(42, 31, 24, 0.85);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: color 0.18s ease, background-color 0.18s ease,
+                border-color 0.18s ease, opacity 0.18s ease;
+}
+.cell-expand:hover,
+.cell-expand:focus-visible {
+    color: var(--ink);
+    background-color: var(--gold);
+    border-color: var(--gold);
+    opacity: 1;
+    outline: none;
+}
+
+/* Texto completo: oculto salvo que la fila esté expandida. `pre-wrap` es la
+   pieza clave — sin ella el navegador colapsa los 
+ a espacios simples. */
+.cell-text-full {
+    display: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 11.5px;
+    line-height: 1.5;
+    padding: 3px 34px 3px 0;
+    /* Tope de alto: a partir de aquí el bloque scrollea por su cuenta, así una
+       entrada de 200 líneas no empuja la fila siguiente fuera de la vista. */
+    max-height: 200px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Fila expandida: la celda deja de ser una línea recortada y las demás
+   columnas se alinean arriba para que #, icono y URL acompañen al bloque. */
+.sheet-grid tbody tr.row-expanded td {
+    vertical-align: top;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+.sheet-grid tbody tr.row-expanded .cell-text {
+    white-space: normal;
+    cursor: default;
+}
+.sheet-grid tbody tr.row-expanded .cell-text-line { display: none; }
+.sheet-grid tbody tr.row-expanded .cell-text-full { display: block; }
+
+/* El badge de la fila abierta se queda anclado arriba (no centrado), junto
+   a la primera línea del bloque. */
+.sheet-grid tbody tr.row-expanded .cell-expand {
+    top: 6px;
+    transform: none;
+}
+
+/* Scrollbar del bloque expandido. A diferencia del resto de la app va con el
+   tan SOLIDO, no el translucido: es la unica senal de que quedan lineas por
+   leer, y sobre el glow dorado de la fila resaltada un 0.35 de alpha
+   desaparece por completo. */
+.cell-text-full::-webkit-scrollbar { width: 8px; }
+.cell-text-full::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 5px;
+}
+.cell-text-full::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 5px;
+}
+.cell-text-full::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+@media (prefers-reduced-motion: reduce) {
+    .cell-expand { transition: none; }
+}
+
+/* ──────────────────────────────────────────────────────────────
    ROW HIGHLIGHT — fila señalada al abrir el popup desde el menú
    contextual ("ver entrada"). Late con un glow dorado hasta que el
    usuario pasa el mouse o hace clic (corporate.js quita la clase).

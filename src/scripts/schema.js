@@ -11,7 +11,10 @@
  *   · Padres  → sin `parentDatabase`.
  *   · Hijos   → `parentDatabase === <nombre del padre>`.
  *
- * Los nodos son <div> absolutos; los conectores son <path> curvos en un
+ * Los nodos de Vault/Chest son <a> absolutos que enlazan a la vista Home
+ * (`corporate.html?open=<hoja>`), así que un click abre esa base de datos
+ * con su contenido a la vista. El nodo raíz no es enlace: no es una BD.
+ * Los conectores son <path> curvos en un
  * <svg> de fondo. Todo el layout se calcula en JS para poder dibujar las
  * curvas con coordenadas exactas y habilitar scroll cuando no cabe.
  */
@@ -52,7 +55,11 @@
     }
 
     function makeNode(kind, rec, geo, delay) {
-        const el = document.createElement('div');
+        // Vault/Chest son enlaces reales (no un <div> con listener) para que
+        // funcionen con teclado, foco y el resto de la semántica de un link.
+        // El raíz es la BD entera, no una hoja abrible → sigue siendo <div>.
+        const isLink = kind !== 'root';
+        const el = document.createElement(isLink ? 'a' : 'div');
         el.className = `schema-node node-${kind}`;
         el.style.left   = `${geo.x}px`;
         el.style.top    = `${geo.y}px`;
@@ -71,7 +78,14 @@
         } else {
             title.textContent = rec.name;
             meta.textContent  = rec.meta;
-            el.title = `${rec.name} — ${rec.meta}`;
+            el.title = `${rec.name} — ${rec.meta} · click to open in Home`;
+        }
+
+        if (isLink) {
+            // `openSheet` lo consume corporate.js, que resuelve el vault padre
+            // (y la pestaña, si es un chest) a partir de este nombre.
+            el.href = `corporate.html?open=${encodeURIComponent(rec.name)}`;
+            el.setAttribute('aria-label', `Open ${rec.name} in Home — ${rec.meta}`);
         }
         el.appendChild(title);
         el.appendChild(meta);
@@ -82,7 +96,8 @@
         const parents  = allDbs.filter(d => !d.parentDatabase);
         const childrenOf = (name) => allDbs.filter(d => d.parentDatabase === name);
 
-        // Limpia render previo (nodos, conserva el svg).
+        // Limpia render previo (nodos y estado de hover, conserva el svg).
+        stage.classList.remove('dimmed');
         stage.querySelectorAll('.schema-node').forEach(n => n.remove());
         svg.innerHTML = '';
 
@@ -119,8 +134,23 @@
 
         const contentBottom = y - PARENT_GAP + PAD_TOP;
         const rightEdge = anyKids ? (CHILD.x + CHILD.w) : (PARENT.x + PARENT.w);
-        const stageW = rightEdge + PAD_SIDE;
-        const stageH = Math.max(contentBottom, canvas.clientHeight);
+        const contentRight = rightEdge + PAD_SIDE;
+
+        // Centrado del bloque dentro del lienzo cuando sobra espacio: sin
+        // esto el diagrama queda pegado arriba-izquierda y la mitad inferior
+        // del card se ve vacia (parece que falta contenido). Si el contenido
+        // NO cabe, el offset es 0 y manda el scroll.
+        const offsetX = Math.max(0, (canvas.clientWidth  - contentRight)  / 2);
+        const offsetY = Math.max(0, (canvas.clientHeight - contentBottom) / 2);
+
+        parentLayout.forEach((pl) => {
+            pl.x += offsetX;
+            pl.y += offsetY;
+            pl.kids.forEach((kg) => { kg.x += offsetX; kg.y += offsetY; });
+        });
+
+        const stageW = contentRight;
+        const stageH = contentBottom;
 
         stage.style.width  = `${stageW}px`;
         stage.style.height = `${stageH}px`;
@@ -129,10 +159,11 @@
 
         // 2) Nodo raíz, centrado verticalmente respecto a las bandas.
         const bandsMid = (PAD_TOP + (y - PARENT_GAP)) / 2;
-        const rootY = Math.max(PAD_TOP, bandsMid - ROOT.h / 2);
-        const rootGeo = { x: ROOT.x, y: rootY, w: ROOT.w, h: ROOT.h };
+        const rootX = ROOT.x + offsetX;
+        const rootY = Math.max(PAD_TOP, bandsMid - ROOT.h / 2) + offsetY;
+        const rootGeo = { x: rootX, y: rootY, w: ROOT.w, h: ROOT.h };
         const rootEl = makeNode('root', plural(parents.length, 'vault'), rootGeo, 0);
-        const rootAnchor = { x: ROOT.x + ROOT.w, y: rootY + ROOT.h / 2 };
+        const rootAnchor = { x: rootX + ROOT.w, y: rootY + ROOT.h / 2 };
 
         // Índices para el resaltado por relación.
         const parentEntries = []; // { el, rootLink, childLinks[], childEls[] }
@@ -220,9 +251,31 @@
             return;
         }
 
-        render(allDbs, canvas, stage, svg, emptyEl);
+        let lastW = 0;
+        let lastH = 0;
+        let pending = 0;
+
+        function draw() {
+            lastW = canvas.clientWidth;
+            lastH = canvas.clientHeight;
+            render(allDbs, canvas, stage, svg, emptyEl);
+        }
+
+        draw();
+
         // Recalcula el layout si cambia el tamaño de la ventana del popup.
-        window.addEventListener('resize', () => render(allDbs, canvas, stage, svg, emptyEl));
+        // Se agrupa en un requestAnimationFrame y se descarta si el lienzo
+        // mide lo mismo que en el último dibujo: el popup se auto-dimensiona
+        // según su contenido, así que redibujar a ciegas en cada `resize`
+        // puede realimentarse y hacer parpadear el diagrama.
+        window.addEventListener('resize', () => {
+            if (pending) cancelAnimationFrame(pending);
+            pending = requestAnimationFrame(() => {
+                pending = 0;
+                if (canvas.clientWidth === lastW && canvas.clientHeight === lastH) return;
+                draw();
+            });
+        });
     }
 
     if (document.readyState === 'loading') {

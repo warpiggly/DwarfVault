@@ -91,6 +91,12 @@
     // la tabla simplemente crece. Si hay menos, rellenamos con filas vacías.
     const MIN_VISIBLE_ROWS = 18;
 
+    // Filas abiertas a lo alto para leer el dato completo (indices de entrada).
+    // Vive fuera del render porque `renderGrid` reconstruye el <tbody> entero:
+    // sin esto, guardar una edicion colapsaria lo que el usuario tenia abierto.
+    const expandedRows = new Set();
+    let lastRenderedSheet = null;
+
     // ── Toast ───────────────────────────────────────────────────
     let toastTimer = null;
     function showToast(msg, isError) {
@@ -262,6 +268,12 @@
     // mostramos solo filas vacías. Si hay sheet, mostramos sus entradas y
     // rellenamos hasta MIN_VISIBLE_ROWS con filas placeholder.
     function renderGrid() {
+        // Cambiar de hoja invalida los indices abiertos: son de otra tabla.
+        if (lastRenderedSheet !== currentSheet) {
+            expandedRows.clear();
+            lastRenderedSheet = currentSheet;
+        }
+
         gridBody.innerHTML = '';
 
         const sheet   = currentSheet ? getRecord(currentSheet) : null;
@@ -278,6 +290,7 @@
             gridBody.appendChild(buildEmptyRow(i));
         }
 
+        markExpandableCells();
         applySearchFilter();
     }
 
@@ -513,12 +526,106 @@
         td.appendChild(img);
     }
 
+    // La celda Text tiene DOS vistas que conviven en el DOM; el CSS decide
+    // cual se ve segun `tr.row-expanded`:
+    //   · .cell-text-line → solo la primera linea (celda nowrap + ellipsis,
+    //     igual que siempre). Era lo UNICO que se renderizaba antes, y por eso
+    //     un dato con saltos de linea parecia truncado sin remedio.
+    //   · .cell-text-full → el texto COMPLETO con `white-space: pre-wrap`, que
+    //     respeta saltos de linea, sangrias y espacios tal como se guardaron.
+    // Tenerlas siempre montadas hace que expandir/colapsar sea solo una clase:
+    // no repinta la fila ni pierde el estado de nada.
     function renderTextCell(td, entry) {
         td.innerHTML = '';
+        const text = entry.text || '';
+
         const span = document.createElement('span');
-        span.textContent = (entry.text || '').split('\n')[0];
+        span.className   = 'cell-text-line';
+        span.textContent = text.split('\n')[0];
         td.appendChild(span);
-        td.title = entry.text || '';
+
+        const full = document.createElement('div');
+        full.className   = 'cell-text-full';
+        full.textContent = text;
+        td.appendChild(full);
+
+        // El title sigue siendo el texto completo: applySearchFilter busca
+        // sobre `td.title`, asi que la busqueda ve TODAS las lineas.
+        td.title = text;
+    }
+
+    // ── Expansion de filas ──────────────────────────────────────
+    // Badge que avisa de que la celda esconde contenido y a la vez hace de
+    // interruptor. Va posicionado absoluto contra el borde derecho de la celda
+    // porque una primera linea larga, al ser nowrap + ellipsis, se comeria un
+    // badge colocado en el flujo normal.
+    function addExpandBadge(td, label) {
+        const btn = document.createElement('button');
+        btn.type          = 'button';
+        btn.className     = 'cell-expand';
+        btn.dataset.label = label;
+        btn.textContent   = label;
+        btn.title         = 'Show full text';
+        btn.setAttribute('aria-expanded', 'false');
+
+        // La celda ya usa click → copiar y dblclick → editar. El badge detiene
+        // ambos para que expandir no copie ni abra el modal por accidente.
+        const swallow = (e) => { e.stopPropagation(); e.preventDefault(); };
+        btn.addEventListener('dblclick', swallow);
+        btn.addEventListener('click', (e) => {
+            swallow(e);
+            toggleRowExpansion(td.closest('tr'));
+        });
+
+        td.classList.add('has-more');
+        td.appendChild(btn);
+        return btn;
+    }
+
+    function toggleRowExpansion(tr, force) {
+        if (!tr) return;
+        const idx = Number(tr.dataset.idx);
+        const on  = (force == null) ? !tr.classList.contains('row-expanded') : force;
+
+        tr.classList.toggle('row-expanded', on);
+        if (on) expandedRows.add(idx); else expandedRows.delete(idx);
+
+        const btn = tr.querySelector('.cell-expand');
+        if (btn) {
+            btn.setAttribute('aria-expanded', String(on));
+            btn.title       = on ? 'Collapse' : 'Show full text';
+            btn.textContent = on ? '▲' : btn.dataset.label;
+        }
+    }
+
+    // Decide que filas pueden expandirse. Corre DESPUES de insertar las filas
+    // porque el segundo motivo para expandir (una unica linea que no cabe a lo
+    // ancho) solo se sabe midiendo la celda ya renderizada.
+    function markExpandableCells() {
+        gridBody.querySelectorAll('tr:not(.row-empty)').forEach((tr) => {
+            const td = tr.querySelector('.cell-text');
+            if (!td) return;
+
+            const lines = (td.title || '').split('\n').length;
+            // Se mide ANTES de anadir el badge: el badge reserva padding y
+            // falsearia el calculo del recorte.
+            const clipped = td.scrollWidth > td.clientWidth + 1;
+            if (lines <= 1 && !clipped) return;
+
+            addExpandBadge(td, lines > 1 ? `⏎ ${lines}` : '⋯');
+
+            // Reaplica lo que el usuario tenia abierto antes del repintado.
+            if (expandedRows.has(Number(tr.dataset.idx))) toggleRowExpansion(tr, true);
+        });
+    }
+
+    // Abre una fila concreta (la que llega del menu contextual). Si no tiene
+    // badge no hay nada escondido que mostrar, asi que no se toca.
+    function expandEntryRow(idx) {
+        if (idx == null || Number.isNaN(idx)) return;
+        const tr = gridBody.querySelector(`tr[data-idx="${idx}"]`);
+        if (!tr || !tr.querySelector('.cell-expand')) return;
+        toggleRowExpansion(tr, true);
     }
 
     // ── Edit modal (reciclado del REFORGE ENTRY dwarven) ────────
@@ -1391,6 +1498,10 @@
 
     // ── Orchestration ───────────────────────────────────────────
     async function refresh(target) {
+        // Los datos pueden haber cambiado (borrados, imports): los indices
+        // abiertos ya no son de fiar, se descartan y se vuelve a decidir.
+        expandedRows.clear();
+
         target = target || {};
         try {
             allDbs = await loadAll();
@@ -1398,6 +1509,18 @@
             console.error('[Corporate] Could not load databases:', e);
             showToast('Could not load vaults', true);
             allDbs = [];
+        }
+
+        // Deep-link desde la vista Schema (`corporate.html?open=<hoja>`):
+        // el nodo sólo conoce su propio nombre, así que aquí resolvemos el
+        // vault padre (si es un chest, su `parentDatabase`; si es un vault,
+        // él mismo) y dejamos ese registro como hoja activa.
+        if (target.openSheet) {
+            const rec = getRecord(target.openSheet);
+            if (rec) {
+                target.selectParent = rec.parentDatabase || rec.name;
+                target.selectSheet  = rec.name;
+            }
         }
 
         // Petición "ver entrada" desde el menú contextual: resolvemos la hoja
@@ -1443,8 +1566,13 @@
         renderGrid();
         updateToolbarState();
 
-        // Tras render, resaltamos la fila de la entrada solicitada (una vez).
-        if (target.viewTarget) highlightEntryRow(target.viewTarget.entryIndex);
+        // Tras render: la entrada que llega del menu contextual se abre
+        // COMPLETA (si esconde algo) y ademas se resalta. Se abre primero para
+        // que el scrollIntoView del resaltado ya cuente con el alto expandido.
+        if (target.viewTarget) {
+            expandEntryRow(target.viewTarget.entryIndex);
+            highlightEntryRow(target.viewTarget.entryIndex);
+        }
     }
 
     // ── Resaltado de "ver entrada" ──────────────────────────────
@@ -1594,6 +1722,14 @@
     function init() {
         bind();
 
+        // Deep-link de la vista Schema: ?open=<hoja>. Se lee de la URL (no de
+        // chrome.storage) porque es SÍNCRONO: la hoja pedida entra en el primer
+        // refresh y no se ve un salto desde el vault por defecto.
+        let openSheet = '';
+        try {
+            openSheet = new URLSearchParams(location.search).get('open') || '';
+        } catch (_e) { /* URL sin querystring válido → apertura normal */ }
+
         // Si el popup se abrió desde el menú contextual para VER una entrada,
         // background.js dejó en storage.local {dbName, entryIndex, viewEntryAt}.
         // Abrimos en esa hoja y resaltamos su fila. La marca de tiempo (ventana
@@ -1604,13 +1740,13 @@
                 if (fresh && s.dbName) {
                     // Consumimos la marca para que no vuelva a dispararse.
                     chrome.storage.local.remove('viewEntryAt');
-                    refresh({ viewTarget: { dbName: s.dbName, entryIndex: Number(s.entryIndex) } });
+                    refresh({ openSheet, viewTarget: { dbName: s.dbName, entryIndex: Number(s.entryIndex) } });
                 } else {
-                    refresh({});
+                    refresh({ openSheet });
                 }
             });
         } else {
-            refresh({});
+            refresh({ openSheet });
         }
     }
 
