@@ -89,7 +89,17 @@
         if (!options || typeof chrome === 'undefined' || !chrome.notifications) return;
         const enabled = await isEnabled();
         if (!enabled) return;
-        chrome.notifications.create(options);
+        try {
+            // El callback consume chrome.runtime.lastError. Sin él, un fallo
+            // (iconUrl inaccesible, notificaciones bloqueadas por el SO) se
+            // reporta como error no comprobado en la consola.
+            chrome.notifications.create(options, () => {
+                const err = chrome.runtime.lastError;
+                if (err) console.debug('[DwarfVault] notification:', err.message);
+            });
+        } catch (error) {
+            console.debug('[DwarfVault] notification failed:', error?.message);
+        }
     }
 
     // Mantener la caché sincronizada entre contextos (popup y service worker

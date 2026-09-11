@@ -18,20 +18,36 @@
 
 const OFFSCREEN_TARGET = 'dwarf-offscreen';
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Defensa en profundidad: solo mensajes originados en esta extensión.
+    if (sender?.id !== chrome.runtime.id) return;
+
     // Ignorar cualquier mensaje que no vaya dirigido a este documento, para
     // no interferir con los mensajes del popup ni del service worker.
     if (!message || message.target !== OFFSCREEN_TARGET) return;
     if (message.action !== 'copyToClipboard') return;
 
     const sink = document.getElementById('clipboardSink');
+
+    // Si el textarea no existe, responder explícitamente en vez de dejar al
+    // service worker esperando hasta su timeout.
+    if (!sink) {
+        console.error('[DwarfVault][offscreen] Falta #clipboardSink.');
+        sendResponse({ ok: false });
+        return;
+    }
+
     let ok = false;
 
     try {
         sink.value = typeof message.text === 'string' ? message.text : '';
-        sink.focus();
-        sink.select();
-        ok = document.execCommand('copy'); // eslint-disable-line
+        // Sin texto no hay nada que copiar; execCommand devolvería true sobre
+        // una selección vacía y borraría el portapapeles del usuario.
+        if (sink.value.length > 0) {
+            sink.focus();
+            sink.select();
+            ok = document.execCommand('copy'); // eslint-disable-line
+        }
     } catch (error) {
         console.error('[DwarfVault][offscreen] Copy failed:', error);
         ok = false;
