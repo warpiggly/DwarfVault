@@ -556,6 +556,8 @@ body {
 .toolbar-select:hover { border-color: var(--parchment-dim); }
 .toolbar-select:focus { border-color: var(--gold); box-shadow: 0 0 6px rgba(255, 196, 0, 0.4); }
 
+.toolbar-type { flex: 0 0 120px; }
+
 .toolbar-select option {
     background-color: var(--wood);
     color: var(--parchment);
@@ -592,8 +594,14 @@ body {
     position: relative;
 }
 
+/* La tabla es más ancha que el wrapper justo lo que miden Note + Type:
+   # | Icon | Text | URL llenan la vista como siempre y Note | Type
+   aparecen al mover la barra horizontal de abajo. */
 .sheet-grid {
-    width: 100%;
+    --note-w: 220px;
+    --type-w: 70px;
+    /* + padding (8px por lado) y borde (1px) de cada una de las 2 columnas */
+    width: calc(100% + var(--note-w) + var(--type-w) + 34px);
     border-collapse: collapse;
     table-layout: fixed;     /* anchos predecibles, evita rebote en edit */
     font-family: inherit;
@@ -624,7 +632,15 @@ body {
 .col-index   { width: 36px;  text-align: center !important; }
 .col-favicon { width: 52px;  text-align: center !important; }
 .col-text    { width: auto; }
-.col-url     { width: 36%; }
+.col-url     { width: 270px; }   /* ≈ el 36% de antes; en px para no crecer con la tabla */
+.col-note    { width: var(--note-w); }
+.col-type    { width: var(--type-w); text-align: center !important; }
+
+/* # queda fijo a la izquierda al mover la barra: la fila no pierde su número. */
+.sheet-grid th.col-index,
+.sheet-grid td.cell-index { position: sticky; left: 0; }
+.sheet-grid td.cell-index  { z-index: 1; }
+.sheet-grid th.col-index   { z-index: 3; }
 
 /* Body cells. Padding comprimido y font-size más pequeño. */
 .sheet-grid tbody td {
@@ -860,6 +876,40 @@ body {
     border-radius: 2px;
     object-fit: contain;
     filter: drop-shadow(0 0 2px rgba(255, 196, 0, 0.25));   /* leve halo dorado */
+}
+
+/* Type: badge deducido del texto, no editable. */
+.sheet-grid tbody td.cell-type {
+    text-align: center;
+    padding: 4px 6px;
+    cursor: default;
+}
+.cell-type-badge {
+    display: inline-block;
+    min-width: 22px;
+    padding: 1px 4px;
+    font-size: 10px;
+    line-height: 1.4;
+    color: var(--gold);
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+}
+
+/* Note: texto del usuario, más tenue que Text para no competir. */
+.sheet-grid tbody td.cell-note {
+    color: var(--parchment-dim);
+    font-style: italic;
+}
+.sheet-grid tbody tr.row-expanded td.cell-note {
+    white-space: pre-wrap;
+    word-break: break-word;
+    vertical-align: top;
+}
+.sheet-grid tbody td.cell-note-empty {
+    opacity: 0.5;
+    text-align: center;
+    font-style: normal;
 }
 
 /* Marcador "sin link": atenuado, en cursiva, para que se lea como estado
@@ -1183,6 +1233,8 @@ body {
     tab-size: 4;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+.edit-modal-textarea.edit-modal-note { min-height: 60px; }
+
 .edit-modal-textarea:focus,
 .edit-modal-url:focus {
     border-color: var(--gold);

@@ -222,7 +222,9 @@ function createTable(dbItem) {
     const colDefs = [
         { text: '#',      cls: 'th-index'  },
         { text: '',       cls: 'th-favicon' },  // columna de favicon
+        { text: 'TYPE',   cls: 'th-type'   },
         { text: 'TEXT',   cls: 'th-text'   },
+        { text: 'NOTE',   cls: 'th-note'   },
         { text: 'SOURCE', cls: 'th-source' },
         { text: 'DATE',   cls: 'th-date'   }
     ];
@@ -284,7 +286,19 @@ function createTableRow(entry, index) {
     }
     row.appendChild(faviconCell);
 
-    // ── Col 3: texto (clic para copiar) ───────────────────────────────────
+    // ── Col 3: tipo (deducido del texto) ──────────────────────────────────
+    const type       = DwarfEntryType.detect(entry.text);
+    const typeCell   = document.createElement('td');
+    typeCell.className = 'td-type';
+
+    const typeBadge       = document.createElement('span');
+    typeBadge.className   = `td-type__badge td-type__badge--${type.key}`;
+    typeBadge.textContent = type.icon;
+    typeBadge.title       = type.label;
+    typeCell.appendChild(typeBadge);
+    row.appendChild(typeCell);
+
+    // ── Col 4: texto (clic para copiar) ───────────────────────────────────
     const textCell   = document.createElement('td');
     textCell.className = 'td-text';
 
@@ -320,7 +334,22 @@ function createTableRow(entry, index) {
 
     row.appendChild(textCell);
 
-    // ── Col 4: URL (source) ────────────────────────────────────────────────
+    // ── Col 5: nota del usuario ────────────────────────────────────────────
+    const noteCell   = document.createElement('td');
+    noteCell.className = 'td-note';
+    if (entry.note) {
+        const noteSpan       = document.createElement('span');
+        noteSpan.className   = 'td-note__span';
+        noteSpan.textContent = entry.note;
+        noteSpan.title       = entry.note;
+        noteCell.appendChild(noteSpan);
+    } else {
+        noteCell.textContent = '—';
+        noteCell.classList.add('td-note--empty');
+    }
+    row.appendChild(noteCell);
+
+    // ── Col 6: URL (source) ────────────────────────────────────────────────
     const urlCell   = document.createElement('td');
     urlCell.className = 'td-url';
 
@@ -366,7 +395,7 @@ function createTableRow(entry, index) {
 
     row.appendChild(urlCell);
 
-    // ── Col 5: fecha ───────────────────────────────────────────────────────
+    // ── Col 7: fecha ───────────────────────────────────────────────────────
     const dateCell   = document.createElement('td');
     dateCell.className = 'td-date';
 

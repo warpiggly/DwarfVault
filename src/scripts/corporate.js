@@ -10,8 +10,9 @@
  *
  * UX:
  *  - Top toolbar: dropdown de vault padre + CRUD + search + CSV import/export
- *  - Grid central: 3 columnas (# | Text | URL), favicon inline en Text,
- *    doble-click sobre celda → input editable (Enter/blur guarda, Esc cancela)
+ *  - Grid central: # | Icon | Text | URL llenan el ancho; Note | Type quedan
+ *    a la derecha y se ven con el scroll horizontal. Type se deduce del texto
+ *    (DwarfEntryType); clic copia, doble-click abre REFORGE ENTRY
  *  - Bottom tabs: si el padre tiene hijos, se navega entre ellos. Si el padre
  *    tiene entradas propias, aparece su propia tab con el badge PARENT.
  *    Si solo existe el padre sin hijos, no se muestran tabs.
@@ -30,6 +31,7 @@
     const sheetEmpty  = document.getElementById('sheetEmpty');
     const sheetTabs   = document.getElementById('sheetTabs');
     const searchInput = document.getElementById('searchInput');
+    const typeFilter  = document.getElementById('typeFilter');
     const importInput = document.getElementById('importInput');
     const importFullInput = document.getElementById('importFullInput');
     const toastEl     = document.getElementById('sheetToast');
@@ -295,8 +297,10 @@
     }
 
     function buildRow(entry, idx) {
-        const tr = document.createElement('tr');
-        tr.dataset.idx = String(idx);
+        const tr   = document.createElement('tr');
+        const type = DwarfEntryType.detect(entry.text);
+        tr.dataset.idx  = String(idx);
+        tr.dataset.type = type.key;
 
         // # — no editable
         const tdIdx = document.createElement('td');
@@ -340,6 +344,32 @@
                          () => openEditModal(entry, idx, 'url'));
         tr.appendChild(tdUrl);
 
+        // Note — clic copia la nota, doble-click abre el modal en el campo Note.
+        const tdNote = document.createElement('td');
+        tdNote.className     = 'cell-note';
+        tdNote.dataset.field = 'note';
+        if (entry.note) {
+            tdNote.textContent = entry.note;
+            tdNote.title       = entry.note;
+        } else {
+            tdNote.classList.add('cell-note-empty');
+            tdNote.textContent = '—';
+            tdNote.title       = 'No note — double-click to add one';
+        }
+        attachCopyOrEdit(tdNote, () => entry.note || '', 'Note copied',
+                         () => openEditModal(entry, idx, 'note'));
+        tr.appendChild(tdNote);
+
+        // Type — deducido del texto, no editable.
+        const tdType = document.createElement('td');
+        tdType.className = 'cell-type';
+        const badge = document.createElement('span');
+        badge.className   = `cell-type-badge cell-type-${type.key}`;
+        badge.textContent = type.icon;
+        badge.title       = type.label;
+        tdType.appendChild(badge);
+        tr.appendChild(tdType);
+
         return tr;
     }
 
@@ -379,6 +409,14 @@
             tdUrl.addEventListener('click', () => startInlineNewUrl(tdUrl));
         }
         tr.appendChild(tdUrl);
+
+        const tdNote = document.createElement('td');
+        tdNote.className = 'cell-note cell-empty';
+        tr.appendChild(tdNote);
+
+        const tdType = document.createElement('td');
+        tdType.className = 'cell-type cell-empty';
+        tr.appendChild(tdType);
 
         return tr;
     }
@@ -629,8 +667,8 @@
     }
 
     // ── Edit modal (reciclado del REFORGE ENTRY dwarven) ────────
-    // Abre un modal con textarea (preserva \n) + input de URL. Save
-    // escribe ambos campos a IndexedDB de una sola pasada y refresca
+    // Abre un modal con textarea (preserva \n) + input de URL + nota. Save
+    // escribe los campos a IndexedDB de una sola pasada y refresca
     // la rejilla. focusField controla a qué campo va el foco inicial.
     function openEditModal(entry, idx, focusField) {
         // Si hubiera uno abierto (race condition), lo cerramos primero.
@@ -693,6 +731,19 @@
         urlInput.value     = entry.url || '';
         modal.appendChild(urlInput);
 
+        const noteLabel = document.createElement('label');
+        noteLabel.className   = 'edit-modal-label';
+        noteLabel.textContent = 'Note';
+        modal.appendChild(noteLabel);
+
+        const noteInput = document.createElement('textarea');
+        noteInput.className   = 'edit-modal-textarea edit-modal-note';
+        noteInput.value       = entry.note || '';
+        noteInput.placeholder = 'Why did you save this?';
+        noteInput.maxLength   = DwarfSecurity.MAX_NOTE_LENGTH;
+        noteInput.spellcheck  = false;
+        modal.appendChild(noteInput);
+
         const btnRow = document.createElement('div');
         btnRow.className = 'edit-modal-actions';
 
@@ -715,6 +766,8 @@
         if (focusField === 'url') {
             urlInput.focus();
             urlInput.select();
+        } else if (focusField === 'note') {
+            noteInput.focus();
         } else {
             textarea.focus();
             // No select() para no perder el caret si el texto es largo.
@@ -745,13 +798,15 @@
         saveBtn.addEventListener('click', async () => {
             const newText = textarea.value;
             const newUrl  = urlInput.value;
+            const newNote = DwarfSecurity.sanitizeNote(noteInput.value);
             try {
                 const record = getRecord(currentSheet);
-                record.entries[idx].text = newText;
-                record.entries[idx].url  = newUrl;
+                const stored = record.entries[idx];
+                stored.text = newText;
+                stored.url  = newUrl;
+                if (newNote) stored.note = newNote;
+                else         delete stored.note;
                 await putRecord(record);
-                entry.text = newText;
-                entry.url  = newUrl;
                 notifyBackground();
                 close();
                 await refresh({ selectParent: currentParent, selectSheet: currentSheet });
@@ -1289,21 +1344,26 @@
     }
 
     // ── Search ──────────────────────────────────────────────────
+    // Búsqueda (texto, nota, URL) + filtro por Type. Con filtro activo las
+    // filas placeholder se ocultan: no tienen tipo.
     function applySearchFilter() {
-        const q = (searchInput.value || '').trim().toLowerCase();
+        const q    = (searchInput.value || '').trim().toLowerCase();
+        const type = typeFilter.value;
         const rows = gridBody.querySelectorAll('tr');
 
-        if (!q) {
+        if (!q && !type) {
             rows.forEach(tr => tr.classList.remove('row-hidden'));
             return;
         }
         // Selectores por clase — sobreviven a reordenar columnas.
+        const cellText = (tr, cls) => {
+            const td = tr.querySelector(cls);
+            return (td && !td.classList.contains('cell-note-empty') && (td.title || td.textContent) || '').toLowerCase();
+        };
         rows.forEach(tr => {
-            const textCell = tr.querySelector('.cell-text');
-            const urlCell  = tr.querySelector('.cell-url');
-            const text = ((textCell && (textCell.title || textCell.textContent)) || '').toLowerCase();
-            const url  = ((urlCell  && (urlCell .title || urlCell .textContent)) || '').toLowerCase();
-            tr.classList.toggle('row-hidden', !(text.includes(q) || url.includes(q)));
+            const matchType = !type || tr.dataset.type === type;
+            const matchText = !q || ['.cell-text', '.cell-note', '.cell-url'].some(c => cellText(tr, c).includes(q));
+            tr.classList.toggle('row-hidden', !(matchType && matchText));
         });
     }
 
@@ -1692,6 +1752,7 @@
         importInput.addEventListener('change', onImport);
         importFullInput.addEventListener('change', onImportFull);
         searchInput.addEventListener('input', applySearchFilter);
+        typeFilter.addEventListener('change', applySearchFilter);
     }
 
     function init() {

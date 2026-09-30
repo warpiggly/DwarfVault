@@ -132,6 +132,14 @@
                     placeholder="Search in this sheet…"
                     aria-label="Search entries in current sheet"
                 >
+                <select id="typeFilter" class="toolbar-select toolbar-type" aria-label="Filter by type">
+                    <option value="">All types</option>
+                    <option value="text">📝 Text</option>
+                    <option value="link">🔗 Link</option>
+                    <option value="email">✉️ Email</option>
+                    <option value="code">{} Code</option>
+                    <option value="number">#️⃣ Number</option>
+                </select>
             </div>
 
             <!-- Grid -->
@@ -143,6 +151,8 @@
                             <th class="col-favicon" title="Source favicon">Icon</th>
                             <th class="col-text">Text</th>
                             <th class="col-url">URL</th>
+                            <th class="col-note">Note</th>
+                            <th class="col-type" title="Detected from the text">Type</th>
                         </tr>
                     </thead>
                     <tbody id="sheetGridBody"></tbody>
@@ -175,6 +185,7 @@
     <!-- Scripts: shared utilities first, then corporate logic, then toggle,
          por último los embers ambientales (puramente visuales, no bloquean). -->
     <script src="../scripts/security.js"></script>
+    <script src="../scripts/entryType.js"></script>
     <script src="../scripts/xlsx.js"></script>
     <script src="../scripts/importPlanner.js"></script>
     <script src="../scripts/importDialog.js"></script>

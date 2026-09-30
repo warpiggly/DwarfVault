@@ -250,6 +250,8 @@ body::before {
 /* Estilos para la tabla estilo Excel */
 table {
     width: 100%;
+    /* Anchos fijos por <th>; TEXT se queda con el sobrante (body mide 500px). */
+    table-layout: fixed;
     border-collapse: collapse;
     font-family: 'Righteous-Regular', sans-serif;
     color: #f4e5c3;
@@ -526,15 +528,23 @@ body::-webkit-scrollbar-thumb:hover {
    ═══════════════════════════════════════════════════════════════ */
 
 .th-favicon {
-    width: 28px;
+    width: 20px;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="%23FFD700"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>');
     background-repeat: no-repeat;
     background-position: center;
     background-size: 14px;
 }
-.th-index  { width: 35px; text-align: center; }
-.th-source { width: 85px; }
-.th-date   { width: 75px; text-align: center; }
+.th-index  { width: 24px; text-align: center; }
+.th-type   { width: 26px; text-align: center; font-size: 8px; }
+.th-note   { width: 80px; }
+.th-source { width: 60px; }
+.th-date   { width: 48px; text-align: center; }
+
+/* 7 columnas en 500px: menos padding en las estrechas. */
+.th-index, .th-favicon, .th-type,
+.td-index, .td-favicon, .td-type { padding-left: 4px; padding-right: 4px; }
+.th-note, .th-source, .th-date,
+.td-note, .td-url, .td-date      { padding-left: 6px; padding-right: 6px; }
 
 /* ═══════════════════════════════════════════════════════════════
    VIEWBOARD — Celdas de datos
@@ -546,10 +556,10 @@ body::-webkit-scrollbar-thumb:hover {
     font-weight: bold;
     font-size: 11px;
     background-color: rgba(121, 86, 73, 0.15);
-    width: 35px;
+    width: 24px;
 }
 
-.td-favicon { text-align: center; width: 28px; }
+.td-favicon { text-align: center; width: 20px; }
 .td-favicon__img {
     width: 18px;
     height: 18px;
@@ -561,7 +571,7 @@ body::-webkit-scrollbar-thumb:hover {
 }
 .td-favicon__placeholder { font-size: 16px; opacity: 0.4; }
 
-.td-text { position: relative; max-width: 150px; cursor: pointer; }
+.td-text { position: relative; cursor: pointer; }
 .td-text__content {
     display: flex;
     align-items: center;
@@ -585,7 +595,30 @@ body::-webkit-scrollbar-thumb:hover {
 .td-text:hover .td-text__copy-icon { opacity: 0.6; }
 .td-text--copied { background-color: rgba(76, 175, 80, 0.3) !important; }
 
-.td-url { width: 85px; min-width: 85px; max-width: 85px; }
+.td-type { text-align: center; width: 26px; }
+.td-type__badge {
+    display: inline-block;
+    min-width: 20px;
+    padding: 1px 3px;
+    font-size: 10px;
+    color: #FFD700;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(192, 160, 128, 0.4);
+    border-radius: 3px;
+}
+
+.td-note { width: 80px; font-size: 9px; color: #d4c5a3; }
+.td-note__span {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+.td-note--empty { opacity: 0.5; text-align: center; }
+
+.td-url { width: 60px; }
 .td-url__container {
     display: flex;
     align-items: center;
@@ -597,7 +630,7 @@ body::-webkit-scrollbar-thumb:hover {
 .td-url__empty    { color: #d4c5a3; opacity: 0.5; font-size: 10px; }
 .td-url__fallback { font-size: 9px; }
 
-.td-date { text-align: center; width: 75px; min-width: 75px; max-width: 75px; font-size: 9px; color: #d4c5a3; }
+.td-date { text-align: center; width: 48px; font-size: 9px; color: #d4c5a3; }
 .td-date__container { display: flex; flex-direction: column; gap: 2px; }
 .td-date__day  { font-weight: bold; font-size: 9px; }
 .td-date__time { font-size: 8px; opacity: 0.7; }

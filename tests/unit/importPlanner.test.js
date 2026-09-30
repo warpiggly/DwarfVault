@@ -193,3 +193,26 @@ describe('export CSV para Excel', () => {
         assert.equal(parseCsvEntries('\uFEFFhola;https://a.com', NOW)[0].text, 'hola');
     });
 });
+
+describe('note', () => {
+    test('ida y vuelta CSV conserva la nota; sin nota no aparece el campo', () => {
+        const entries = [
+            { text: 'a', url: '', favicon: '', date: NOW, note: 'por qué; "esto", sí' },
+            { text: 'b', url: '', favicon: '', date: NOW },
+        ];
+        assert.deepEqual(parseCsvEntries(entriesToCsv(entries, ','), NOW), entries);
+    });
+
+    test('CSV viejo de 4 columnas sin header sigue sin nota', () => {
+        assert.deepEqual(parseCsvEntries('1,hola,https://a.com,', NOW)[0],
+            { text: 'hola', url: 'https://a.com', favicon: '', date: NOW });
+    });
+
+    test('sanitizeEntry recorta la nota y descarta la vacía', () => {
+        const S = globalThis.DwarfSecurity;
+        assert.equal(S.sanitizeEntry({ text: 'x', note: '  hola  ' }).note, 'hola');
+        assert.equal('note' in S.sanitizeEntry({ text: 'x', note: '   ' }), false);
+        assert.equal('note' in S.sanitizeEntry({ text: 'x', note: 42 }), false);
+        assert.equal(S.sanitizeEntry({ text: 'x', note: 'n'.repeat(5000) }).note.length, S.MAX_NOTE_LENGTH);
+    });
+});

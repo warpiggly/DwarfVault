@@ -19,6 +19,8 @@
     const MAX_DB_NAME_LENGTH   = 100;
     /** Longitud máxima de texto de una entrada (1 MB de caracteres). */
     const MAX_ENTRY_TEXT       = 1_000_000;
+    /** Longitud máxima de la nota de una entrada. */
+    const MAX_NOTE_LENGTH      = 2_000;
     /** Longitud máxima de una URL. */
     const MAX_URL_LENGTH       = 8_192;
     /** Tope de entradas permitidas en un import. */
@@ -124,11 +126,12 @@
 
     /**
      * Devuelve una entry saneada con el mismo schema que usa IndexedDB
-     * (`{ text, url, favicon, date }`) pero con URLs validadas y longitudes
-     * limitadas. Si la entry es inválida (sin texto), devuelve null.
+     * (`{ text, url, favicon, date, note? }`) pero con URLs validadas y longitudes
+     * limitadas. `note` solo aparece si trae texto. Si la entry es inválida
+     * (sin texto), devuelve null.
      *
      * @param {*} raw
-     * @returns {{text:string,url:string,favicon:string,date:string}|null}
+     * @returns {{text:string,url:string,favicon:string,date:string,note?:string}|null}
      */
     function sanitizeEntry(raw) {
         if (!raw || typeof raw !== 'object') return null;
@@ -136,12 +139,25 @@
         const text = typeof raw.text === 'string' ? raw.text.slice(0, MAX_ENTRY_TEXT) : '';
         if (!text.trim()) return null;
 
-        return {
+        const entry = {
             text,
             url:     safeUrlOrEmpty(raw.url),
             favicon: safeFaviconOrEmpty(raw.favicon),
             date:    typeof raw.date === 'string' ? raw.date : new Date().toISOString()
         };
+        const note = sanitizeNote(raw.note);
+        if (note) entry.note = note;
+        return entry;
+    }
+
+    /**
+     * Nota libre del usuario ("por qué guardé esto"). Recorta y limita.
+     *
+     * @param {*} note
+     * @returns {string}
+     */
+    function sanitizeNote(note) {
+        return typeof note === 'string' ? note.trim().slice(0, MAX_NOTE_LENGTH) : '';
     }
 
     /**
@@ -212,10 +228,12 @@
         sanitizeDbName,
         isValidDbName,
         sanitizeEntry,
+        sanitizeNote,
         sanitizeDatabase,
         sanitizeImportData,
         MAX_DB_NAME_LENGTH,
         MAX_ENTRY_TEXT,
+        MAX_NOTE_LENGTH,
         MAX_URL_LENGTH
     };
 

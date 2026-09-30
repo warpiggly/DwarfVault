@@ -90,10 +90,10 @@
         return rows;
     }
 
-    /** Entries → filas del export propio (`#,text,url,favicon`). */
+    /** Entries → filas del export propio (`#,text,url,favicon,note`). */
     function entriesToRows(entries) {
-        const rows = [['#', 'text', 'url', 'favicon']];
-        (entries || []).forEach((e, i) => rows.push([i + 1, e.text || '', e.url || '', e.favicon || '']));
+        const rows = [['#', 'text', 'url', 'favicon', 'note']];
+        (entries || []).forEach((e, i) => rows.push([i + 1, e.text || '', e.url || '', e.favicon || '', e.note || '']));
         return rows;
     }
 
@@ -103,16 +103,16 @@
 
     /** Registros de IndexedDB → hojas para DwarfXlsx.buildXlsx (una por tabla). */
     function recordsToSheets(records) {
-        return records.map(r => ({ name: r.name, rows: entriesToRows(r.entries), widths: [6, 70, 45, 30] }));
+        return records.map(r => ({ name: r.name, rows: entriesToRows(r.entries), widths: [6, 70, 45, 30, 40] }));
     }
 
     function safeUrl(v)     { return root.DwarfSecurity ? root.DwarfSecurity.safeUrlOrEmpty(v)     : (v || ''); }
     function safeFavicon(v) { return root.DwarfSecurity ? root.DwarfSecurity.safeFaviconOrEmpty(v) : (v || ''); }
 
     /**
-     * Filas (CSV o Excel) → entries `{text,url,favicon,date}`.
+     * Filas (CSV o Excel) → entries `{text,url,favicon,date,note?}`.
      * Con encabezado se mapea por nombre de columna (en cualquier orden).
-     * Sin encabezado, por ancho del archivo: `#,text,url,favicon` (4+) |
+     * Sin encabezado, por ancho del archivo: `#,text,url,favicon[,note]` (4+) |
      * `text,url,favicon` | `text,url` | `text`. Se usa el ancho máximo y no
      * el de cada fila porque Excel omite las celdas vacías del final.
      */
@@ -126,21 +126,26 @@
         if (hasHeader) {
             const url = head.indexOf('url');
             const text = head.indexOf('text');
-            col = { text: text >= 0 ? text : (url === 0 ? 1 : 0), url, favicon: head.indexOf('favicon') };
+            col = { text: text >= 0 ? text : (url === 0 ? 1 : 0), url, favicon: head.indexOf('favicon'), note: head.indexOf('note') };
         } else {
             const off = rows.reduce((m, r) => Math.max(m, r.length), 0) >= 4 ? 1 : 0;
-            col = { text: off, url: off + 1, favicon: off + 2 };
+            col = { text: off, url: off + 1, favicon: off + 2, note: off ? off + 3 : -1 };
         }
         const cell = (r, i) => (i >= 0 && r[i] != null ? String(r[i]) : '');
 
         return (hasHeader ? rows.slice(1) : rows)
             .filter(r => r.some(c => c != null && String(c).length > 0))
-            .map(r => ({
-                text:    cell(r, col.text),
-                url:     safeUrl(cell(r, col.url)),
-                favicon: safeFavicon(cell(r, col.favicon)),
-                date,
-            }));
+            .map(r => {
+                const entry = {
+                    text:    cell(r, col.text),
+                    url:     safeUrl(cell(r, col.url)),
+                    favicon: safeFavicon(cell(r, col.favicon)),
+                    date,
+                };
+                const note = cell(r, col.note).trim();
+                if (note) entry.note = note;
+                return entry;
+            });
     }
 
     function parseCsvEntries(text, nowISO) {

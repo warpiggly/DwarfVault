@@ -64,7 +64,7 @@ for (const [view, v] of Object.entries(VIEWS)) {
 
             const [sheet] = await X.readXlsx(bytes);
             expect(sheet.name).toBe('Notes');
-            expect(sheet.rows[0]).toEqual(['#', 'text', 'url', 'favicon']);
+            expect(sheet.rows[0]).toEqual(['#', 'text', 'url', 'favicon', 'note']);
             expect(rowsToEntries(sheet.rows, NOW)).toEqual(TRICKY);
         });
 

@@ -55,7 +55,7 @@ for (const [locale, delim] of [['es-CO', ';'], ['en-US', ',']]) {
 
                 expect([...buf.subarray(0, 3)]).toEqual([0xEF, 0xBB, 0xBF]);
                 const text = buf.toString('utf8').slice(1);
-                expect(text.split('\r\n')[0]).toBe(['#', 'text', 'url', 'favicon'].join(delim));
+                expect(text.split('\r\n')[0]).toBe(['#', 'text', 'url', 'favicon', 'note'].join(delim));
                 expect(text).toContain('ñandú');
 
                 await page.locator(v.importInput).setInputFiles(csvFile('Notes.csv', buf));

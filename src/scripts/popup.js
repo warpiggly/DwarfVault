@@ -250,32 +250,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── RELICS: búsqueda en tiempo real ──────────────────────────────────────
 
-    document.getElementById('searchBar').addEventListener('input', (e) => {
-        const query  = e.target.value.toLowerCase().trim();
+    // Texto e índice + filtro por TYPE: loadEntries lee ambos controles.
+    const reloadSelected = () => {
         const dbName = document.getElementById('databaseSelect').value;
-        if (!dbName) return;
-
-        if (!query) {
-            loadEntries(dbName);
-            return;
-        }
-
-        openDatabase((db) => {
-            const store = db.transaction('databases', 'readonly').objectStore('databases');
-            store.get(dbName).onsuccess = (event) => {
-                const dbData = event.target.result;
-                if (!dbData?.entries) return;
-
-                const filtered = dbData.entries
-                    .map((entry, i) => ({ entry, originalIndex: i }))
-                    .filter(({ entry, originalIndex }) =>
-                        entry.text.toLowerCase().includes(query) ||
-                        String(originalIndex + 1).includes(query)
-                    );
-                renderEntries(dbName, filtered);
-            };
-        });
-    });
+        if (dbName) loadEntries(dbName);
+    };
+    document.getElementById('searchBar').addEventListener('input', reloadSelected);
+    document.getElementById('typeFilter').addEventListener('change', reloadSelected);
 
     // ── Toggle global de notificaciones 🔔 / 🔕 ────────────────────────────
     // Persiste en chrome.storage.local vía DwarfNotify. Afecta tanto a las
@@ -526,19 +507,28 @@ function populateQuickAccessSelect(selectId, databases, activeDb) {
 }
 
 /**
- * Carga las entradas de una BD y las muestra en la lista.
+ * Carga las entradas de una BD y las muestra en la lista, aplicando la
+ * búsqueda (texto, nota o índice) y el filtro de TYPE activos.
  *
  * @param {string} dbName
  */
 function loadEntries(dbName) {
+    const query = document.getElementById('searchBar').value.toLowerCase().trim();
+    const type  = document.getElementById('typeFilter').value;
+
     openDatabase((db) => {
         const store = db.transaction('databases', 'readonly').objectStore('databases');
         store.get(dbName).onsuccess = (event) => {
             const dbData  = event.target.result;
-            const entries = (dbData?.entries || []).map((entry, i) => ({
-                entry,
-                originalIndex: i
-            }));
+            const entries = (dbData?.entries || [])
+                .map((entry, i) => ({ entry, originalIndex: i }))
+                .filter(({ entry, originalIndex }) =>
+                    (!type || DwarfEntryType.detect(entry.text).key === type) &&
+                    (!query ||
+                        entry.text.toLowerCase().includes(query) ||
+                        (entry.note || '').toLowerCase().includes(query) ||
+                        String(originalIndex + 1).includes(query))
+                );
             renderEntries(dbName, entries);
         };
     });
@@ -571,6 +561,13 @@ function renderEntries(dbName, entries) {
         const contentDiv = document.createElement('div');
         contentDiv.className = 'entry-content';
 
+        const type        = DwarfEntryType.detect(entry.text);
+        const typeBadge   = document.createElement('span');
+        typeBadge.className   = `entry-type entry-type--${type.key}`;
+        typeBadge.textContent = type.icon;
+        typeBadge.title       = type.label;
+        contentDiv.appendChild(typeBadge);
+
         const safeFav = DwarfSecurity.safeFaviconOrEmpty(entry.favicon);
         if (safeFav) {
             const favicon    = document.createElement('img');
@@ -598,6 +595,14 @@ function renderEntries(dbName, entries) {
 
         li.appendChild(contentDiv);
 
+        if (entry.note) {
+            const note       = document.createElement('p');
+            note.className   = 'entry-note';
+            note.textContent = `🗒️ ${entry.note}`;
+            note.title       = entry.note;
+            li.appendChild(note);
+        }
+
         // Contenedor de acciones (Edit + Delete) para alinearlos lado a lado.
         const actions = document.createElement('div');
         actions.className = 'entry-actions';
@@ -624,12 +629,12 @@ function renderEntries(dbName, entries) {
 
 /**
  * Abre un modal de edición sobre el popup con un <textarea> (preserva
- * saltos de línea, tabulaciones y espacios) y un input de URL. Al guardar
- * persiste los cambios en IndexedDB vía editEntry().
+ * saltos de línea, tabulaciones y espacios), un input de URL y la nota.
+ * Al guardar persiste los cambios en IndexedDB vía editEntry().
  *
  * @param {string} dbName
  * @param {number} entryIndex
- * @param {{text: string, url: string, favicon: string}} entry
+ * @param {{text: string, url: string, favicon: string, note?: string}} entry
  */
 function openEditModal(dbName, entryIndex, entry) {
     // Si ya existe uno abierto, cerrarlo antes de crear otro.
@@ -669,6 +674,20 @@ function openEditModal(dbName, entryIndex, entry) {
     urlInput.className = 'edit-modal-url';
     urlInput.value     = entry.url || '';
     modal.appendChild(urlInput);
+
+    // Nota: por qué se guardó esta entrada.
+    const noteLabel = document.createElement('label');
+    noteLabel.className   = 'edit-modal-label';
+    noteLabel.textContent = 'Note';
+    modal.appendChild(noteLabel);
+
+    const noteInput = document.createElement('textarea');
+    noteInput.className   = 'edit-modal-textarea edit-modal-note';
+    noteInput.value       = entry.note || '';
+    noteInput.placeholder = 'Why did you save this?';
+    noteInput.maxLength   = DwarfSecurity.MAX_NOTE_LENGTH;
+    noteInput.spellcheck  = false;
+    modal.appendChild(noteInput);
 
     // Botones.
     const btnRow = document.createElement('div');
@@ -724,7 +743,7 @@ function openEditModal(dbName, entryIndex, entry) {
         }
         // Evitar dobles guardados mientras la transacción está en vuelo.
         saveBtn.disabled = true;
-        editEntry(dbName, entryIndex, newText, newUrl)
+        editEntry(dbName, entryIndex, newText, newUrl, noteInput.value)
             .then(close)
             .catch((err) => {
                 console.error('[DwarfVault] Error saving entry:', err);
@@ -863,9 +882,10 @@ function openDeleteConfirmModal(dbName, entryIndex, entry) {
  * @param {number} entryIndex
  * @param {string} newText
  * @param {string} newUrl
+ * @param {string} newNote - Vacía → se quita la nota.
  * @returns {Promise<void>}
  */
-function editEntry(dbName, entryIndex, newText, newUrl) {
+function editEntry(dbName, entryIndex, newText, newUrl, newNote) {
     return new Promise((resolve, reject) => {
         openDatabase((db) => {
             const store = db.transaction('databases', 'readwrite').objectStore('databases');
@@ -873,8 +893,12 @@ function editEntry(dbName, entryIndex, newText, newUrl) {
                 const dbData = event.target.result;
                 if (!dbData?.entries?.[entryIndex]) { resolve(); return; }
 
-                dbData.entries[entryIndex].text = newText;
-                dbData.entries[entryIndex].url  = newUrl;
+                const entry = dbData.entries[entryIndex];
+                entry.text = newText;
+                entry.url  = newUrl;
+                const note = DwarfSecurity.sanitizeNote(newNote);
+                if (note) entry.note = note;
+                else      delete entry.note;
 
                 const req = store.put(dbData);
                 req.onsuccess = () => {
