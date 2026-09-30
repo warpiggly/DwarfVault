@@ -30,10 +30,13 @@ function seedDb(records) {
 }
 
 const test = base.extend({
-    context: async ({}, use) => {
+    /** Carpeta de la extensión a cargar (por defecto el repo; el smoke test usa el ZIP empaquetado). */
+    extPath: [EXT, { option: true }],
+    context: async ({ locale, extPath }, use) => {
         const ctx = await chromium.launchPersistentContext('', {
             channel: 'chromium',
-            args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
+            locale,
+            args: [`--disable-extensions-except=${extPath}`, `--load-extension=${extPath}`],
         });
         await use(ctx);
         await ctx.close();

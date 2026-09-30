@@ -216,18 +216,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('export-csv').addEventListener('click', exportDataAsCSV);
     document.getElementById('export-parent').addEventListener('click', exportParentDatabase);
+    document.getElementById('export-xlsx').addEventListener('click', exportDataAsXlsx);
+    document.getElementById('export-vault-xlsx').addEventListener('click', exportVaultAsXlsx);
 
-    // Importar CSV (base de datos individual)
+    // Importar CSV / Excel (base de datos individual)
     document.getElementById('importDatabase').addEventListener('click', () => {
         document.getElementById('importCSV').click();
     });
     document.getElementById('importCSV').addEventListener('change', (event) => {
         const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => processCSV(e.target.result, file.name);
-        reader.readAsText(file);
         event.target.value = ''; // permitir reimportar el mismo archivo
+        if (file) processImportFile(file);
     });
 
     // Importar JSON (padre + hijas)
@@ -987,14 +986,10 @@ function exportDataAsCSV() {
                 return;
             }
 
-            const esc  = (v) => `"${(v || '').replace(/"/g, '""')}"`;
-            const rows = ['Index,Text,URL,Favicon'];
-            dbData.entries.forEach((entry, i) => {
-                rows.push(`${i + 1},${esc(entry.text)},${esc(entry.url)},${esc(entry.favicon)}`);
-            });
-
+            // BOM + separador según idioma → Excel lo abre en columnas y con tildes.
+            const csv = DwarfImport.entriesToCsv(dbData.entries, DwarfImport.csvDelimiterForLocale(navigator.language));
             downloadBlob(
-                new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' }),
+                new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
                 `${dbName}.csv`
             );
         };
@@ -1044,6 +1039,51 @@ function exportParentDatabase() {
                 `📜 Total entries: ${total}`
             );
         };
+    });
+}
+
+// ── Exportar Excel (.xlsx) ────────────────────────────────────────────────────
+
+async function downloadXlsx(records, filename) {
+    try {
+        const { bytes, truncated } = await DwarfXlsx.buildXlsx(DwarfImport.recordsToSheets(records));
+        downloadBlob(new Blob([bytes], { type: DwarfXlsx.MIME }), filename);
+        if (truncated) {
+            alert(`⚠️ ${truncated} cell(s) were cut to Excel's ${DwarfXlsx.MAX_CELL_CHARS}-character limit.`);
+        }
+    } catch (e) {
+        console.error('[DwarfVault] Excel export failed:', e);
+        alert('Error exporting to Excel.');
+    }
+}
+
+/** Exporta la BD seleccionada como libro de Excel de una hoja. */
+function exportDataAsXlsx() {
+    const dbName = document.getElementById('databaseSelect').value;
+    if (!dbName) { alert('Please select a database first.'); return; }
+
+    getAllDatabases((all) => {
+        const record = all.find(d => d.name === dbName);
+        if (!record?.entries?.length) { alert('No entries to export.'); return; }
+        downloadXlsx([record], `${dbName}.xlsx`);
+    });
+}
+
+/**
+ * Exporta el vault completo (padre + hijas) como un libro con una hoja por
+ * tabla. Si está seleccionada una hija, exporta el vault de su padre.
+ */
+function exportVaultAsXlsx() {
+    const dbName = document.getElementById('databaseSelect').value;
+    if (!dbName) { alert('Please select a database first.'); return; }
+
+    getAllDatabases((all) => {
+        const selected = all.find(d => d.name === dbName);
+        if (!selected) { alert('Database not found.'); return; }
+        const parentName = selected.parentDatabase || selected.name;
+        const parent     = all.find(d => d.name === parentName);
+        if (!parent) { alert('Database not found.'); return; }
+        downloadXlsx([parent, ...all.filter(d => d.parentDatabase === parentName)], `${parentName}_vault.xlsx`);
     });
 }
 
@@ -1149,37 +1189,47 @@ function importParentDatabase(rawImport) {
 }
 
 /**
- * Parsea el CSV y pregunta el destino (tabla sola, hija de un padre, o
- * añadir/reemplazar la BD seleccionada) antes de escribir nada.
+ * Lee el archivo (CSV o Excel) y pregunta el destino (tabla sola, hija de un
+ * padre, o añadir/reemplazar la BD seleccionada) antes de escribir nada.
  *
- * @param {string} csvData
- * @param {string} fileName
+ * @param {File} file
  */
-function processCSV(csvData, fileName) {
+async function processImportFile(file) {
+    let tables;
+    try {
+        tables = await DwarfImport.readImportFile(file);
+    } catch (e) {
+        console.error('[DwarfVault] Import failed:', e);
+        alert('Could not read the file. Is it a valid CSV or Excel (.xlsx) file?');
+        return;
+    }
+
     // Cada fila se pasa por sanitizeEntry: URL y favicon con esquemas
     // peligrosos (javascript:, data:text/html, file:, blob:...) se neutralizan
     // a cadena vacía. Las filas sin texto se descartan.
-    const entries = DwarfImport.parseCsvEntries(csvData)
-        .map(DwarfSecurity.sanitizeEntry)
-        .filter(Boolean);
-    if (entries.length === 0) {
-        alert('No valid entries found in the CSV file.');
+    tables = tables
+        .map(t => ({
+            name:    DwarfSecurity.sanitizeDbName(t.name) || 'Imported',
+            entries: t.entries.map(DwarfSecurity.sanitizeEntry).filter(Boolean),
+        }))
+        .filter(t => t.entries.length > 0);
+    if (tables.length === 0) {
+        alert('No valid entries found in the file.');
         return;
     }
 
     getAllDatabases((all) => {
         const currentSheet = document.getElementById('databaseSelect').value;
         const current      = all.find(d => d.name === currentSheet);
-        const baseName     = DwarfSecurity.sanitizeDbName(DwarfImport.baseNameFromFile(fileName)) || 'Imported';
 
         DwarfImportDialog.open({
-            count:         entries.length,
-            defaultName:   DwarfImport.uniqueName(all.map(d => d.name), baseName),
+            tables,
+            takenNames:    all.map(d => d.name),
             parents:       all.filter(d => !d.parentDatabase).map(d => d.name),
             currentParent: current ? (current.parentDatabase || current.name) : '',
             currentSheet:  current ? current.name : '',
             onSubmit:      (choice) => new Promise((resolve) => {
-                const plan = DwarfImport.planCsvImport(all, entries, {
+                const plan = DwarfImport.planCsvImport(all, tables[choice.table].entries, {
                     ...choice, name: DwarfSecurity.sanitizeDbName(choice.name),
                 });
                 if (!plan.ok) { alert(plan.error); resolve(false); return; }
@@ -1194,7 +1244,7 @@ function processCSV(csvData, fileName) {
                         resolve();
                         showImportedDatabase(plan.record.name);
                     };
-                    tx.onerror = () => { alert('Error importing CSV.'); resolve(false); };
+                    tx.onerror = () => { alert('Error importing file.'); resolve(false); };
                 });
             }),
         });

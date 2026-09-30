@@ -1,14 +1,16 @@
 /**
- * DwarfVault — Diálogo "¿dónde importo este CSV?" compartido por las vistas
+ * DwarfVault — Diálogo "¿dónde importo este CSV/Excel?" compartido por las vistas
  * corporate y dwarven. Reutiliza las clases .edit-modal-* que ambas hojas
  * de estilo ya definen. La lógica de qué se escribe vive en importPlanner.js.
  *
  *   DwarfImportDialog.open({
- *       count, defaultName,
+ *       tables:        [{name, entries}],   // 1 por CSV, 1 por hoja de Excel
+ *       takenNames:    ['Work', ...],   // para proponer un nombre libre
  *       parents:       ['Work', ...],   // vaults padre disponibles
  *       currentParent: 'Work',          // preselección del select de padre
  *       currentSheet:  'Notes' | '',    // si hay, ofrece append / replace
- *       onSubmit({mode, name, parent, target}) → Promise; false = no cerrar
+ *       onSubmit({mode, name, parent, target, table}) → Promise; false = no cerrar
+ *                                     (`table` = índice en `tables`)
  *   })
  */
 (function (root) {
@@ -21,12 +23,28 @@
         return node;
     }
 
-    function open({ count, defaultName, parents = [], currentParent = '', currentSheet = '', onSubmit }) {
+    function open({ tables, takenNames = [], parents = [], currentParent = '', currentSheet = '', onSubmit }) {
         document.querySelector('.edit-modal-backdrop')?.remove();
 
         const backdrop = el('div', 'edit-modal-backdrop');
         const modal    = el('div', 'edit-modal import-modal');
-        modal.appendChild(el('h3', 'edit-modal-title', `⇩ Import ${count} row(s) — where?`));
+        const title = el('h3', 'edit-modal-title');
+        modal.appendChild(title);
+
+        // Excel con varias hojas: se elige cuál importar.
+        const sheetSelect = el('select', 'toolbar-select options-select import-parent-select');
+        sheetSelect.id = 'importDestSheet';
+        tables.forEach((t, i) => {
+            const opt = el('option', null, `${t.name} (${t.entries.length})`);
+            opt.value = String(i);
+            sheetSelect.appendChild(opt);
+        });
+        if (tables.length > 1) {
+            modal.appendChild(el('label', 'edit-modal-label', 'Excel sheet'));
+            modal.appendChild(sheetSelect);
+        }
+        const table = () => tables[Number(sheetSelect.value) || 0];
+        const suggestName = () => root.DwarfImport.uniqueName(takenNames, table().name);
 
         const options = [
             { mode: 'new-parent', label: '📁 New standalone table' },
@@ -68,7 +86,7 @@
         const nameInput = el('input', 'edit-modal-url');
         nameInput.type       = 'text';
         nameInput.id         = 'importDestName';
-        nameInput.value      = defaultName;
+        nameInput.value      = suggestName();
         nameInput.spellcheck = false;
         modal.appendChild(nameLabel);
         modal.appendChild(nameInput);
@@ -81,6 +99,16 @@
         };
         Object.values(radios).forEach(r => r.addEventListener('change', sync));
         sync();
+
+        // El nombre sigue a la hoja elegida mientras el usuario no lo edite.
+        let nameEdited = false;
+        nameInput.addEventListener('input', () => { nameEdited = true; });
+        const paintTable = () => {
+            title.textContent = `⇩ Import ${table().entries.length} row(s) — where?`;
+            if (!nameEdited) nameInput.value = suggestName();
+        };
+        sheetSelect.addEventListener('change', paintTable);
+        paintTable();
 
         const btnRow    = el('div', 'edit-modal-actions');
         const saveBtn   = el('button', 'save-btn', '⇩ Import');
@@ -104,6 +132,7 @@
                 name:   nameInput.value.trim(),
                 parent: parentSelect.value,
                 target: currentSheet,
+                table:  Number(sheetSelect.value) || 0,
             });
             if (result !== false) close();
         };

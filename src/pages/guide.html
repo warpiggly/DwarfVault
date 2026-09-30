@@ -142,8 +142,9 @@
                             <p><strong>Vault menu</strong> — manage databases:</p>
                             <p><span class="ui">＋ New Parent</span> new Vault · <span class="ui">＋ New Child</span> new Chest · <span class="ui">✎ Rename</span> rename the selected one · <span class="ui">× Delete</span> remove it forever ⚠️</p>
                             <p><strong>Data menu</strong> — move things in and out:</p>
-                            <p><span class="ui">⇩ Import CSV</span> / <span class="ui">⇧ Export CSV</span> back up a single sheet as a spreadsheet file.<br>
-                               <span class="ui">🗃️ Import Full Vault</span> / <span class="ui">📦 Export Full Vault</span> back up a Vault <strong>with all its Chests</strong> in one JSON file.</p>
+                            <p><span class="ui">⇩ Import CSV / Excel</span> loads a <code>.csv</code> or <code>.xlsx</code> file. It always asks <strong>where</strong> to put it first: a new standalone table, a new Chest inside a Vault, or added to / replacing the current sheet. If the Excel file has several sheets, you pick which one.<br>
+                               <span class="ui">📊 Export Excel</span> / <span class="ui">⇧ Export CSV</span> save the current sheet. <span class="ui">📊 Export Full Vault to Excel</span> saves a Vault and its Chests in one workbook, one sheet each.<br>
+                               <span class="ui">🗃️ Import Full Vault</span> / <span class="ui">📦 Export Full Vault</span> back up a Vault <strong>with all its Chests</strong> in one JSON file. Nothing that already exists gets overwritten: names that clash are renamed.</p>
                         </div>
                     </details>
 

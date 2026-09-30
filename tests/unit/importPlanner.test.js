@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 require('../../src/scripts/security.js');
 const {
     parseCsvEntries, baseNameFromFile, uniqueName, planCsvImport, planFullImport,
+    buildCsv, entriesToCsv, csvDelimiterForLocale,
 } = require('../../src/scripts/importPlanner.js');
 
 const NOW = '2026-01-01T00:00:00.000Z';
@@ -151,5 +152,44 @@ describe('planFullImport — hijas con nombre repetido no se roban', () => {
         const plan = planFullImport([], file);
         assert.deepEqual(plan.records.map(r => r.name), ['Work', 'Notes', 'Ideas']);
         assert.deepEqual(plan.renamed, []);
+    });
+});
+
+describe('export CSV para Excel', () => {
+    test('separador según idioma: coma decimal → ;', () => {
+        assert.equal(csvDelimiterForLocale('es-CO'), ';');
+        assert.equal(csvDelimiterForLocale('de-DE'), ';');
+        assert.equal(csvDelimiterForLocale('en-US'), ',');
+        assert.equal(csvDelimiterForLocale('xx-invalid-!!'), ',');
+    });
+
+    test('BOM UTF-8 al inicio + CRLF entre filas', () => {
+        const csv = buildCsv([['a', 'b'], ['c', 'd']], ';');
+        assert.equal(csv, '\uFEFFa;b\r\nc;d');
+    });
+
+    test('comilla el campo solo si trae separador, comillas o salto', () => {
+        assert.equal(buildCsv([['x,y', 'x;y']], ';'), '\uFEFFx,y;"x;y"');
+        assert.equal(buildCsv([['x,y', 'x;y']], ','), '\uFEFF"x,y",x;y');
+        assert.equal(buildCsv([['di "hola"', 'l1\nl2']], ','), '\uFEFF"di ""hola""","l1\nl2"');
+    });
+
+    for (const d of [',', ';']) {
+        test(`ida y vuelta con "${d}": tildes, separadores, comillas y saltos`, () => {
+            const entries = [
+                { text: 'ñandú, café; "citado"\nsegunda línea', url: 'https://a.com/?q=1,2', favicon: '', date: NOW },
+                { text: 'simple', url: '', favicon: 'https://a.com/f.ico', date: NOW },
+            ];
+            assert.deepEqual(parseCsvEntries(entriesToCsv(entries, d), NOW), entries);
+        });
+    }
+
+    test('import acepta CSV con tab (guardado desde Excel como texto)', () => {
+        assert.deepEqual(parseCsvEntries('text\turl\nhola\thttps://a.com', NOW)[0],
+            { text: 'hola', url: 'https://a.com', favicon: '', date: NOW });
+    });
+
+    test('BOM sin header no ensucia el primer texto', () => {
+        assert.equal(parseCsvEntries('\uFEFFhola;https://a.com', NOW)[0].text, 'hola');
     });
 });

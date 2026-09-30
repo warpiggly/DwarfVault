@@ -1307,32 +1307,52 @@
         });
     }
 
-    // ── CSV ─────────────────────────────────────────────────────
-    function csvEscape(s) {
-        const str = String(s == null ? '' : s);
-        return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    // ── CSV / Excel ─────────────────────────────────────────────
+    function saveFile(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
     }
 
+    // Separador según idioma para que Excel lo abra en columnas.
     function onExport() {
         if (!currentSheet) return;
         const record = getRecord(currentSheet);
         if (!record) return;
 
-        const rows = [['#', 'text', 'url', 'favicon']];
-        (record.entries || []).forEach((e, i) => {
-            rows.push([i + 1, e.text || '', e.url || '', e.favicon || '']);
-        });
-        const csv  = rows.map(r => r.map(csvEscape).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = `${currentSheet}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+        const csv = DwarfImport.entriesToCsv(record.entries, DwarfImport.csvDelimiterForLocale(navigator.language));
+        saveFile(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${currentSheet}.csv`);
         showToast('Exported');
+    }
+
+    async function exportXlsx(records, filename) {
+        try {
+            const { bytes, truncated } = await DwarfXlsx.buildXlsx(DwarfImport.recordsToSheets(records));
+            saveFile(new Blob([bytes], { type: DwarfXlsx.MIME }), filename);
+            showToast(truncated
+                ? `Exported — ${truncated} cell(s) cut to Excel's ${DwarfXlsx.MAX_CELL_CHARS} char limit`
+                : 'Exported to Excel', !!truncated);
+        } catch (e) {
+            console.error('[Corporate] Excel export failed:', e);
+            showToast('Excel export failed', true);
+        }
+    }
+
+    function onExportXlsx() {
+        const record = currentSheet && getRecord(currentSheet);
+        if (record) exportXlsx([record], `${currentSheet}.xlsx`);
+    }
+
+    /** Padre + hijas en un solo libro: una hoja por tabla. */
+    function onExportVaultXlsx() {
+        const parent = currentParent && getRecord(currentParent);
+        if (!parent) { showToast('Pick a parent vault first', true); return; }
+        exportXlsx([parent, ...children(currentParent)], `${currentParent}_vault.xlsx`);
     }
 
     async function onImport(event) {
@@ -1340,25 +1360,26 @@
         event.target.value = '';
         if (!file) return;
 
-        let entries;
+        let tables;
         try {
-            entries = DwarfImport.parseCsvEntries(await file.text());
+            tables = await DwarfImport.readImportFile(file);
         } catch (e) {
             console.error('[Corporate] Import failed:', e);
-            showToast('Import failed: invalid CSV', true);
+            showToast('Import failed: unreadable file', true);
             return;
         }
-        if (entries.length === 0) { showToast('No rows to import', true); return; }
+        if (tables.length === 0) { showToast('No rows to import', true); return; }
 
         // Nunca se escribe sin preguntar destino: tabla sola, hija de un
         // padre, o (explícito) añadir/reemplazar la hoja actual.
         DwarfImportDialog.open({
-            count:         entries.length,
+            tables,
+            takenNames:    allDbs.map(d => d.name),
             parents:       parents().map(p => p.name),
             currentParent,
             currentSheet,
-            defaultName:   DwarfImport.uniqueName(allDbs.map(d => d.name), DwarfImport.baseNameFromFile(file.name)),
             onSubmit:      async (choice) => {
+                const entries = tables[choice.table].entries;
                 const plan = DwarfImport.planCsvImport(allDbs, entries, choice);
                 if (!plan.ok) { showToast(plan.error, true); return false; }
                 if (choice.mode === 'replace' && !confirm(
@@ -1557,6 +1578,8 @@
         setMenuItemDisabled('rename',    !hasSheet);
         setMenuItemDisabled('delete',    !hasSheet);
         setMenuItemDisabled('export',    !hasSheet);
+        setMenuItemDisabled('export-xlsx',       !hasSheet);
+        setMenuItemDisabled('export-vault-xlsx', !hasParent);
     }
 
     function setMenuItemDisabled(action, disabled) {
@@ -1597,8 +1620,10 @@
         'delete':     onDelete,
         'import':      () => importInput.click(),
         'export':      onExport,
+        'export-xlsx': onExportXlsx,
         'import-full': () => importFullInput.click(),
-        'export-full': onExportFull
+        'export-full': onExportFull,
+        'export-vault-xlsx': onExportVaultXlsx
     };
 
     function setupMenuBar() {

@@ -99,8 +99,13 @@
                 <!-- Single database row -->
                 <div class="forge-btn-row">
                     <button id="export-csv" class="action-btn forge-btn">📤 EXPORT <span style="color: #cccccc;">CSV</span></button>
-                    <input type="file" id="importCSV" accept=".csv" style="display: none;">
-                    <button id="importDatabase" class="action-btn forge-btn">📥 IMPORT <span style="color: #cccccc;">CSV</span></button>
+                    <input type="file" id="importCSV" accept=".csv,.xlsx" style="display: none;">
+                    <button id="importDatabase" class="action-btn forge-btn">📥 IMPORT <span style="color: #cccccc;">CSV / Excel</span></button>
+                </div>
+                <!-- Excel row: la BD seleccionada o el vault completo (una hoja por tabla) -->
+                <div class="forge-btn-row">
+                    <button id="export-xlsx" class="action-btn forge-btn">📊 EXPORT <span style="color: #cccccc;">Excel</span></button>
+                    <button id="export-vault-xlsx" class="action-btn forge-btn">📊 EXPORT <span style="color: #cccccc;">Vault Excel</span></button>
                 </div>
                 <!-- Parent database row (con hijos) -->
                 <div class="forge-btn-row">
@@ -163,6 +168,7 @@
     <script src="../scripts/security.js"></script>
     <script src="../scripts/notifications.js"></script>
     <script src="../scripts/contextUnlock.js"></script>
+    <script src="../scripts/xlsx.js"></script>
     <script src="../scripts/importPlanner.js"></script>
     <script src="../scripts/importDialog.js"></script>
     <script src="../scripts/db.js"></script>

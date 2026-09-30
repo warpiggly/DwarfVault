@@ -97,11 +97,13 @@
                         aria-expanded="false"
                         aria-controls="menu-data">Data</button>
                 <div id="menu-data" class="menu-dropdown" role="menu" hidden>
-                    <button type="button" class="menu-item" role="menuitem" data-action="import">⇩ Import CSV</button>
+                    <button type="button" class="menu-item" role="menuitem" data-action="import">⇩ Import CSV / Excel</button>
+                    <button type="button" class="menu-item" role="menuitem" data-action="export-xlsx">📊 Export Excel</button>
                     <button type="button" class="menu-item" role="menuitem" data-action="export">⇧ Export CSV</button>
                     <div class="menu-separator" role="separator"></div>
                     <button type="button" class="menu-item" role="menuitem" data-action="import-full">🗃️ Import Full Vault</button>
                     <button type="button" class="menu-item" role="menuitem" data-action="export-full">📦 Export Full Vault</button>
+                    <button type="button" class="menu-item" role="menuitem" data-action="export-vault-xlsx">📊 Export Full Vault to Excel</button>
                 </div>
             </div>
 
@@ -159,8 +161,8 @@
 
         </div>
 
-        <!-- File input oculto: lo dispara el menú Data → Import CSV. -->
-        <input type="file" id="importInput" accept=".csv" hidden>
+        <!-- File input oculto: lo dispara el menú Data → Import CSV / Excel. -->
+        <input type="file" id="importInput" accept=".csv,.xlsx" hidden>
 
         <!-- File input oculto: lo dispara el menú Data → Import Full Vault (JSON). -->
         <input type="file" id="importFullInput" accept=".json,application/json" hidden>
@@ -173,6 +175,7 @@
     <!-- Scripts: shared utilities first, then corporate logic, then toggle,
          por último los embers ambientales (puramente visuales, no bloquean). -->
     <script src="../scripts/security.js"></script>
+    <script src="../scripts/xlsx.js"></script>
     <script src="../scripts/importPlanner.js"></script>
     <script src="../scripts/importDialog.js"></script>
     <script src="../scripts/db.js"></script>
