@@ -4,3 +4,8 @@
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# Tests
+node_modules/
+test-results/
+playwright-report/

@@ -1313,41 +1313,6 @@
         return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
     }
 
-    function csvParseLine(line) {
-        const out = []; let cur = ''; let inQuote = false;
-        for (let i = 0; i < line.length; i++) {
-            const c = line[i];
-            if (inQuote) {
-                if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
-                else if (c === '"') { inQuote = false; }
-                else                 { cur += c; }
-            } else {
-                if      (c === ',') { out.push(cur); cur = ''; }
-                else if (c === '"') { inQuote = true; }
-                else                 { cur += c; }
-            }
-        }
-        out.push(cur);
-        return out;
-    }
-
-    function csvParse(text) {
-        // Soporta saltos de línea dentro de campos entre comillas.
-        const rows = []; let buf = ''; let inQuote = false;
-        for (let i = 0; i < text.length; i++) {
-            const c = text[i];
-            if (c === '"') inQuote = !inQuote;
-            if ((c === '\n' || c === '\r') && !inQuote) {
-                if (c === '\r' && text[i + 1] === '\n') i++;
-                if (buf.length > 0) { rows.push(csvParseLine(buf)); buf = ''; }
-            } else {
-                buf += c;
-            }
-        }
-        if (buf.length > 0) rows.push(csvParseLine(buf));
-        return rows;
-    }
-
     function onExport() {
         if (!currentSheet) return;
         const record = getRecord(currentSheet);
@@ -1373,51 +1338,44 @@
     async function onImport(event) {
         const file = event.target.files && event.target.files[0];
         event.target.value = '';
-        if (!file || !currentSheet) return;
+        if (!file) return;
 
+        let entries;
         try {
-            const text = await file.text();
-            const rows = csvParse(text);
-            if (rows.length === 0) { showToast('CSV is empty', true); return; }
-
-            const head      = rows[0].map(s => (s || '').toLowerCase());
-            const hasHeader = head.includes('text') || head.includes('url');
-            const dataRows  = hasHeader ? rows.slice(1) : rows;
-
-            // Layouts aceptados:
-            //   4 cols: #, text, url, favicon  (formato del export propio)
-            //   3 cols: text, url, favicon
-            //   2 cols: text, url
-            const nowISO = new Date().toISOString();
-            const parsed = dataRows
-                .filter(r => r.some(c => c && c.length > 0))
-                .map(r => {
-                    // Mantenemos `date` (campo del schema dwarven) para que las
-                    // entradas importadas sean indistinguibles de las nativas.
-                    if (r.length >= 4)  return { text: r[1] || '', url: r[2] || '', favicon: r[3] || '', date: nowISO };
-                    if (r.length === 3) return { text: r[0] || '', url: r[1] || '', favicon: r[2] || '', date: nowISO };
-                    if (r.length === 2) return { text: r[0] || '', url: r[1] || '', favicon: '',         date: nowISO };
-                    return { text: r[0] || '', url: '', favicon: '', date: nowISO };
-                });
-
-            if (parsed.length === 0) { showToast('No rows to import', true); return; }
-
-            const append = confirm(
-                `Import ${parsed.length} row(s) into "${currentSheet}"?\n\n` +
-                `OK  = Append to existing entries\n` +
-                `Cancel = Replace all entries`
-            );
-
-            const record   = getRecord(currentSheet);
-            record.entries = append ? (record.entries || []).concat(parsed) : parsed;
-            await putRecord(record);
-            notifyBackground();
-            await refresh({ selectParent: currentParent, selectSheet: currentSheet });
-            showToast(`Imported (${append ? 'append' : 'replace'}): ${parsed.length} row(s)`);
+            entries = DwarfImport.parseCsvEntries(await file.text());
         } catch (e) {
             console.error('[Corporate] Import failed:', e);
             showToast('Import failed: invalid CSV', true);
+            return;
         }
+        if (entries.length === 0) { showToast('No rows to import', true); return; }
+
+        // Nunca se escribe sin preguntar destino: tabla sola, hija de un
+        // padre, o (explícito) añadir/reemplazar la hoja actual.
+        DwarfImportDialog.open({
+            count:         entries.length,
+            parents:       parents().map(p => p.name),
+            currentParent,
+            currentSheet,
+            defaultName:   DwarfImport.uniqueName(allDbs.map(d => d.name), DwarfImport.baseNameFromFile(file.name)),
+            onSubmit:      async (choice) => {
+                const plan = DwarfImport.planCsvImport(allDbs, entries, choice);
+                if (!plan.ok) { showToast(plan.error, true); return false; }
+                if (choice.mode === 'replace' && !confirm(
+                    `Replace ALL ${(getRecord(choice.target).entries || []).length} entries of "${choice.target}"?`
+                )) return false;
+                try {
+                    await putRecord(plan.record);
+                    notifyBackground();
+                    await refresh({ selectParent: plan.select.parent, selectSheet: plan.select.sheet });
+                    showToast(`Imported ${entries.length} row(s) into "${plan.record.name}"`);
+                } catch (e) {
+                    console.error('[Corporate] Import failed:', e);
+                    showToast('Import failed', true);
+                    return false;
+                }
+            }
+        });
     }
 
     // ── Full Vault export / import (JSON: padre + hijas) ─────────
@@ -1463,29 +1421,22 @@
                 showToast('Invalid vault file', true);
                 return;
             }
-            const childDbs = Array.isArray(data.childDatabases) ? data.childDatabases : [];
-
-            // Colisión de nombre: si el padre ya existe, importamos con sufijo
-            // "_imported" y reapuntamos las hijas para no pisar lo existente.
+            // Colisión de nombre: padre con sufijo libre; las hijas que choquen
+            // también se renombran (antes se pisaban y quedaban reapuntadas).
             let name = parent.name;
             if (allDbs.some(d => d.name === name)) {
-                name = `${parent.name}_imported`;
+                name = DwarfImport.uniqueName(allDbs.map(d => d.name), `${parent.name}_imported`);
                 const ok = confirm(
                     `"${parent.name}" already exists.\n\n` +
                     `OK = Import as "${name}"\nCancel = Abort import`
                 );
                 if (!ok) return;
             }
-            const oldName = parent.name;
 
-            await putRecord({ ...parent, name, parentDatabase: null });
-            for (const c of childDbs) {
-                if (!c || !c.name) continue;
-                await putRecord({
-                    ...c,
-                    parentDatabase: c.parentDatabase === oldName ? name : (c.parentDatabase || name),
-                });
-            }
+            const plan = DwarfImport.planFullImport(allDbs, data, name);
+            if (!plan.ok) { showToast(plan.error, true); return; }
+            for (const r of plan.records) await putRecord(r);
+            const childDbs = plan.records.slice(1);
 
             notifyBackground();
             await refresh({ selectParent: name });
@@ -1605,7 +1556,6 @@
         setMenuItemDisabled('new-child', !hasParent);
         setMenuItemDisabled('rename',    !hasSheet);
         setMenuItemDisabled('delete',    !hasSheet);
-        setMenuItemDisabled('import',    !hasSheet);
         setMenuItemDisabled('export',    !hasSheet);
     }
 

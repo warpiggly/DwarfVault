@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => processCSV(e.target.result, file.name.replace(/\.csv$/i, ''));
+        reader.onload = (e) => processCSV(e.target.result, file.name);
         reader.readAsText(file);
         event.target.value = ''; // permitir reimportar el mismo archivo
     });
@@ -1047,13 +1047,32 @@ function exportParentDatabase() {
     });
 }
 
-// ── Importar JSON (padre + hijas) ─────────────────────────────────────────────
+// ── Importar (JSON padre + hijas / CSV) ──────────────────────────────────────
+// Qué se escribe lo decide DwarfImport (importPlanner.js, compartido con la
+// vista corporate). Regla: nada existente se pisa sin que el usuario lo pida.
+
+/** @param {function(Array): void} callback - todos los registros del store */
+function getAllDatabases(callback) {
+    openDatabase((db) => {
+        db.transaction('databases', 'readonly').objectStore('databases')
+            .getAll().onsuccess = (e) => callback(e.target.result || []);
+    });
+}
+
+/** Tras importar: deja seleccionada la BD nueva y refresca popup + menú. */
+function showImportedDatabase(name) {
+    chrome.storage.local.set({ dbName: name }, () => {
+        openDatabase(loadDatabases);
+        chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+    });
+}
 
 /**
  * Importa una estructura padre + hijas desde un archivo JSON exportado
- * por DwarfVault.
+ * por DwarfVault. Si el padre ya existe se ofrece sobrescribirlo o
+ * renombrar; las hijas que choquen con otras BDs se renombran solas.
  *
- * @param {Object} importData
+ * @param {Object} rawImport
  */
 function importParentDatabase(rawImport) {
     // Validar y sanear: nombres, URLs y favicons de todas las entries se
@@ -1064,218 +1083,121 @@ function importParentDatabase(rawImport) {
         alert('Invalid file format. Please select a valid DwarfVault export file.');
         return;
     }
+    const oldName = importData.parentDatabase.name;
 
-    // Función interna: ejecuta la importación atómica en una transacción.
-    const executeImport = (data) => {
+    // Escritura atómica: si algo falla no queda un vault a medias.
+    const executeImport = (plan) => {
         openDatabase((db) => {
             const tx    = db.transaction('databases', 'readwrite');
             const store = tx.objectStore('databases');
 
             tx.oncomplete = () => {
-                const total = data.parentDatabase.entries.length +
-                    (data.childDatabases || []).reduce((s, c) => s + c.entries.length, 0);
+                const total = plan.records.reduce((s, r) => s + r.entries.length, 0);
+                const renamedMsg = plan.renamed.length
+                    ? `\n\n✏️ Renamed (name already in use):\n` +
+                      plan.renamed.map(r => `- ${r.from} → ${r.to}`).join('\n')
+                    : '';
                 alert(
                     `✅ Import successful!\n\n` +
-                    `📁 Parent: ${data.parentDatabase.name}\n` +
-                    `📂 Children: ${(data.childDatabases || []).length}\n` +
-                    `📜 Total entries: ${total}`
+                    `📁 Parent: ${plan.parentName}\n` +
+                    `📂 Children: ${plan.records.length - 1}\n` +
+                    `📜 Total entries: ${total}` + renamedMsg
                 );
-                openDatabase(loadDatabases);
-                chrome.runtime.sendMessage({ action: 'updateContextMenu' });
+                showImportedDatabase(plan.parentName);
             };
+            tx.onerror = () => alert('Error importing database.');
 
-            tx.onerror = () => {
-                alert('Error importing database. A database with this name may already exist.');
-            };
-
-            store.add(data.parentDatabase);
-            (data.childDatabases || []).forEach(child => store.add(child));
+            plan.records.forEach(r => store.add(r));
         });
     };
 
-    // Verificar si ya existe una BD con el mismo nombre
-    openDatabase((db) => {
-        const store = db.transaction('databases', 'readonly').objectStore('databases');
-        store.get(importData.parentDatabase.name).onsuccess = (event) => {
+    const planAndImport = (existing, name) => {
+        const plan = DwarfImport.planFullImport(existing, importData, name);
+        if (!plan.ok) { alert(`Import cancelled: ${plan.error}.`); return; }
+        executeImport(plan);
+    };
 
-            if (!event.target.result) {
-                // No existe → importar directamente
-                executeImport(importData);
-                return;
-            }
+    getAllDatabases((all) => {
+        if (!all.some(d => d.name === oldName)) { planAndImport(all, oldName); return; }
 
-            // Ya existe → preguntar al usuario
-            const overwrite = confirm(
-                `"${importData.parentDatabase.name}" already exists.\n\n` +
-                `Do you want to overwrite it? ⚠️ This will delete the existing data.`
-            );
+        const overwrite = confirm(
+            `"${oldName}" already exists.\n\n` +
+            `OK = Overwrite it ⚠️ (deletes "${oldName}" and its children)\n` +
+            `Cancel = Import with a new name`
+        );
 
-            if (overwrite) {
-                // Eliminar la BD existente y sus hijas, luego importar
-                openDatabase((db2) => {
-                    const delTx    = db2.transaction('databases', 'readwrite');
-                    const delStore = delTx.objectStore('databases');
-                    delStore.getAll().onsuccess = (getAllEvent) => {
-                        getAllEvent.target.result
-                            .filter(d =>
-                                d.name === importData.parentDatabase.name ||
-                                d.parentDatabase === importData.parentDatabase.name
-                            )
-                            .forEach(d => delStore.delete(d.name));
-                    };
-                    delTx.oncomplete = () => executeImport(importData);
-                    delTx.onerror    = () => alert('Error deleting existing database.');
-                });
-            } else {
-                // Renombrar la BD importada
-                const rawNew   = prompt(
-                    'Enter a new name for the imported database:',
-                    importData.parentDatabase.name + '_imported'
-                );
-                const trimmed  = DwarfSecurity.sanitizeDbName(rawNew);
-                if (!trimmed) { alert('Import cancelled.'); return; }
+        if (overwrite) {
+            const doomed = all.filter(d => d.name === oldName || d.parentDatabase === oldName);
+            openDatabase((db) => {
+                const delTx    = db.transaction('databases', 'readwrite');
+                const delStore = delTx.objectStore('databases');
+                doomed.forEach(d => delStore.delete(d.name));
+                delTx.oncomplete = () => planAndImport(all.filter(d => !doomed.includes(d)), oldName);
+                delTx.onerror    = () => alert('Error deleting existing database.');
+            });
+            return;
+        }
 
-                const oldName  = importData.parentDatabase.name;
-                const renamed  = {
-                    ...importData,
-                    parentDatabase: { ...importData.parentDatabase, name: trimmed },
-                    childDatabases: (importData.childDatabases || []).map(c =>
-                        c.parentDatabase === oldName ? { ...c, parentDatabase: trimmed } : c
-                    )
-                };
-                executeImport(renamed);
-            }
-        };
+        const rawNew  = prompt(
+            'Enter a new name for the imported database:',
+            DwarfImport.uniqueName(all.map(d => d.name), `${oldName}_imported`)
+        );
+        const trimmed = DwarfSecurity.sanitizeDbName(rawNew);
+        if (!trimmed) { alert('Import cancelled.'); return; }
+        planAndImport(all, trimmed);
     });
 }
 
-// ── Importar CSV ──────────────────────────────────────────────────────────────
-
 /**
- * Parsea una línea CSV respetando campos entrecomillados y comas internas.
- *
- * @param {string} text
- * @returns {string[]}
- */
-function parseCSVLine(text) {
-    const result = [];
-    let cell     = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        if (char === '"') {
-            // Comilla doble dentro de un campo entrecomillado → comilla literal
-            if (inQuotes && text[i + 1] === '"') { cell += '"'; i++; }
-            else                                  { inQuotes = !inQuotes; }
-        } else if (char === ',' && !inQuotes) {
-            result.push(cell);
-            cell = '';
-        } else {
-            cell += char;
-        }
-    }
-    result.push(cell);
-    return result;
-}
-
-/**
- * Procesa el contenido de un CSV y crea la BD correspondiente.
+ * Parsea el CSV y pregunta el destino (tabla sola, hija de un padre, o
+ * añadir/reemplazar la BD seleccionada) antes de escribir nada.
  *
  * @param {string} csvData
- * @param {string} dbName  - Nombre derivado del nombre del archivo.
+ * @param {string} fileName
  */
-function processCSV(csvData, dbName) {
-    const safeName = DwarfSecurity.sanitizeDbName(dbName);
-    if (!safeName) { alert('Invalid file name for the imported database.'); return; }
-
-    const lines = csvData.split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) { alert('Invalid CSV format.'); return; }
-
+function processCSV(csvData, fileName) {
     // Cada fila se pasa por sanitizeEntry: URL y favicon con esquemas
     // peligrosos (javascript:, data:text/html, file:, blob:...) se neutralizan
     // a cadena vacía. Las filas sin texto se descartan.
-    const entries = [];
-    for (let i = 1; i < lines.length; i++) {
-        const row = parseCSVLine(lines[i]);
-        if (row.length < 4) continue;
-        const sanitized = DwarfSecurity.sanitizeEntry({
-            text: row[1], url: row[2], favicon: row[3]
-        });
-        if (sanitized) entries.push(sanitized);
-    }
-
+    const entries = DwarfImport.parseCsvEntries(csvData)
+        .map(DwarfSecurity.sanitizeEntry)
+        .filter(Boolean);
     if (entries.length === 0) {
         alert('No valid entries found in the CSV file.');
         return;
     }
-    saveImportedDatabase(safeName, entries);
-}
 
-/**
- * Pregunta si la BD importada será hija o independiente y la crea.
- *
- * @param {string} dbName
- * @param {Array}  entries
- */
-function saveImportedDatabase(dbName, entries) {
-    const addToParent = confirm(
-        `Do you want to add "${dbName}" as a CHILD inside a parent?\n\n` +
-        `OK = Yes (choose parent)\nCancel = No (independent)`
-    );
+    getAllDatabases((all) => {
+        const currentSheet = document.getElementById('databaseSelect').value;
+        const current      = all.find(d => d.name === currentSheet);
+        const baseName     = DwarfSecurity.sanitizeDbName(DwarfImport.baseNameFromFile(fileName)) || 'Imported';
 
-    if (!addToParent) {
-        createImportedDatabase(dbName, entries, null);
-        return;
-    }
+        DwarfImportDialog.open({
+            count:         entries.length,
+            defaultName:   DwarfImport.uniqueName(all.map(d => d.name), baseName),
+            parents:       all.filter(d => !d.parentDatabase).map(d => d.name),
+            currentParent: current ? (current.parentDatabase || current.name) : '',
+            currentSheet:  current ? current.name : '',
+            onSubmit:      (choice) => new Promise((resolve) => {
+                const plan = DwarfImport.planCsvImport(all, entries, {
+                    ...choice, name: DwarfSecurity.sanitizeDbName(choice.name),
+                });
+                if (!plan.ok) { alert(plan.error); resolve(false); return; }
+                if (choice.mode === 'replace' && !confirm(
+                    `Replace ALL ${current.entries.length} entries of "${current.name}"?`
+                )) { resolve(false); return; }
 
-    openDatabase((db) => {
-        const store = db.transaction('databases', 'readonly').objectStore('databases');
-        store.getAll().onsuccess = (event) => {
-            const parents = event.target.result.filter(d => !d.parentDatabase);
-            if (parents.length === 0) {
-                alert('No parent databases available. Creating as parent.');
-                createImportedDatabase(dbName, entries, null);
-                return;
-            }
-            const list   = parents.map((d, i) => `${i + 1}. ${d.name}`).join('\n');
-            const choice = prompt(`Available parents:\n\n${list}\n\nEnter number:`);
-            const idx    = parseInt(choice, 10) - 1;
-            if (idx >= 0 && idx < parents.length) {
-                createImportedDatabase(dbName, entries, parents[idx].name);
-            } else {
-                alert('Invalid selection. Creating as parent.');
-                createImportedDatabase(dbName, entries, null);
-            }
-        };
-    });
-}
-
-/**
- * Crea la BD importada en IndexedDB.
- *
- * @param {string}      dbName
- * @param {Array}       entries
- * @param {string|null} parentDatabase
- */
-function createImportedDatabase(dbName, entries, parentDatabase) {
-    openDatabase((db) => {
-        const store  = db.transaction('databases', 'readwrite').objectStore('databases');
-        const addReq = store.add({ name: dbName, entries, parentDatabase });
-
-        addReq.onsuccess = () => {
-            openDatabase(loadDatabases);
-            chrome.runtime.sendMessage({ action: 'updateContextMenu' });
-            const type = parentDatabase ? `child of "${parentDatabase}"` : 'parent database';
-            alert(`✅ "${dbName}" imported successfully as ${type}.`);
-        };
-
-        addReq.onerror = () => {
-            alert(
-                `A database named "${dbName}" already exists.\n` +
-                `Please rename the file and try again.`
-            );
-        };
+                openDatabase((db) => {
+                    const tx = db.transaction('databases', 'readwrite');
+                    tx.objectStore('databases').put(plan.record);
+                    tx.oncomplete = () => {
+                        resolve();
+                        showImportedDatabase(plan.record.name);
+                    };
+                    tx.onerror = () => { alert('Error importing CSV.'); resolve(false); };
+                });
+            }),
+        });
     });
 }
 

@@ -1467,3 +1467,24 @@ body {
 .dwarf-btn.link-btn-active:hover:not(:disabled) {
     background-color: #3a824f;
 }
+
+/* Import CSV: destino elegido con radios (tabla sola / hija / hoja actual). */
+.import-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--parchment);
+    cursor: pointer;
+}
+.import-option:has(input:disabled) {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.import-option input {
+    accent-color: var(--gold);
+    margin: 0;
+}
+.import-modal [hidden] {
+    display: none !important;
+}

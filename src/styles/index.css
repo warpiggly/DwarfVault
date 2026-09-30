@@ -1085,3 +1085,40 @@ a:active {
     outline-offset: 3px;
 }
 
+
+/* Import CSV: destino elegido con radios (tabla sola / hija / BD actual). */
+.import-option {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 6px;
+    font-size: 13px;
+    color: #f4e5c3;
+    cursor: pointer;
+}
+.import-option:has(input:disabled) {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.import-option input {
+    flex: 0 0 auto;
+    width: auto;
+    accent-color: #c0a080;
+    margin: 0;
+}
+.import-parent-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    font-family: 'Righteous-Regular', sans-serif;
+    font-size: 13px;
+    color: #f4e5c3;
+    background-color: #2b1d12;
+    border: 2px solid #c0a080;
+    border-radius: 6px;
+    outline: none;
+}
+.import-modal [hidden] {
+    display: none !important;
+}
